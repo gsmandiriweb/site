@@ -1,0 +1,68 @@
+---
+import Logo from "./Logo.astro";
+import { u } from "../utils/url.ts";
+const wa = "https://wa.me/6281249343303";
+---
+<header class="site-header">
+  <div class="wrap site-header__bar">
+    <a class="brand" href={u("/")} aria-label="Beranda Bangun Sarana Makmur">
+      <span class="brand__mark"><Logo /></span>
+      <span class="brand__text">
+        <span class="brand__mark-t">BSM</span>
+        <span class="brand__sub">Bangun Sarana Makmur</span>
+      </span>
+    </a>
+    <nav class="nav" aria-label="Navigasi utama">
+      <div class="nav__links">
+        <a href={u("/")}>Beranda</a>
+        <a href={u("/kategori")}>Produk</a>
+        <a href={u("/blog")}>Blog</a>
+        <a href={u("/#kontak")}>Kontak</a>
+      </div>
+      <a class="btn btn--primary nav__cta" href={wa} target="_blank" rel="noopener">
+        Minta Penawaran
+      </a>
+      <button
+        class="nav__toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="Buka menu"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+    </nav>
+  </div>
+  <div class="nav__mobile" id="mobile-menu" hidden>
+    <a href={u("/")}>Beranda</a>
+    <a href={u("/kategori")}>Produk</a>
+    <a href={u("/blog")}>Blog</a>
+    <a href={u("/#kontak")}>Kontak</a>
+    <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+  </div>
+</header>
+
+<script>
+  const btn = document.querySelector(".nav__toggle");
+  const menu = document.getElementById("mobile-menu");
+  btn?.addEventListener("click", () => {
+    const open = menu.hasAttribute("hidden");
+    if (open) {
+      menu.removeAttribute("hidden");
+      btn.setAttribute("aria-expanded", "true");
+      btn.setAttribute("aria-label", "Tutup menu");
+    } else {
+      menu.setAttribute("hidden", "");
+      btn.setAttribute("aria-expanded", "false");
+      btn.setAttribute("aria-label", "Buka menu");
+    }
+  });
+  menu?.querySelectorAll("a").forEach((a) =>
+    a.addEventListener("click", () => {
+      menu.setAttribute("hidden", "");
+      btn?.setAttribute("aria-expanded", "false");
+    })
+  );
+</script>

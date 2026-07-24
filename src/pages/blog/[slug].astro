@@ -1,0 +1,40 @@
+---
+import Base from "../../layouts/Base.astro";
+import { u } from "../../utils/url.ts";
+import { getCollection, getEntry, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const wa = "https://wa.me/6281249343303";
+const fmt = (d) => new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+---
+<Base title={`${post.data.title} — Bangun Sarana Makmur`}>
+  <article class="section wrap" aria-labelledby="post-title">
+    <a class="back-link" href={u("/blog")}>← Semua artikel</a>
+    <header class="article-head" style="margin-top:1.5rem">
+      <span class="label">{post.data.kicker ?? "Artikel"} · {fmt(post.data.date)}</span>
+      <h1 class="display" id="post-title">{post.data.title}</h1>
+    </header>
+
+    {
+      post.data.image && (
+        <figure class="article-figure">
+          <img src={u(post.data.image)} alt={post.data.title} />
+        </figure>
+      )
+    }
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <p style="margin-top:2.5rem">
+      <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Tanya material ini via WhatsApp</a>
+    </p>
+  </article>
+</Base>

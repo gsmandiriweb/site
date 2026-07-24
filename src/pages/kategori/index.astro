@@ -1,0 +1,35 @@
+---
+import Base from "../../layouts/Base.astro";
+import CategoryIcon from "../../components/CategoryIcon.astro";
+import { u } from "../../utils/url.ts";
+import { categories } from "../../data/catalog.ts";
+---
+<Base title="Katalog Material — Bangun Sarana Makmur">
+  <section class="hero wrap" aria-labelledby="cat-title">
+    <div class="hero__copy" style="max-width:none">
+      <div class="eyebrow-row">
+        <span class="tick" aria-hidden="true"></span>
+        <span class="label label--ink">Katalog Material</span>
+      </div>
+      <h1 class="display" id="cat-title">Satu sumber,<br />seluruh proyek.</h1>
+      <p class="lede">Enam kelompok material konstruksi — dari atap hingga utilitas. Pilih keluarga produk, lalu minta penawaran lengkap via WhatsApp.</p>
+    </div>
+  </section>
+
+  <section class="section wrap" style="padding-top:0">
+    <div class="cat-grid">
+      {
+        categories.map((c) => (
+          <a class="cat" href={u(`/kategori/${c.slug}`)} aria-label={c.name}>
+            <span class="cat__icon"><CategoryIcon name={c.icon} /></span>
+            <span class="cat__name">{c.name}</span>
+            <span class="cat__meta">{c.count} lini produk</span>
+            <span class="cat__arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</Base>

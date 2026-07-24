@@ -1,0 +1,35 @@
+---
+import Base from "../../layouts/Base.astro";
+import { u } from "../../utils/url.ts";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog"))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const fmt = (d) => new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+---
+<Base title="Blog & Panduan Material — Bangun Sarana Makmur">
+  <section class="hero wrap" aria-labelledby="blog-title">
+    <div class="hero__copy" style="max-width:none">
+      <div class="eyebrow-row">
+        <span class="tick" aria-hidden="true"></span>
+        <span class="label label--ink">Blog &amp; Panduan Material</span>
+      </div>
+      <h1 class="display" id="blog-title">Bantu Anda memilih<br />material yang tepat.</h1>
+      <p class="lede">Panduan praktis memilih pagar BRC, atap, bondek, dan material konstruksi lainnya — ditulis untuk kontraktor dan pemilik proyek.</p>
+    </div>
+  </section>
+
+  <section class="section wrap" style="padding-top:0">
+    <div class="post-row">
+      {
+        posts.map((post) => (
+          <a class="post" href={u(`/blog/${post.id}`)} aria-label={post.data.title}>
+            <span class="post__kicker">{post.data.kicker ?? "Artikel"} · {fmt(post.data.date)}</span>
+            <span class="post__title">{post.data.title}</span>
+            <span class="post__excerpt">{post.data.excerpt}</span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</Base>

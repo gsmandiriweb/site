@@ -1,0 +1,56 @@
+---
+// Blueprint-line category icons. Stroke uses currentColor (blueprint indigo).
+const { name } = Astro.props;
+---
+{
+  name === "roof" && (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 12 L12 4 L21 12" />
+      <path d="M5 12 V20 M19 12 V20 M3 20 H21" />
+      <path d="M9 20 V14 H15 V20" />
+    </svg>
+  )
+}
+{
+  name === "wall" && (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="4" y="4" width="16" height="16" />
+      <path d="M4 10 H20 M4 15 H20 M10 4 V10 M16 10 V15 M7 15 V20 M14 15 V20" />
+    </svg>
+  )
+}
+{
+  name === "door" && (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="6" y="3" width="12" height="18" />
+      <path d="M15 12 H17" />
+      <path d="M6 21 V3" />
+    </svg>
+  )
+}
+{
+  name === "beam" && (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="9" y="3" width="6" height="18" />
+      <path d="M9 7 H15 M9 17 H15 M11 3 V7 M13 7 V17 M11 17 V21" />
+    </svg>
+  )
+}
+{
+  name === "fence" && (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 8 V20 M19 8 V20" />
+      <path d="M3 8 H21 M3 13 H21" />
+      <path d="M8 8 V13 M12 8 V13 M16 8 V13 M8 13 V18 M12 13 V18 M16 13 V18" />
+    </svg>
+  )
+}
+{
+  name === "util" && (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 21 V8" />
+      <path d="M12 8 C8 8 6 5 6 3 H18 C18 5 16 8 12 8 Z" />
+      <path d="M9 21 H15" />
+    </svg>
+  )
+}

@@ -1,0 +1,40 @@
+---
+import "../styles/global.css";
+import { u } from "../utils/url.ts";
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import WhatsAppFloat from "../components/WhatsAppFloat.astro";
+
+const title = Astro.props.title ?? "Bangun Sarana Makmur — Distributor Material Konstruksi";
+const desc =
+  Astro.props.description ??
+  "CV Bangun Sarana Makmur: distributor & supplier material konstruksi bangunan. Harga pabrik, kirim ke seluruh Indonesia. Pagar BRC, atap, bondek, dan seluruh kebutuhan proyek.";
+---
+
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href={u("/favicon.svg")} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={desc} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <SiteHeader />
+      <main>
+        <slot />
+      </main>
+      <SiteFooter />
+    </div>
+    <WhatsAppFloat />
+  </body>
+</html>

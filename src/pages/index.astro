@@ -1,17 +1,212 @@
 ---
+/*
+  DIRECTION CONTRACT — Blueprint Field (new-work, concept-seed assigned index 6/7, key bsm-bangun-saranamakmur)
+  THESIS: The site is a structural drafting sheet; BRC fencing is the proof BSM can supply the whole catalog.
+    Refuses the generic distributor template and the luxury-showroom look.
+  OWN-WORLD: Drafting-paper ground; blueprint-indigo owns whole regions (hero map, section fields, header rule);
+    ink text; galvalume steel grid/dividers; safety-orange reserved for CTAs. The page grid is the BRC welded-mesh spacing.
+  STORY: A first-time visitor understands BSM is a one-stop factory-price distributor, sees BRC built to spec,
+    and asks for a quote on WhatsApp within seconds.
+  FIRST VIEWPORT: A dimensioned BRC panel drawing over a faint delivery network; headline "Material bangunan.
+    Harga pabrik. Siap kirim."; blueprint-stamped WhatsApp CTA.
+  FORM: Blueprint Field, assigned index 6 of 7 by concept-seed (key bsm-bangun-saranamakmur);
+    staging: single trunk → branching category routes. Seed key printed by concept-seed.mjs.
+*/
+import Base from "../layouts/Base.astro";
+import CategoryIcon from "../components/CategoryIcon.astro";
+import { categories, brcProducts } from "../data/catalog.ts";
+import { getCollection } from "astro:content";
+import { u } from "../utils/url.ts";
 
+const wa = "https://wa.me/6281249343303";
+
+const posts = (await getCollection("blog"))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+const fmt = (d: Date) =>
+  new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base>
+  <!-- ===================== HERO ===================== -->
+  <section class="hero wrap" aria-labelledby="hero-title">
+    <div class="hero__grid">
+      <div class="hero__copy">
+        <div class="eyebrow-row">
+          <span class="tick" aria-hidden="true"></span>
+          <span class="label label--ink">Distributor &amp; Supplier · Surabaya</span>
+        </div>
+        <h1 class="display" id="hero-title">Material bangunan.<br />Harga pabrik.<br />Siap kirim.</h1>
+        <p class="lede">
+          CV Bangun Sarana Makmur melayani pagar BRC, atap, bondek, dan seluruh kebutuhan
+          proyek konstruksi — langsung dari pabrik, kirim ke 34 provinsi.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+          <a class="btn btn--ghost" href="#katalog">Lihat Katalog</a>
+        </div>
+
+        <!-- Delivery network proof (abstract, honest: dots + routes, not a geographic claim) -->
+        <div style="margin-top:2.2rem">
+          <span class="label">Jaringan Pengiriman · 34 Provinsi</span>
+          <svg viewBox="0 0 320 96" role="img" aria-label="Jaringan pengiriman dari Surabaya ke seluruh Indonesia" style="width:100%;height:auto;margin-top:.6rem;opacity:.85">
+            <line x1="160" y1="60" x2="40" y2="24" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
+            <line x1="160" y1="60" x2="92" y2="20" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
+            <line x1="160" y1="60" x2="250" y2="20" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
+            <line x1="160" y1="60" x2="288" y2="40" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
+            <line x1="160" y1="60" x2="60" y2="84" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
+            <g fill="#1b3a6b" font-family="JetBrains Mono, monospace" font-size="8" letter-spacing="0.5">
+              <circle cx="40" cy="24" r="2.5" /><text x="34" y="16">JKT</text>
+              <circle cx="92" cy="20" r="2.5" /><text x="86" y="12">BDJ</text>
+              <circle cx="250" cy="20" r="2.5" /><text x="244" y="12">MKS</text>
+              <circle cx="288" cy="40" r="2.5" /><text x="282" y="34">JAY</text>
+              <circle cx="60" cy="84" r="2.5" /><text x="54" y="96">PLM</text>
+            </g>
+            <circle cx="160" cy="60" r="5" fill="#e8551e" />
+            <text x="160" y="78" text-anchor="middle" fill="#15212e" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" letter-spacing="0.5">SBY</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Dimensioned BRC specimen (signature component) -->
+      <figure class="hero__sheet" aria-label="Gambar kerja pagar BRC: panel 240×150 cm, besi ∅6 mm galvanis">
+        <img src={u("/images/bsm/pagar-brc-panel-perspektif.jpg")} alt="Pagar BRC panel dilas, tampak perspektif" />
+        <svg class="dim" viewBox="0 0 400 400" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#1b3a6b" />
+            </marker>
+          </defs>
+          <!-- top dimension: 240 cm -->
+          <line class="draw" x1="40" y1="28" x2="360" y2="28" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+          <line x1="40" y1="22" x2="40" y2="34" stroke="#1b3a6b" stroke-width="1.2" />
+          <line x1="360" y1="22" x2="360" y2="34" stroke="#1b3a6b" stroke-width="1.2" />
+          <text class="pop" x="200" y="20" text-anchor="middle">240 cm</text>
+          <!-- left dimension: 150 cm -->
+          <line class="draw-2" x1="28" y1="60" x2="28" y2="360" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+          <line x1="22" y1="60" x2="34" y2="60" stroke="#1b3a6b" stroke-width="1.2" />
+          <line x1="22" y1="360" x2="34" y2="360" stroke="#1b3a6b" stroke-width="1.2" />
+          <text class="pop" x="20" y="212" text-anchor="middle" transform="rotate(-90 20 212)">150 cm</text>
+          <!-- callout: wire diameter -->
+          <polyline class="callout draw" points="150,250 150,300 250,300" fill="none" />
+          <text class="pop" x="156" y="304" fill="#c8430f">∅6 mm · Galvanis</text>
+          <!-- callout: mesh -->
+          <polyline class="callout draw-2" points="300,190 330,150 360,150" fill="none" />
+          <text class="pop" x="300" y="144" text-anchor="end" fill="#c8430f">Mesh 150×150</text>
+        </svg>
+        <figcaption class="specimen__titleblock">
+          <b>BRC FENCE PANEL</b><br />SCALE 1:20 · ORIGIN SBY<br />GALVANIS ELEKTRO
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== TRUST STRIP ===================== -->
+  <section class="trust" aria-label="Keunggulan BSM">
+    <div class="trust__cell">
+      <div class="n">34</div>
+      <span class="label">Provinsi terjangkau</span>
+    </div>
+    <div class="trust__cell">
+      <div class="n">6</div>
+      <span class="label">Kelompok produk</span>
+    </div>
+    <div class="trust__cell">
+      <div class="n">READY</div>
+      <span class="label">Stok pabrik</span>
+    </div>
+    <div class="trust__cell">
+      <div class="n">FREE</div>
+      <span class="label">Kirim Surabaya · Konsultasi</span>
+    </div>
+  </section>
+
+  <!-- ===================== CATEGORY GRID ===================== -->
+  <section class="section wrap" id="katalog" aria-labelledby="kat-title">
+    <div class="section-head">
+      <span class="label">Katalog Material</span>
+      <h2 class="headline" id="kat-title">Satu sumber untuk seluruh kebutuhan proyek</h2>
+    </div>
+    <div class="cat-grid">
+      {
+        categories.map((c) => (
+          <a class="cat" href="#katalog" aria-label={c.name}>
+            <span class="cat__icon"><CategoryIcon name={c.icon} /></span>
+            <span class="cat__name">{c.name}</span>
+            <span class="cat__meta">{c.count} lini produk</span>
+            <span class="cat__arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- ===================== FEATURED BRC ===================== -->
+  <section class="section section--deep wrap" id="brc" aria-labelledby="brc-title">
+    <div class="section-head">
+      <span class="label">Produk Unggulan · BRC</span>
+      <h2 class="headline" id="brc-title">Pagar BRC: diproduksi, dilas, siap kirim</h2>
+    </div>
+    <div class="prod-row">
+      {
+        brcProducts.map((p) => (
+          <a class="prod" href={wa} target="_blank" rel="noopener" aria-label={p.name}>
+            <span class="specimen">
+              <img src={u(p.image)} alt={p.name} loading="lazy" />
+              <span class="specimen__titleblock">
+                <b>{p.name.toUpperCase()}</b><br />GALVANIS
+              </span>
+            </span>
+            <span class="prod__name">{p.name}</span>
+            <span class="prod__spec">{p.spec}</span>
+          </a>
+        ))
+      }
+    </div>
+    <p style="margin-top:2rem">
+      <a class="btn btn--ghost" href={wa} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
+    </p>
+  </section>
+
+  <!-- ===================== BLOG TEASER ===================== -->
+  <section class="section wrap" id="blog" aria-labelledby="blog-title">
+    <div class="section-head">
+      <span class="label">Blog &amp; Panduan Material</span>
+      <h2 class="headline" id="blog-title">Bantu Anda memilih material yang tepat</h2>
+    </div>
+    <div class="post-row">
+      {
+        posts.map((post) => (
+          <a class="post" href={u(`/blog/${post.id}`)} aria-label={post.data.title}>
+            <span class="post__kicker">{post.data.kicker ?? "Artikel"} · {fmt(post.data.date)}</span>
+            <span class="post__title">{post.data.title}</span>
+            <span class="post__excerpt">{post.data.excerpt}</span>
+          </a>
+        ))
+      }
+    </div>
+    <p style="margin-top:2rem">
+      <a class="btn btn--ghost" href={u("/blog")}>Baca semua artikel →</a>
+    </p>
+  </section>
+
+  <!-- ===================== CTA CLOSE ===================== -->
+  <section class="section section--field" id="kontak" aria-labelledby="cta-title">
+    <div class="wrap cta-close">
+      <span class="label">Kontak &amp; Penawaran</span>
+      <h2 class="display" id="cta-title">Siap bangun? Minta penawaran sekarang.</h2>
+      <p class="lede">
+        Hubungi tim sales BSM via WhatsApp untuk harga pabrik, stok, dan pengiriman ke proyek Anda.
+      </p>
+      <div class="hero__actions" style="justify-content:center">
+        <a class="btn btn--onfield" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
+        <a class="btn btn--ghostfield" href="mailto:bsmbangun@yahoo.co.id">bsmbangun@yahoo.co.id</a>
+      </div>
+      <p class="muted" style="margin-top:1.6rem;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em">
+        Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472
+      </p>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,81 @@
+---
+import Base from "../../layouts/Base.astro";
+import CategoryIcon from "../../components/CategoryIcon.astro";
+import { u } from "../../utils/url.ts";
+import { categories, brcProducts, getCategory } from "../../data/catalog.ts";
+
+export function getStaticPaths() {
+  return categories.map((c) => ({ params: { slug: c.slug }, props: { category: c } }));
+}
+
+const { category } = Astro.props;
+const wa = "https://wa.me/6281249343303";
+const isBrc = category.slug === "pagar";
+---
+<Base title={`${category.name} — Bangun Sarana Makmur`}>
+  <section class="hero wrap" aria-labelledby="c-title">
+    <div class="cat-hero">
+      <div class="hero__copy" style="max-width:none">
+        <div class="eyebrow-row">
+          <span class="tick" aria-hidden="true"></span>
+          <span class="label label--ink">{category.count} lini produk</span>
+        </div>
+        <h1 class="display" id="c-title" style="font-size:clamp(2rem,5vw,3.4rem)">{category.name}</h1>
+        <p class="lede">{category.blurb}</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+          <a class="btn btn--ghost" href={u("/kategori")}>Semua Kategori</a>
+        </div>
+      </div>
+      <figure class="specimen" aria-label={category.name}>
+        <img src={u(category.image)} alt={category.name} />
+        <figcaption class="specimen__titleblock">
+          <b>{category.name.toUpperCase()}</b><br />ORIGIN SBY
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  {
+    isBrc && (
+      <section class="section section--deep wrap" aria-labelledby="brc-t">
+        <div class="section-head">
+          <span class="label">Produk Unggulan · BRC</span>
+          <h2 class="headline" id="brc-t">Pagar BRC: diproduksi, dilas, siap kirim</h2>
+        </div>
+        <div class="prod-row">
+          {brcProducts.map((p) => (
+            <a class="prod" href={wa} target="_blank" rel="noopener" aria-label={p.name}>
+              <span class="specimen"><img src={u(p.image)} alt={p.name} loading="lazy" />
+                <span class="specimen__titleblock"><b>{p.name.toUpperCase()}</b><br />GALVANIS</span>
+              </span>
+              <span class="prod__name">{p.name}</span>
+              <span class="prod__spec">{p.spec}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <section class="section wrap" aria-labelledby="lines-t">
+    <div class="section-head">
+      <span class="label">Daftar Produk</span>
+      <h2 class="headline" id="lines-t">Lini produk {category.name}</h2>
+    </div>
+    <div class="bom">
+      {
+        category.lines.map((line, i) => (
+          <div class="bom__row">
+            <span class="tick" aria-hidden="true"></span>
+            <span>{line}</span>
+            <span class="n">{String(i + 1).padStart(2, "0")}</span>
+          </div>
+        ))
+      }
+    </div>
+    <p style="margin-top:2rem">
+      <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta penawaran {category.name} →</a>
+    </p>
+  </section>
+</Base>

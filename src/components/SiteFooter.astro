@@ -1,0 +1,48 @@
+---
+import Logo from "./Logo.astro";
+import { u } from "../utils/url.ts";
+const year = new Date().getFullYear();
+const wa = "https://wa.me/6281249343303";
+---
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.9rem">
+          <span style="width:34px;height:34px;display:block"><Logo variant="light" /></span>
+          <span class="brand__mark-t" style="font-size:1.1rem">BSM</span>
+        </div>
+        <h4 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">CV Bangun Sarana Makmur</h4>
+        <p class="muted">Distributor &amp; supplier material konstruksi bangunan. Harga pabrik, kirim ke seluruh Indonesia.</p>
+        <p style="margin-top:1rem">
+          <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran via WhatsApp</a>
+        </p>
+      </div>
+      <div>
+        <h4>Kontak</h4>
+        <ul>
+          <li>Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya</li>
+          <li>031 – 99853472</li>
+          <li>0812 4934 3303 · 0878 5123 4221</li>
+          <li>0812 3111 1660 · 0812 2200 1911</li>
+          <li><a href="mailto:bsmbangun@yahoo.co.id">bsmbangun@yahoo.co.id</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Kategori</h4>
+        <ul>
+          <li><a href={u("/kategori/atap")}>Atap &amp; Penutup Atap</a></li>
+          <li><a href={u("/kategori/dinding")}>Dinding, Plafon &amp; Fasad</a></li>
+          <li><a href={u("/kategori/pintu")}>Pintu</a></li>
+          <li><a href={u("/kategori/struktur")}>Struktur &amp; Lantai</a></li>
+          <li><a href={u("/kategori/pagar")}>Pagar, Pengaman &amp; Kawat</a></li>
+          <li><a href={u("/kategori/utilitas")}>Utilitas &amp; Aksesoris</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-base">
+      <span>© {year} CV Bangun Sarana Makmur</span>
+      <span>Distributor Material Konstruksi · Surabaya, Jawa Timur</span>
+    </div>
+  </div>
+</footer>
