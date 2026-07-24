@@ -72,10 +72,24 @@ const isBrc = category.slug === "pagar";
       <span class="label">Daftar Produk</span>
       <h2 class="headline" id="lines-t">Lini produk {category.name}</h2>
     </div>
-    <div class="bom">
+
+    <div class="bom-filter">
+      <label class="label" for="bom-search">Cari lini produk</label>
+      <input
+        id="bom-search"
+        class="bom-search"
+        type="search"
+        placeholder="mis. bondek, acp, kawat…"
+        autocomplete="off"
+        aria-describedby="bom-count"
+      />
+      <span class="bom-count" id="bom-count" aria-live="polite"></span>
+    </div>
+
+    <div class="bom" id="bom-list">
       {
         category.lines.map((line, i) => (
-          <div class="bom__row">
+          <div class="bom__row" data-line={line.toLowerCase()}>
             <span class="tick" aria-hidden="true"></span>
             <span>{line}</span>
             <span class="n">{String(i + 1).padStart(2, "0")}</span>
@@ -83,8 +97,46 @@ const isBrc = category.slug === "pagar";
         ))
       }
     </div>
+    <p class="bom-empty" id="bom-empty" hidden>
+      Tidak ada lini yang cocok.<button type="button" class="bom-reset" id="bom-reset">Reset</button>
+    </p>
     <p style="margin-top:2rem">
       <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta penawaran {category.name} →</a>
     </p>
   </section>
 </Base>
+
+<script>
+  const input = document.getElementById("bom-search") as HTMLInputElement | null;
+  const list = document.getElementById("bom-list");
+  const count = document.getElementById("bom-count");
+  const empty = document.getElementById("bom-empty");
+  const reset = document.getElementById("bom-reset");
+
+  if (input && list) {
+    const rows = Array.from(list.querySelectorAll<HTMLElement>(".bom__row"));
+    // Strip accents so "atap" matches "Atap", "kawat" matches "Kawat".
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    const update = () => {
+      const q = norm(input.value.trim());
+      let shown = 0;
+      rows.forEach((row) => {
+        const hay = norm(row.dataset.line || row.textContent || "");
+        const match = !q || hay.includes(q);
+        row.style.display = match ? "" : "none";
+        if (match) shown++;
+      });
+      if (count) count.textContent = `${shown} dari ${rows.length} lini`;
+      if (empty) empty.hidden = shown > 0;
+    };
+
+    input.addEventListener("input", update);
+    reset?.addEventListener("click", () => {
+      input.value = "";
+      update();
+      input.focus();
+    });
+    update();
+  }
+</script>
