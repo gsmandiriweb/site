@@ -11,7 +11,45 @@
     <div id="root"></div>
     <script src="./static-cms-app.js"></script>
     <script>
-      window.CMS.init();
+      window.CMS.init({
+        config: {
+          backend: {
+            name: "github",
+            repo: "gsmandiriweb/site",
+            branch: "main",
+            auth: { client_id: "Ov23liVh1kY1hx8YykqC" },
+          },
+          local_backend: true,
+          media_folder: "public/images/blog",
+          public_folder: "/images/blog",
+          publish_mode: "simple",
+          collections: [
+            {
+              name: "blog",
+              label: "Blog",
+              label_singular: "Artikel",
+              folder: "src/content/blog",
+              create: true,
+              slug: "{{slug}}",
+              fields: [
+                { name: "title", label: "Judul", widget: "string" },
+                { name: "kicker", label: "Kicker", widget: "string", required: false },
+                { name: "date", label: "Tanggal", widget: "datetime" },
+                { name: "image", label: "Gambar", widget: "image", required: false },
+                { name: "excerpt", label: "Ringkasan", widget: "text", required: false },
+                {
+                  name: "draft",
+                  label: "Draft",
+                  widget: "boolean",
+                  required: false,
+                  default: false,
+                },
+                { name: "body", label: "Isi Artikel", widget: "markdown" },
+              ],
+            },
+          ],
+        },
+      });
     </script>
   </body>
 </html>
