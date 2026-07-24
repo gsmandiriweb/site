@@ -14,7 +14,7 @@ backend:
   repo: gsmandiriweb/site
   branch: main
   auth:
-    client_id: <GITHUB_OAUTH_CLIENT_ID>
+    client_id: Ov23liVh1kY1hx8YykqC
 local_backend: true
 media_folder: "public/images/blog"
 public_folder: "/images/blog"
