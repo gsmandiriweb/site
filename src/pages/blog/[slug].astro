@@ -1,6 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { u } from "../../utils/url.ts";
+import { u, waLink } from "../../utils/url.ts";
 import { getCollection, getEntry, render } from "astro:content";
 
 export async function getStaticPaths() {
@@ -10,7 +10,9 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await render(post);
-const wa = "https://wa.me/6281249343303";
+const wa = waLink(
+  `Halo BSM, saya baru membaca artikel "${post.data.title}". Mohon info lebih lanjut mengenai material yang dibahas. Terima kasih.`
+);
 const fmt = (d) => new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
 ---
 <Base title={`${post.data.title} — Bangun Sarana Makmur`}>

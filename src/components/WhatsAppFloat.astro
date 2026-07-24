@@ -1,5 +1,6 @@
 ---
-const wa = "https://wa.me/6281249343303";
+import { waLink } from "../utils/url.ts";
+const wa = waLink();
 ---
 <a class="wa-float" href={wa} target="_blank" rel="noopener" aria-label="Hubungi via WhatsApp">
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

@@ -16,9 +16,13 @@ import Base from "../layouts/Base.astro";
 import CategoryIcon from "../components/CategoryIcon.astro";
 import { categories, brcProducts } from "../data/catalog.ts";
 import { getCollection } from "astro:content";
-import { u } from "../utils/url.ts";
+import { u, waLink } from "../utils/url.ts";
 
-const wa = "https://wa.me/6281249343303";
+const wa = waLink();
+const waBrc = waLink(
+  "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang BRC, tiang Y, pintu pagar, aksesoris). " +
+    "Mohon info harga pabrik, stok, dan pengiriman. Terima kasih."
+);
 
 const posts = (await getCollection("blog"))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
@@ -130,7 +134,7 @@ const fmt = (d: Date) =>
     <div class="cat-grid">
       {
         categories.map((c) => (
-          <a class="cat" href="#katalog" aria-label={c.name}>
+          <a class="cat" href={u(`/kategori/${c.slug}`)} aria-label={c.name}>
             <span class="cat__icon"><CategoryIcon name={c.icon} /></span>
             <span class="cat__name">{c.name}</span>
             <span class="cat__meta">{c.count} lini produk</span>
@@ -152,7 +156,14 @@ const fmt = (d: Date) =>
     <div class="prod-row">
       {
         brcProducts.map((p) => (
-          <a class="prod" href={wa} target="_blank" rel="noopener" aria-label={p.name}>
+          <a
+            class="prod"
+            href={waLink(
+              `Halo BSM, saya butuh penawaran untuk \"${p.name}\" (${p.spec}). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.`
+            )}
+            target="_blank"
+            rel="noopener"
+            aria-label={p.name}>
             <span class="specimen">
               <img src={u(p.image)} alt={p.name} loading="lazy" />
               <span class="specimen__titleblock">
@@ -166,7 +177,7 @@ const fmt = (d: Date) =>
       }
     </div>
     <p style="margin-top:2rem">
-      <a class="btn btn--ghost" href={wa} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
+      <a class="btn btn--ghost" href={waBrc} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
     </p>
   </section>
 

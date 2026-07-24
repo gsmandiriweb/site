@@ -1,8 +1,8 @@
 ---
 import Logo from "./Logo.astro";
-import { u } from "../utils/url.ts";
+import { u, waLink } from "../utils/url.ts";
 const year = new Date().getFullYear();
-const wa = "https://wa.me/6281249343303";
+const wa = waLink();
 ---
 <footer class="site-footer">
   <div class="wrap">

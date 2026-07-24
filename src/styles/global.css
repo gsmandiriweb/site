@@ -13,6 +13,7 @@
   --steel: #8fa3b8;
   --signal: #e8551e;
   --signal-deep: #c8430f;
+  --signal-darker: #a8360b;
   --paper-text: #fcfaf4;
 
   --mesh: 120px; /* BRC mesh column */
@@ -39,6 +40,14 @@
 
 html {
   scroll-behavior: smooth;
+  /* Keep anchored sections clear of the 72px sticky header when jumping
+     via #kontak / #katalog / #blog etc. */
+  scroll-padding-top: 90px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
@@ -89,6 +98,7 @@ body::before {
   letter-spacing: -0.02em;
   font-size: clamp(2.4rem, 6vw, 4.6rem);
   margin: 0;
+  text-wrap: balance;
 }
 .headline {
   font-family: var(--font-display);
@@ -98,6 +108,7 @@ body::before {
   letter-spacing: -0.01em;
   font-size: clamp(1.5rem, 3vw, 2.2rem);
   margin: 0;
+  text-wrap: balance;
 }
 .title {
   font-family: var(--font-display);
@@ -192,11 +203,11 @@ body::before {
   height: 18px;
 }
 .btn--primary {
-  background: var(--signal);
+  background: var(--signal-deep);
   color: var(--paper-text);
 }
 .btn--primary:hover {
-  background: var(--signal-deep);
+  background: var(--signal-darker);
   transform: translateY(-1px);
 }
 .btn--ghost {
@@ -208,11 +219,11 @@ body::before {
   border-color: var(--ink);
 }
 .btn--onfield {
-  background: var(--signal);
+  background: var(--signal-deep);
   color: var(--paper-text);
 }
 .btn--onfield:hover {
-  background: var(--signal-deep);
+  background: var(--signal-darker);
 }
 .btn--ghostfield {
   background: transparent;
@@ -575,6 +586,28 @@ body::before {
   }
 }
 
+/* GSAP takes over the hero dimension draw when active.
+   No-JS and reduced-motion users keep the CSS keyframes above. */
+html.gsap .dim .draw,
+html.gsap .dim .draw-2,
+html.gsap .dim .pop {
+  animation: none;
+}
+
+/* Pre-hide hero pieces only while JS is about to animate them, to avoid a
+   flash of unstyled content. Scoped to no-preference so reduced-motion users
+   are never hidden, and the inline script clears it as a safety net. */
+@media (prefers-reduced-motion: no-preference) {
+  html.gsap-pending .hero__copy .display,
+  html.gsap-pending .hero__copy .lede,
+  html.gsap-pending .hero__copy .hero__actions,
+  html.gsap-pending .eyebrow-row .tick,
+  html.gsap-pending .hero__copy svg,
+  html.gsap-pending .hero__sheet {
+    opacity: 0;
+  }
+}
+
 /* ---------- Category grid ---------- */
 .cat-grid {
   display: grid;
@@ -765,7 +798,7 @@ body::before {
 }
 .hero__grid {
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns: 1.15fr 0.85fr;
   gap: clamp(1.5rem, 4vw, 3rem);
   align-items: center;
 }
@@ -775,10 +808,15 @@ body::before {
   }
 }
 .hero__copy {
-  max-width: 38ch;
+  /* Fill the grid cell so the display headline has room to sit on its lines */
+  max-width: none;
 }
 .hero__copy .display {
   margin-bottom: 1.2rem;
+  /* Sized to the copy column so each phrase holds one line instead of
+     ragged-wrapping; balanced if it must break on narrow screens. */
+  font-size: clamp(2rem, 4.4vw, 3rem);
+  line-height: 1.02;
 }
 .hero__copy .lede {
   margin-bottom: 1.8rem;
