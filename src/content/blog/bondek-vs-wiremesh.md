@@ -3,7 +3,7 @@ title: "Bondek vs Wiremesh: Solusi Lantai Cor yang Tepat"
 kicker: "Struktur & Lantai"
 excerpt: "Kapan pakai bondek, kapan wiremesh? Pelajari perbedaan pasang, kekuatan, dan efisiensi biaya proyek."
 date: 2026-06-27
-image: /images/ref/bondek.png
+image: bondek.png
 ---
 
 Bondek dan wiremesh sama-sama dipakai untuk lantai beton cor, tapi perannya berbeda. Mengacaukan keduanya bisa menambah biaya dan memperlambat proyek.

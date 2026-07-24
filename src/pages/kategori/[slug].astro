@@ -1,6 +1,8 @@
 ---
 import Base from "../../layouts/Base.astro";
 import CategoryIcon from "../../components/CategoryIcon.astro";
+import { Image } from "astro:assets";
+import { imageAsset } from "../../utils/images.ts";
 import { u, waLink } from "../../utils/url.ts";
 import { categories, brcProducts, getCategory } from "../../data/catalog.ts";
 
@@ -30,7 +32,7 @@ const isBrc = category.slug === "pagar";
         </div>
       </div>
       <figure class="specimen" aria-label={category.name}>
-        <img src={u(category.image)} alt={category.name} />
+        <Image src={imageAsset(category.image)} alt={category.name} width={700} format="webp" loading="eager" fetchpriority="high" decoding="async" />
         <figcaption class="specimen__titleblock">
           <b>{category.name.toUpperCase()}</b><br />ORIGIN SBY
         </figcaption>
@@ -55,7 +57,7 @@ const isBrc = category.slug === "pagar";
               target="_blank"
               rel="noopener"
               aria-label={p.name}>
-              <span class="specimen"><img src={u(p.image)} alt={p.name} loading="lazy" />
+              <span class="specimen"><Image src={imageAsset(p.image)} alt={p.name} width={400} format="webp" loading="lazy" decoding="async" />
                 <span class="specimen__titleblock"><b>{p.name.toUpperCase()}</b><br />GALVANIS</span>
               </span>
               <span class="prod__name">{p.name}</span>

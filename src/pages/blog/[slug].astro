@@ -1,5 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
+import { Image } from "astro:assets";
+import { imageAsset } from "../../utils/images.ts";
 import { u, waLink } from "../../utils/url.ts";
 import { getCollection, getEntry, render } from "astro:content";
 
@@ -26,7 +28,7 @@ const fmt = (d) => new Date(d).toLocaleDateString("id-ID", { day: "2-digit", mon
     {
       post.data.image && (
         <figure class="article-figure">
-          <img src={u(post.data.image)} alt={post.data.title} />
+          <Image src={imageAsset(post.data.image)} alt={post.data.title} width={1000} format="webp" decoding="async" />
         </figure>
       )
     }

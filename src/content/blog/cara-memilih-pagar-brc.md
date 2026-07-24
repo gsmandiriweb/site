@@ -3,7 +3,7 @@ title: "Cara Memilih Pagar BRC: Ukuran, Ketebalan & Galvanis"
 kicker: "Panduan Material"
 excerpt: "Bedah spesifikasi pagar BRC supaya proyek pagar Anda tahan karat dan sesuai beban — dari ∅6 mm hingga tinggi 150–190 cm."
 date: 2026-07-18
-image: /images/bsm/pagar-brc-panel-perspektif.jpg
+image: pagar-brc-panel-perspektif.jpg
 ---
 
 Pagar BRC adalah pagar las galvanis yang diproduksi dari besi beton polos dilas membentuk mesh (kawat) persegi. Karena diproduksi di pabrik dengan cetakan presisi, ukuran dan kekuatannya seragam — itulah alasan banyak proyek memilihnya untuk pagar perumahan, pabrik, gudang, hingga lahan terbuka.
