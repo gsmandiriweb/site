@@ -14,6 +14,7 @@ blueprint-deep: "#102A50"
 steel: "#8FA3B8"
 signal: "#E8551E"
 signal-deep: "#C8430F"
+signal-darker: "#A8360B"
 typography:
 display:
 fontFamily: "'Archivo', 'Arial Narrow', sans-serif"
@@ -42,12 +43,12 @@ lg: "32px"
 xl: "64px"
 components:
 button-primary:
-backgroundColor: "{colors.signal}"
+backgroundColor: "{colors.signal-deep}" # AA resting fill; bright signal kept as a 2px accent mark only
 textColor: "#FCFAF4"
 rounded: "{rounded.sm}"
 padding: "14px 28px"
 button-primary-hover:
-backgroundColor: "{colors.signal-deep}"
+backgroundColor: "{colors.signal-darker}"
 button-ghost:
 backgroundColor: "transparent"
 textColor: "{colors.ink}"
@@ -132,8 +133,8 @@ Corners are gently squared (radius 4–8px on controls, 14px on large specimen p
 ### Buttons
 
 - **Shape:** squared (4px radius), mono label, uppercase, tracking 0.12em.
-- **Primary:** signal-orange fill, near-white label, padding 14px 28px.
-- **Hover / Focus:** deepens to signal-deep; focus-visible shows a 2px ink outline offset 2px.
+- **Primary:** signal-deep fill (WCAG-AA with the near-white label), near-white label, padding 14px 28px; bright signal (#E8551E) is reserved for 2px accent marks (eyebrow tick, READY STOCK, callouts).
+- **Hover / Focus:** deepens to signal-darker; focus-visible shows a 2px ink outline offset 2px.
 - **Ghost:** transparent, ink text, 1px steel border; used for secondary actions.
 
 ### Chips / Spec Tags

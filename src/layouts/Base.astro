@@ -17,6 +17,15 @@ const desc =
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href={u("/favicon.svg")} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      // Mark that JS is present and about to animate, so CSS can pre-hide hero
+      // pieces without a flash. The 3s fallback guarantees content is never
+      // left hidden if the animation bundle fails to load.
+      document.documentElement.classList.add("gsap-pending");
+      setTimeout(function () {
+        document.documentElement.classList.remove("gsap-pending");
+      }, 3000);
+    </script>
     <meta name="description" content={desc} />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
@@ -36,5 +45,101 @@ const desc =
       <SiteFooter />
     </div>
     <WhatsAppFloat />
+
+    <script>
+      import gsap from "gsap";
+      import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      const root = document.documentElement;
+      const mm = gsap.matchMedia();
+
+      // All motion lives inside the no-preference branch. Reduced-motion users
+      // (and users without matchMedia support) get the static, fully-visible
+      // page — no hidden elements, no animation.
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        root.classList.add("gsap");
+        root.classList.remove("gsap-pending");
+
+        // ---------- HERO INTRO (the single authored motion moment) ----------
+        const heroTl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+        heroTl
+          .from(".eyebrow-row .tick", {
+            autoAlpha: 0,
+            scaleX: 0,
+            transformOrigin: "left center",
+            duration: 0.5,
+          }, 0)
+          .from(".hero__copy .display", { autoAlpha: 0, yPercent: 8, duration: 0.85 }, 0.1)
+          .from(".hero__copy .lede", { autoAlpha: 0, y: 18, duration: 0.7 }, 0.32)
+          .from(".hero__copy .hero__actions", { autoAlpha: 0, y: 18, duration: 0.6 }, 0.46)
+          .from(".hero__copy svg", { autoAlpha: 0, duration: 0.6 }, 0.25)
+          .from(".hero__sheet", { autoAlpha: 0, duration: 0.6 }, 0.2)
+          .from(
+            ".hero__copy svg > circle, .hero__copy svg > text",
+            { autoAlpha: 0, scale: 0, transformOrigin: "center", duration: 0.5, stagger: 0.05, ease: "back.out(2)" },
+            0.32
+          )
+          .from(
+            ".hero__copy svg g",
+            { autoAlpha: 0, scale: 0, transformOrigin: "center", duration: 0.5, stagger: 0.07, ease: "back.out(2)" },
+            0.36
+          )
+          .from(".wa-float", { autoAlpha: 0, y: 24, duration: 0.6 }, 1.0);
+
+        // Dimension lines draw themselves in (sample real length, animate offset).
+        const dimEls = gsap.utils.toArray(
+          ".hero__sheet .dim .draw, .hero__sheet .dim .draw-2, .hero__sheet .dim .callout"
+        );
+        dimEls.forEach((el) => {
+          const len = el.getTotalLength();
+          gsap.set(el, { strokeDasharray: len, strokeDashoffset: len });
+        });
+        heroTl.to(dimEls, { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut", stagger: 0.1 }, 0.55);
+        heroTl.from(".hero__sheet .dim .pop", { autoAlpha: 0, y: 6, duration: 0.5, stagger: 0.08 }, 1.0);
+        heroTl.from(".hero__sheet .specimen__titleblock", { autoAlpha: 0, duration: 0.5 }, 1.1);
+
+        // ---------- CALM SCROLL REVEALS (everything else stays quiet) ----------
+        gsap.utils
+          .toArray(".section-head, .cat-hero, .article-head, .article-figure, .cta-close")
+          .forEach((el) => {
+            gsap.from(el, {
+              autoAlpha: 0,
+              y: 22,
+              duration: 0.7,
+              ease: "power2.out",
+              scrollTrigger: { trigger: el, start: "top 85%", once: true },
+            });
+          });
+
+        const grids = gsap.utils.toArray(".cat, .prod, .post, .trust__cell, .bom__row");
+        gsap.set(grids, { autoAlpha: 0, y: 24 });
+        ScrollTrigger.batch(grids, {
+          start: "top 88%",
+          onEnter: (batch) =>
+            gsap.to(batch, {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.6,
+              ease: "power2.out",
+              stagger: 0.08,
+              overwrite: true,
+            }),
+        });
+
+        // Layout shifts (fonts, images) change trigger positions — recalc.
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(() => ScrollTrigger.refresh());
+        }
+        window.addEventListener("load", () => ScrollTrigger.refresh());
+      });
+
+      // Reduced motion (or no matchMedia): make sure nothing stays hidden.
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        root.classList.remove("gsap-pending");
+      }
+    </script>
   </body>
 </html>
