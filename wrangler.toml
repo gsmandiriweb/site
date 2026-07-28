@@ -13,7 +13,7 @@
 # Use Workers + Assets (not classic Cloudflare *Pages*): the Astro 7 adapter
 # emits a split output (static assets in dist/client, worker in dist/server).
 
-name = "second-shepherd"
+name = "site"
 compatibility_date = "2026-04-15"
 
 # Node.js compatibility is REQUIRED for Astro on Cloudflare Workers. Astro's
