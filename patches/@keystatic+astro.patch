@@ -1,0 +1,19 @@
+--- a/dist/keystatic-astro-api.js
++++ b/dist/keystatic-astro-api.js
+@@ -4,7 +4,15 @@
+ function makeHandler(_config) {
+   return async function keystaticAPIRoute(context) {
+     var _context$locals, _ref, _config$clientId, _ref2, _config$clientSecret, _ref3, _config$secret;
+-    const envVarsForCf = (_context$locals = context.locals) === null || _context$locals === void 0 || (_context$locals = _context$locals.runtime) === null || _context$locals === void 0 ? void 0 : _context$locals.env;
++    let envVarsForCf;
++    // Astro 7 / @astrojs/cloudflare removed `Astro.locals.runtime.env`.
++    // The Cloudflare RuntimeEnv (KEYSTATIC_* secrets/vars) now lives on the
++    // `cloudflare:workers` module. Guard it so `astro dev` (Node) still works.
++    try {
++      envVarsForCf = (await import('cloudflare:workers')).env;
++    } catch {
++      envVarsForCf = void 0;
++    }
+     const handler = makeGenericAPIRouteHandler({
+       ..._config,
+       clientId: (_ref = (_config$clientId = _config.clientId) !== null && _config$clientId !== void 0 ? _config$clientId : envVarsForCf === null || envVarsForCf === void 0 ? void 0 : envVarsForCf.KEYSTATIC_GITHUB_CLIENT_ID) !== null && _ref !== void 0 ? _ref : tryOrUndefined(() => {

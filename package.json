@@ -7,7 +7,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "prepare": "vp config"
+    "prepare": "vp config",
+    "postinstall": "node scripts/patch-keystatic.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.5",
