@@ -1,4 +1,5 @@
 import { config, fields, collection } from "@keystatic/core";
+import { createElement } from "react";
 
 // Keystatic config — git-backed CMS for the blog.
 // Content lives as markdown in src/content/blog (same files Astro reads),
@@ -8,6 +9,21 @@ export default config({
     kind: "github",
     // Owner/name of the GitHub repo this site is built from.
     repo: "gsmandiriweb/site",
+  },
+  // Branding for the Keystatic admin UI (/keystatic). The admin UI is a fixed
+  // app (no theme or UI-library override), so the supported lever for making
+  // it feel on-brand is the logo mark + name shown in its header.
+  ui: {
+    brand: {
+      name: "Bangun Sarana Makmur",
+      mark: () =>
+        createElement("img", {
+          src: "/logo.png",
+          alt: "BSM",
+          height: 30,
+          style: { borderRadius: "4px" },
+        }),
+    },
   },
   collections: {
     blog: collection({
