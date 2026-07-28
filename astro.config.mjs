@@ -14,17 +14,19 @@ import keystatic from "@keystatic/astro";
 // adapter serves them on-demand (needed for GitHub-mode auth) while the blog
 // itself remains static.
 //
-// The adapter is only applied for build/preview/deploy. In `astro dev` we skip it
-// so requests are served by Astro's standard Node SSR dev server instead of the
-// Cloudflare workerd runtime, which throws "exports is not defined" on this
-// project. The on-demand /keystatic routes still work in dev without the adapter.
+// The adapter is only applied for build/preview. We skip it for dev (so requests
+// use Astro's Node SSR dev server instead of the workerd runtime, which throws
+// "exports is not defined" here) and for check/sync (so `astro check` doesn't try
+// to resolve the Wrangler worker entry before a build exists).
 // `globalThis.process` is cast because @types/node isn't installed (the project
 // targets the browser/Cloudflare runtime).
-const isDev = /** @type {any} */ (globalThis).process?.argv?.includes("dev") ?? false;
+const argv = /** @type {any} */ (globalThis).process?.argv ?? [];
+const cmd = typeof argv[2] === "string" ? argv[2] : "";
+const skipAdapter = cmd === "dev" || cmd === "check" || cmd === "sync";
 
 export default defineConfig({
   site: "https://second-shepherd.pages.dev",
   integrations: [react(), keystatic()],
-  // adapter is omitted in `astro dev` (see note above)
-  ...(isDev ? {} : { adapter: cloudflare() }),
+  // adapter omitted for dev/check/sync (see note above)
+  ...(skipAdapter ? {} : { adapter: cloudflare() }),
 });
