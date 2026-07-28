@@ -25,7 +25,7 @@ const cmd = typeof argv[2] === "string" ? argv[2] : "";
 const skipAdapter = cmd === "dev" || cmd === "check" || cmd === "sync";
 
 export default defineConfig({
-  site: "https://second-shepherd.pages.dev",
+  site: "https://site.gsmandiri-web.workers.dev",
   integrations: [react(), keystatic()],
   // adapter omitted for dev/check/sync (see note above)
   ...(skipAdapter ? {} : { adapter: cloudflare() }),

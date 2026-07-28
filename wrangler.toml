@@ -23,7 +23,7 @@ assets = { directory = "./dist/client" }
 #   npx wrangler kv namespace create SESSION
 #
 # (Leave the id as-is and replace before your first deploy.)
-kv_namespaces = [{ binding = "SESSION", id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" }]
+kv_namespaces = [{ binding = "SESSION", id = "21a01da3e6264da0a9f7e7dc42c1e874" }]
 
 # Optional: Cloudflare Images binding. The adapter declares this because it can
 # serve images via Cloudflare Images. This site serves images from the repo, so
