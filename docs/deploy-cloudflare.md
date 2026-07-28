@@ -81,12 +81,39 @@ App** — grant it access to `gsmandiriweb/site`. That finishes the GitHub-mode
 auth (no Netlify involved). Locally you can do the same at
 `http://localhost:4321/keystatic` with `bun run dev`.
 
+### Keystatic environment variables (GitHub mode)
+
+Before GitHub login works, the Worker needs three environment variables
+available at runtime (Cloudflare does not bake them into the build):
+
+- `KEYSTATIC_GITHUB_CLIENT_ID` — from your GitHub App.
+- `KEYSTATIC_GITHUB_CLIENT_SECRET` — from your GitHub App.
+- `KEYSTATIC_SECRET` — a random string, e.g. `openssl rand -hex 32`.
+
+Set them in the Cloudflare dashboard: your Worker → **Settings → Variables
+and Secrets** (client id as a plain variable; the two secrets as encrypted
+secrets). They are then read by the `/api/keystatic` route from the Cloudflare
+RuntimeEnv.
+
+> `@keystatic/astro@5.2.0` reads the RuntimeEnv via the API removed in Astro
+> 7, which made `/api/keystatic` return HTTP 500 on Workers. A postinstall
+> patch (`scripts/patch-keystatic.mjs`, recorded in
+> `patches/@keystatic+astro.patch`) fixes this by reading `cloudflare:workers`
+> instead; it is applied automatically on every `bun install` (including
+> Cloudflare's `bun install --frozen-lockfile`).
+
 ## Troubleshooting
 
 - **`The provided Wrangler config main field (.../dist/server/entry.mjs)
 doesn't point to an existing file`** → `wrangler.toml` still declares
   `main`/`assets`. Remove them; the adapter supplies them and writes
   `dist/server/wrangler.json` at build end.
+- **`Missing required config in Keystatic API setup ... KEYSTATIC_GITHUB_CLIENT_ID`**
+  → the three Keystatic env vars aren't set on the Worker. Add them in the
+  Cloudflare dashboard (Settings → Variables and Secrets) and redeploy.
+- **`Astro.locals.runtime.env has been removed in Astro v6`** → you are on a
+  build without the postinstall patch. Pull the latest commit (it adds
+  `scripts/patch-keystatic.mjs` + the `postinstall` script) and redeploy.
 - **`kv namespace SESSION ... has no id`** → you deployed before pasting the
   KV id from step 2 into `wrangler.toml`.
 - **404 on `/_astro/*` or unstyled page** → still on the old `base: "/site"`
