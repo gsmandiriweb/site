@@ -1,0 +1,590 @@
+---
+// BrcShowcase — the two-zone BRC viewer.
+// Zone A (specimen stage): product selector + angle carousel + on-photo
+//   callout overlay + spec table + per-product WhatsApp CTA. All render from
+//   one `selectedProduct` state; GSAP redraws dimension lines on product
+//   change only (slide changes are a calm crossfade).
+// Zone B (Di Lapangan): static proof-photo grid — pinned photographs, not a
+//   second slider.
+//
+// Image strategy: every angle of every item is rendered server-side (Astro
+// <Image> optimization) into a hidden pool. On product change the client moves
+// the selected item's slide nodes into the carousel track — no runtime image
+// fetching, no un-optimized fallbacks.
+import { Image } from "astro:assets";
+import { imageAsset } from "../utils/images.ts";
+import { waLink } from "../utils/url.ts";
+import SpecTable from "./SpecTable.astro";
+import DimensionOverlay from "./DimensionOverlay.astro";
+import { brcShowcase } from "../data/catalog.ts";
+
+const showcase = brcShowcase;
+const first = showcase.items[0];
+
+const itemJson = showcase.items.map((i) => ({
+  slug: i.slug,
+  name: i.name,
+  angleCount: i.angles.length,
+  callouts: i.callouts ?? [],
+  specs: i.specs,
+  waContext: i.waContext,
+}));
+---
+
+<section class="showcase wrap" aria-labelledby="showcase-title">
+  <div class="section-head">
+    <span class="label">Produk Unggulan · BRC</span>
+    <h2 class="headline" id="showcase-title">{showcase.lead}</h2>
+  </div>
+
+  <div class="showcase__root" data-showcase={JSON.stringify(itemJson)}>
+    {/* ---------- Zone A: specimen stage ---------- */}
+    <div class="showcase__stage">
+      {/* Selector: tablist of products in drafting notation */}
+      <div class="showcase__selector" role="tablist" aria-label="Pilih produk BRC">
+        {
+          showcase.items.map((i, idx) => (
+            <button
+              type="button"
+              role="tab"
+              class="showcase__tab"
+              id={`brc-tab-${i.slug}`}
+              aria-controls="brc-panel"
+              aria-selected={idx === 0 ? "true" : "false"}
+              tabindex={idx === 0 ? 0 : -1}
+              data-slug={i.slug}
+            >
+              <span class="showcase__tab-n">{String(idx + 1).padStart(2, "0")}</span>
+              <span class="showcase__tab-name">{i.name}</span>
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="showcase__panel" id="brc-panel" role="tabpanel" aria-labelledby={`brc-tab-${first.slug}`}>
+        <figure class="specimen showcase__specimen" aria-label={first.name}>
+          <div class="showcase__viewport">
+            <div class="showcase__track" data-track>
+              {/* First item's angles rendered in place; others live in the pool below */}
+              {
+                first.angles.map((a) => (
+                  <div class="showcase__slide" data-for={first.slug}>
+                    <Image src={imageAsset(a)} alt={first.name} width={900} format="webp" loading="eager" decoding="async" />
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+          <DimensionOverlay callouts={first.callouts ?? []} specs={first.specs} />
+          <figcaption class="specimen__titleblock" data-titleblock>
+            <b>{first.name.toUpperCase()}</b><br />ORIGIN SBY
+          </figcaption>
+        </figure>
+
+        <div class="showcase__anglebar" data-anglebar hidden={first.angles.length <= 1}>
+          <button type="button" class="showcase__angle" data-dir="prev" aria-label="Sudut sebelumnya">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="showcase__anglecount label" data-anglecount>1 / {first.angles.length}</span>
+          <button type="button" class="showcase__angle" data-dir="next" aria-label="Sudut berikutnya">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Spec sheet + per-product CTA */}
+      <div class="showcase__detail">
+        <h3 class="title showcase__name" data-name>{first.name}</h3>
+        <div class="showcase__spectable" data-spectable>
+          <SpecTable specs={first.specs} />
+        </div>
+        <a class="btn btn--primary showcase__cta" data-cta href={waLink(first.waContext)} target="_blank" rel="noopener">
+          Minta Penawaran
+        </a>
+      </div>
+    </div>
+
+    {/* ---------- Zone B: Di Lapangan (static proof grid) ---------- */}
+    <div class="showcase__proof" aria-labelledby="proof-title">
+      <div class="showcase__proof-head">
+        <span class="label">Di Lapangan</span>
+        <h3 class="title" id="proof-title">Bukti terpasang &amp; stok gudang</h3>
+      </div>
+      <div class="showcase__proof-grid">
+        {
+          showcase.proof.map((p) => (
+            <figure class="specimen showcase__proof-tile">
+              <Image src={imageAsset(p.image)} alt={p.caption} width={500} format="webp" loading="lazy" decoding="async" />
+              <figcaption class="specimen__titleblock">{p.caption}</figcaption>
+            </figure>
+          ))
+        }
+      </div>
+    </div>
+
+    {/* Hidden pool: every angle of every non-first item, server-optimized.
+        The client moves these into the track on product change. */}
+    <div class="showcase__pool" data-pool hidden aria-hidden="true">
+      {
+        showcase.items.slice(1).map((i) =>
+          i.angles.map((a) => (
+            <div class="showcase__slide" data-for={i.slug}>
+              <Image src={imageAsset(a)} alt={i.name} width={900} format="webp" loading="lazy" decoding="async" />
+            </div>
+          ))
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .showcase__root {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  /* ---------- Stage ---------- */
+  .showcase__stage {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: start;
+  }
+  .showcase__selector {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .showcase__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border: 1px solid var(--steel);
+    border-radius: var(--r-sm);
+    background: var(--paper);
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: border-color 0.18s var(--ease), color 0.18s var(--ease), background 0.18s var(--ease);
+  }
+  .showcase__tab:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .showcase__tab[aria-selected="true"] {
+    border-color: var(--blueprint);
+    border-bottom: 2px solid var(--blueprint);
+    color: var(--ink);
+    background: var(--paper-deep);
+  }
+  .showcase__tab-n {
+    color: var(--steel);
+  }
+  .showcase__tab[aria-selected="true"] .showcase__tab-n {
+    color: var(--blueprint);
+  }
+
+  .showcase__panel {
+    grid-column: 1;
+  }
+  .showcase__specimen {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    margin: 0;
+  }
+  .showcase__viewport {
+    overflow: hidden;
+    border-radius: inherit;
+    height: 100%;
+  }
+  .showcase__track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.5s var(--ease);
+    will-change: transform;
+  }
+  .showcase__slide {
+    flex: 0 0 100%;
+    min-width: 100%;
+    height: 100%;
+  }
+  .showcase__slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .showcase__anglebar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.8rem;
+  }
+  .showcase__anglebar[hidden] {
+    display: none;
+  }
+  .showcase__angle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--steel);
+    border-radius: var(--r-sm);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.18s var(--ease);
+  }
+  .showcase__angle:hover {
+    border-color: var(--ink);
+  }
+  .showcase__anglecount {
+    min-width: 4rem;
+    text-align: center;
+  }
+
+  /* ---------- Detail column ---------- */
+  .showcase__detail {
+    grid-column: 2;
+    position: sticky;
+    top: 90px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .showcase__name {
+    font-size: 1.5rem;
+  }
+  .showcase__cta {
+    align-self: flex-start;
+  }
+
+  /* ---------- Proof grid (Zone B) ---------- */
+  .showcase__proof-head {
+    margin-bottom: 1.4rem;
+  }
+  .showcase__proof-head .label {
+    color: var(--blueprint);
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+  .showcase__proof-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .showcase__proof-tile {
+    aspect-ratio: 4 / 3;
+    margin: 0;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 900px) {
+    .showcase__stage {
+      grid-template-columns: 1fr;
+    }
+    .showcase__detail {
+      grid-column: 1;
+      position: static;
+    }
+    .showcase__proof-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 520px) {
+    .showcase__selector {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 0.4rem;
+    }
+    .showcase__tab {
+      flex: 0 0 auto;
+    }
+    .showcase__proof-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  import EmblaCarousel from "embla-carousel";
+  import gsap from "gsap";
+  import { waLink } from "../utils/url.ts";
+
+  type Callout = { specKey: string; type: string; x: number; y: number; x2?: number; y2?: number; lx?: number; ly?: number };
+  type Item = {
+    slug: string;
+    name: string;
+    angleCount: number;
+    callouts: Callout[];
+    specs: { k: string; v: string }[];
+    waContext: string;
+  };
+
+  const root = document.querySelector<HTMLElement>(".showcase__root");
+  if (root) {
+    const items: Item[] = JSON.parse(root.dataset.showcase || "[]");
+
+    const panel = root.querySelector<HTMLElement>("#brc-panel");
+    const viewport = root.querySelector<HTMLElement>(".showcase__viewport");
+    const track = root.querySelector<HTMLElement>("[data-track]");
+    const specimen = root.querySelector<HTMLElement>(".showcase__specimen");
+    const titleblock = root.querySelector<HTMLElement>("[data-titleblock]");
+    const nameEl = root.querySelector<HTMLElement>("[data-name]");
+    const specContainer = root.querySelector<HTMLElement>("[data-spectable]");
+    const cta = root.querySelector<HTMLAnchorElement>("[data-cta]");
+    const anglebar = root.querySelector<HTMLElement>("[data-anglebar]");
+    const anglecount = root.querySelector<HTMLElement>("[data-anglecount]");
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>(".showcase__tab"));
+    const pool = root.querySelector<HTMLElement>("[data-pool]");
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Index pool slides by slug. Also fold the first item's track-rendered
+    // slides into the pool so every item is treated uniformly.
+    const poolBySlug = new Map<string, HTMLElement[]>();
+    const addNode = (node: HTMLElement) => {
+      const slug = node.dataset.for!;
+      if (!poolBySlug.has(slug)) poolBySlug.set(slug, []);
+      poolBySlug.get(slug)!.push(node);
+      pool?.appendChild(node);
+    };
+    Array.from(track?.querySelectorAll<HTMLElement>(".showcase__slide") ?? []).forEach(addNode);
+    if (pool) {
+      Array.from(pool.querySelectorAll<HTMLElement>(".showcase__slide")).forEach((node) => {
+        const slug = node.dataset.for!;
+        if (!poolBySlug.has(slug)) poolBySlug.set(slug, []);
+        // already in pool; just ensure indexed (avoid dupes)
+        if (!poolBySlug.get(slug)!.includes(node)) poolBySlug.get(slug)!.push(node);
+      });
+    }
+
+    let embla: ReturnType<typeof EmblaCarousel> | null = null;
+    let currentSlug = items[0].slug;
+
+    function loadSlides(item: Item) {
+      if (!track) return;
+      // Return current track slides to the pool.
+      Array.from(track.querySelectorAll<HTMLElement>(".showcase__slide")).forEach((n) => pool?.appendChild(n));
+      // Move this item's slides in.
+      const nodes = poolBySlug.get(item.slug) ?? [];
+      nodes.forEach((n) => track.appendChild(n));
+    }
+
+    function destroyEmbla() {
+      if (embla) {
+        embla.destroy();
+        embla = null;
+      }
+    }
+
+    function initEmbla(item: Item) {
+      if (!viewport) return;
+      loadSlides(item);
+      embla = EmblaCarousel(viewport, { loop: false, speed: reduceMotion ? 0 : 8 });
+      embla.on("select", () => {
+        if (anglecount) {
+          const i = embla!.selectedScrollSnap() + 1;
+          anglecount.textContent = `${i} / ${item.angleCount}`;
+        }
+      });
+      if (anglebar) anglebar.hidden = item.angleCount <= 1;
+      if (anglecount) anglecount.textContent = `1 / ${item.angleCount}`;
+    }
+
+    function renderCallouts(item: Item) {
+      const old = specimen?.querySelector(".dim");
+      if (old) old.remove();
+      if (!specimen || !item.callouts || item.callouts.length === 0) return;
+
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("class", "dim");
+      svg.setAttribute("viewBox", "0 0 400 400");
+      svg.setAttribute("preserveAspectRatio", "none");
+      svg.setAttribute("aria-hidden", "true");
+
+      const defs = document.createElementNS(NS, "defs");
+      const marker = document.createElementNS(NS, "marker");
+      marker.setAttribute("id", "dim-arrow-dyn");
+      marker.setAttribute("markerWidth", "8");
+      marker.setAttribute("markerHeight", "8");
+      marker.setAttribute("refX", "6");
+      marker.setAttribute("refY", "3");
+      marker.setAttribute("orient", "auto");
+      const mp = document.createElementNS(NS, "path");
+      mp.setAttribute("d", "M0,0 L6,3 L0,6 Z");
+      mp.setAttribute("fill", "#1b3a6b");
+      marker.appendChild(mp);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+
+      const valFor = (k: string) => item.specs.find((s) => s.k === k)?.v ?? "";
+
+      item.callouts.forEach((c, i) => {
+        const v = valFor(c.specKey);
+        const cls = i % 2 === 0 ? "draw" : "draw-2";
+        const g = document.createElementNS(NS, "g");
+        if (c.type === "dimension" && c.x2 != null && c.y2 != null) {
+          const line = document.createElementNS(NS, "line");
+          line.setAttribute("class", cls);
+          line.setAttribute("x1", String(c.x));
+          line.setAttribute("y1", String(c.y));
+          line.setAttribute("x2", String(c.x2));
+          line.setAttribute("y2", String(c.y2));
+          line.setAttribute("marker-start", "url(#dim-arrow-dyn)");
+          line.setAttribute("marker-end", "url(#dim-arrow-dyn)");
+          g.appendChild(line);
+          const t = document.createElementNS(NS, "text");
+          t.setAttribute("class", "pop");
+          t.setAttribute("x", String((c.x + c.x2) / 2));
+          t.setAttribute("y", String(c.y - 8));
+          t.setAttribute("text-anchor", "middle");
+          t.textContent = v;
+          g.appendChild(t);
+        } else {
+          const lx = c.lx ?? c.x + 80;
+          const ly = c.ly ?? c.y + 40;
+          const midX = c.x + (lx - c.x) * 0.5;
+          const pl = document.createElementNS(NS, "polyline");
+          pl.setAttribute("class", `callout ${cls}`);
+          pl.setAttribute("points", `${c.x},${c.y} ${midX},${c.y} ${lx},${ly}`);
+          pl.setAttribute("fill", "none");
+          g.appendChild(pl);
+          const circ = document.createElementNS(NS, "circle");
+          circ.setAttribute("cx", String(c.x));
+          circ.setAttribute("cy", String(c.y));
+          circ.setAttribute("r", "2.5");
+          circ.setAttribute("fill", "#c8430f");
+          g.appendChild(circ);
+          const t = document.createElementNS(NS, "text");
+          t.setAttribute("class", "pop");
+          t.setAttribute("x", String(lx));
+          t.setAttribute("y", String(ly - 4));
+          t.setAttribute("text-anchor", lx > c.x ? "start" : "end");
+          t.setAttribute("fill", "#c8430f");
+          t.textContent = v;
+          g.appendChild(t);
+        }
+        svg.appendChild(g);
+      });
+
+      specimen.appendChild(svg);
+    }
+
+    function animateCallouts() {
+      if (reduceMotion) return;
+      const els = gsap.utils.toArray<SVGElement>(
+        ".showcase__specimen .dim .draw, .showcase__specimen .dim .draw-2, .showcase__specimen .dim .callout"
+      );
+      els.forEach((el) => {
+        const len = (el as SVGGraphicsElement).getTotalLength ? (el as SVGGraphicsElement).getTotalLength() : 600;
+        gsap.set(el, { strokeDasharray: len, strokeDashoffset: len });
+      });
+      gsap.to(els, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut", stagger: 0.1 });
+      gsap.from(".showcase__specimen .dim .pop", { autoAlpha: 0, y: 6, duration: 0.4, stagger: 0.06, ease: "power2.out" });
+    }
+
+    function renderSpecTable(item: Item) {
+      if (!specContainer) return;
+      specContainer.innerHTML = "";
+      const dl = document.createElement("dl");
+      dl.className = "spectable";
+      item.specs.forEach((s) => {
+        const row = document.createElement("div");
+        row.className = "spectable__row";
+        const k = document.createElement("dt");
+        k.className = "spectable__k label";
+        k.textContent = s.k;
+        const v = document.createElement("dd");
+        v.className = "spectable__v";
+        v.textContent = s.v;
+        row.appendChild(k);
+        row.appendChild(v);
+        dl.appendChild(row);
+      });
+      specContainer.appendChild(dl);
+      if (!reduceMotion) {
+        gsap.from(dl.querySelectorAll(".spectable__row"), { autoAlpha: 0, x: -10, duration: 0.4, stagger: 0.05, ease: "power2.out" });
+      }
+    }
+
+    function selectProduct(item: Item, focus = false) {
+      currentSlug = item.slug;
+      tabs.forEach((t) => {
+        const sel = t.dataset.slug === item.slug;
+        t.setAttribute("aria-selected", String(sel));
+        t.tabIndex = sel ? 0 : -1;
+      });
+      if (nameEl) nameEl.textContent = item.name;
+      if (cta) cta.href = waLink(item.waContext);
+      if (titleblock) titleblock.innerHTML = `<b>${item.name.toUpperCase()}</b><br>ORIGIN SBY`;
+      renderCallouts(item);
+      destroyEmbla();
+      initEmbla(item);
+      renderSpecTable(item);
+      animateCallouts();
+      if (panel) panel.setAttribute("aria-labelledby", `brc-tab-${item.slug}`);
+      if (focus) tabs.find((t) => t.dataset.slug === item.slug)?.focus();
+    }
+
+    // Initial render: load first item's slides from the pool, then init Embla.
+    loadSlides(items[0]);
+    embla = EmblaCarousel(viewport!, { loop: false, speed: reduceMotion ? 0 : 8 });
+    embla.on("select", () => {
+      if (anglecount) {
+        const i = embla!.selectedScrollSnap() + 1;
+        anglecount.textContent = `${i} / ${items[0].angleCount}`;
+      }
+    });
+    animateCallouts();
+
+    // Tab interactions
+    tabs.forEach((t) => {
+      t.addEventListener("click", () => {
+        const item = items.find((i) => i.slug === t.dataset.slug);
+        if (item) selectProduct(item, true);
+      });
+    });
+
+    // Keyboard on tablist
+    const tablist = root.querySelector<HTMLElement>(".showcase__selector");
+    tablist?.addEventListener("keydown", (e) => {
+      const idx = items.findIndex((i) => i.slug === currentSlug);
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        selectProduct(items[(idx + 1) % items.length], true);
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        selectProduct(items[(idx - 1 + items.length) % items.length], true);
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        selectProduct(items[0], true);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        selectProduct(items[items.length - 1], true);
+      }
+    });
+
+    // Angle controls
+    anglebar?.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest("button[data-dir]") as HTMLButtonElement | null;
+      if (!btn || !embla) return;
+      if (btn.dataset.dir === "next") embla.scrollNext();
+      else embla.scrollPrev();
+    });
+  }
+</script>

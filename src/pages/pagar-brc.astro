@@ -1,0 +1,78 @@
+---
+import Base from "../layouts/Base.astro";
+import BrcShowcase from "../components/BrcShowcase.astro";
+import { brcShowcase } from "../data/catalog.ts";
+import { waLink, u } from "../utils/url.ts";
+import { Image } from "astro:assets";
+import { imageAsset } from "../utils/images.ts";
+
+const waBrc = waLink(
+  "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang BRC, tiang Y, pintu pagar, aksesoris). " +
+    "Mohon info harga pabrik, stok, dan pengiriman. Terima kasih."
+);
+const title = `${brcShowcase.title} — Spesifikasi & Penawaran · Bangun Sarana Makmur`;
+const desc =
+  "Pagar BRC: panel 240×150 cm, ∅6 mm, mesh 150×150, galvanis elektro. Tiang BRC, tiang Y, pintu pagar, aksesoris. " +
+  "Periksa spesifikasi, minta penawaran harga pabrik, kirim ke seluruh Indonesia dari Surabaya.";
+---
+
+<Base title={title} description={desc}>
+  <!-- ===================== HERO ===================== -->
+  <section class="hero wrap" aria-labelledby="brc-hero-title">
+    <div class="hero__grid">
+      <div class="hero__copy">
+        <div class="eyebrow-row">
+          <span class="tick" aria-hidden="true"></span>
+          <span class="label label--ink">Produk Unggulan · BRC · Surabaya</span>
+        </div>
+        <h1 class="display" id="brc-hero-title">Pagar BRC.<br />Dilas titik.<br />Digalvanis.</h1>
+        <p class="lede">
+          Panel, tiang, tiang Y, pintu pagar, dan aksesoris — satu set lengkap dari satu sumber.
+          Periksa spesifikasinya dari setiap sisi, lalu minta penawaran harga pabrik.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href={waBrc} target="_blank" rel="noopener">Minta Penawaran BRC</a>
+          <a class="btn btn--ghost" href="#spesifikasi">Lihat Spesifikasi</a>
+        </div>
+      </div>
+
+      <figure class="hero__sheet" aria-label="Panel pagar BRC 240×150 cm, besi ∅6 mm galvanis">
+        <Image
+          src={imageAsset("pagar-brc-panel-perspektif.jpg")}
+          alt="Pagar BRC panel dilas, tampak perspektif"
+          width={900}
+          format="webp"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+        <figcaption class="specimen__titleblock">
+          <b>BRC FENCE PANEL</b><br />SCALE 1:20 · ORIGIN SBY<br />GALVANIS ELEKTRO
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== SHOWCASE ===================== -->
+  <section class="section wrap" id="spesifikasi" aria-labelledby="showcase-title">
+    <BrcShowcase />
+  </section>
+
+  <!-- ===================== CTA CLOSE ===================== -->
+  <section class="section section--field" id="kontak" aria-labelledby="cta-title">
+    <div class="wrap cta-close">
+      <span class="label">Kontak &amp; Penawaran</span>
+      <h2 class="display" id="cta-title">Siap pasang pagar? Minta penawaran sekarang.</h2>
+      <p class="lede">
+        Hubungi tim sales BSM via WhatsApp untuk harga pabrik, stok, dan pengiriman pagar BRC ke proyek Anda.
+      </p>
+      <div class="hero__actions" style="justify-content:center">
+        <a class="btn btn--onfield" href={waBrc} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
+        <a class="btn btn--ghostfield" href="mailto:bsmbangun@yahoo.co.id">bsmbangun@yahoo.co.id</a>
+      </div>
+      <p class="muted" style="margin-top:1.6rem;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em">
+        Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472
+      </p>
+    </div>
+  </section>
+</Base>

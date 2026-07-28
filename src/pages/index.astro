@@ -74,7 +74,8 @@ const fmt = (d: Date) =>
         </div>
       </div>
 
-      <!-- Dimensioned BRC specimen (signature component) -->
+      <!-- Dimensioned BRC specimen (signature component) — links to the BRC showcase -->
+      <a class="hero__sheet-link" href={u("/pagar-brc")} aria-label="Lihat spesifikasi lengkap pagar BRC">
       <figure class="hero__sheet" aria-label="Gambar kerja pagar BRC: panel 240×150 cm, besi ∅6 mm galvanis">
         <Image src={imageAsset("pagar-brc-panel-perspektif.jpg")} alt="Pagar BRC panel dilas, tampak perspektif" width={900} format="webp" loading="eager" fetchpriority="high" decoding="async" />
         <svg class="dim" viewBox="0 0 400 400" preserveAspectRatio="none" aria-hidden="true">
@@ -104,6 +105,8 @@ const fmt = (d: Date) =>
           <b>BRC FENCE PANEL</b><br />SCALE 1:20 · ORIGIN SBY<br />GALVANIS ELEKTRO
         </figcaption>
       </figure>
+      </a>
+      <a class="hero__sheet-cta label" href={u("/pagar-brc")}>Lihat spesifikasi lengkap →</a>
     </div>
   </section>
 

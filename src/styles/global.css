@@ -868,6 +868,34 @@ html.gsap .dim .pop {
   border-radius: var(--r-md);
   background: var(--paper);
   overflow: hidden;
+  .hero__sheet-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border-radius: var(--r-md);
+    transition: transform 0.2s var(--ease);
+  }
+  .hero__sheet-link:hover {
+    transform: translateY(-2px);
+  }
+  .hero__sheet-link:hover .hero__sheet {
+    box-shadow: var(--lift);
+  }
+  .hero__sheet-cta {
+    display: inline-block;
+    margin-top: 0.9rem;
+    color: var(--blueprint);
+    text-decoration: none;
+    border-bottom: 1px solid var(--blueprint);
+    padding-bottom: 2px;
+    transition:
+      color 0.18s var(--ease),
+      border-color 0.18s var(--ease);
+  }
+  .hero__sheet-cta:hover {
+    color: var(--signal-deep);
+    border-color: var(--signal-deep);
+  }
   aspect-ratio: 1 / 1;
 }
 .hero__sheet img {
