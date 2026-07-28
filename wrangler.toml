@@ -1,0 +1,33 @@
+# Cloudflare Workers + Assets configuration for the BSM site.
+#
+# Deploy flow:  `astro build`  (writes dist/client + dist/server)
+#                then  `wrangler deploy`  (reads this file)
+#
+# @astrojs/cloudflare generates dist/server/wrangler.json by merging THIS file
+# with the built server entry + static assets, so `main`/`assets` below must
+# point at the build output. Do not point `assets.directory` at `./dist` — the
+# Astro 7 adapter emits a split output (static assets in dist/client, worker in
+# dist/server), which classic Cloudflare *Pages* will not serve correctly.
+
+name = "second-shepherd"
+compatibility_date = "2026-04-15"
+
+# Split build output produced by `astro build` with @astrojs/cloudflare.
+main = "./dist/server/entry.mjs"
+assets = { directory = "./dist/client" }
+
+# Bindings injected by @astrojs/cloudflare for on-demand rendering
+# (Keystatic admin auth, Astro sessions). The SESSION KV MUST exist or
+# `wrangler deploy` fails. Create it once and paste its id:
+#
+#   npx wrangler kv namespace create SESSION
+#
+# (Leave the id as-is and replace before your first deploy.)
+kv_namespaces = [{ binding = "SESSION", id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" }]
+
+# Optional: Cloudflare Images binding. The adapter declares this because it can
+# serve images via Cloudflare Images. This site serves images from the repo, so
+# it is left disabled. Uncomment + create the binding only if you switch to
+# Cloudflare Images.
+# [images]
+# binding = "IMAGES"
