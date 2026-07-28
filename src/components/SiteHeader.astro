@@ -1,12 +1,17 @@
 ---
-import Logo from "./Logo.astro";
+import logoSrc from "../images/logo.png";
 import { u, waLink } from "../utils/url.ts";
 const wa = waLink();
+const path = Astro.url.pathname;
+// Mark the current top-level section; hash links (Kontak) are never "active".
+const isActive = (href: string) =>
+  !href.includes("#") &&
+  (href === u("/") ? path === u("/") : path.startsWith(href));
 ---
 <header class="site-header">
   <div class="wrap site-header__bar">
     <a class="brand" href={u("/")} aria-label="Beranda Bangun Sarana Makmur">
-      <span class="brand__mark"><Logo /></span>
+      <span class="brand__mark"><img src={logoSrc.src} alt="BSM — Bangun Sarana Makmur" class="brand__logo" /></span>
       <span class="brand__text">
         <span class="brand__mark-t">BSM</span>
         <span class="brand__sub">Bangun Sarana Makmur</span>
@@ -14,9 +19,9 @@ const wa = waLink();
     </a>
     <nav class="nav" aria-label="Navigasi utama">
       <div class="nav__links">
-        <a href={u("/")}>Beranda</a>
-        <a href={u("/kategori")}>Produk</a>
-        <a href={u("/blog")}>Blog</a>
+        <a href={u("/")} aria-current={isActive(u("/")) ? "page" : undefined}>Beranda</a>
+        <a href={u("/kategori")} aria-current={isActive(u("/kategori")) ? "page" : undefined}>Produk</a>
+        <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
         <a href={u("/#kontak")}>Kontak</a>
       </div>
       <a class="btn btn--primary nav__cta" href={wa} target="_blank" rel="noopener">
@@ -36,9 +41,9 @@ const wa = waLink();
     </nav>
   </div>
   <div class="nav__mobile" id="mobile-menu" hidden>
-    <a href={u("/")}>Beranda</a>
-    <a href={u("/kategori")}>Produk</a>
-    <a href={u("/blog")}>Blog</a>
+    <a href={u("/")} aria-current={isActive(u("/")) ? "page" : undefined}>Beranda</a>
+    <a href={u("/kategori")} aria-current={isActive(u("/kategori")) ? "page" : undefined}>Produk</a>
+    <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
     <a href={u("/#kontak")}>Kontak</a>
     <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
   </div>
