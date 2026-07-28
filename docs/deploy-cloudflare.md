@@ -39,6 +39,12 @@ npx wrangler kv namespace create SESSION
 repo. Uncomment the `[images]` block in `wrangler.toml` only if you adopt
 Cloudflare Images.)
 
+> `wrangler.toml` deliberately contains **only** `name`, `compatibility_date`
+> and bindings. Do **not** add `main` or `assets` — `@astrojs/cloudflare`
+> injects them from the build output into the generated
+> `dist/server/wrangler.json`. Setting them manually breaks `astro build`,
+> because the entry does not exist yet when the adapter validates the config.
+
 ## 3. Deploy
 
 ### Option A — Dashboard (Workers Builds, Git-connected)
@@ -47,10 +53,12 @@ Cloudflare Images.)
    Import a repository** → select `gsmandiriweb/site`.
 2. Framework preset: leave blank / "Astro" if offered; set:
    - **Build command:** `npx astro build`
-   - **Deploy command:** `npx wrangler deploy`
+   - **Deploy command:** `npx wrangler deploy --config dist/server/wrangler.json`
    - **Root directory:** `/` (repo root)
-3. Add the `SESSION` KV binding under **Settings → Bindings** (binding name
-   `SESSION`, the namespace you created in step 2).
+3. (Optional) You can also add the `SESSION` KV binding under **Settings →
+   Bindings**, but it is already wired via `wrangler.toml` and baked into the
+   generated `dist/server/wrangler.json`, so the deploy above already includes
+   it.
 4. **Save and Deploy.** Preview at `*.workers.dev`, then add a custom domain
    under **Settings → Domains** if desired.
 
@@ -61,7 +69,7 @@ Cloudflare Images.)
 
 ```bash
 npx astro build
-npx wrangler deploy        # reads wrangler.toml at the repo root
+npx wrangler deploy --config dist/server/wrangler.json
 ```
 
 For a local smoke test before pushing: `npx astro build && npx wrangler dev`.
@@ -75,6 +83,10 @@ auth (no Netlify involved). Locally you can do the same at
 
 ## Troubleshooting
 
+- **`The provided Wrangler config main field (.../dist/server/entry.mjs)
+doesn't point to an existing file`** → `wrangler.toml` still declares
+  `main`/`assets`. Remove them; the adapter supplies them and writes
+  `dist/server/wrangler.json` at build end.
 - **`kv namespace SESSION ... has no id`** → you deployed before pasting the
   KV id from step 2 into `wrangler.toml`.
 - **404 on `/_astro/*` or unstyled page** → still on the old `base: "/site"`
