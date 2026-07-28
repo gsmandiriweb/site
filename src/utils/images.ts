@@ -15,7 +15,10 @@ for (const [path, mod] of Object.entries(modules)) {
 }
 
 export function imageAsset(name: string): ImageMetadata {
-  const img = byName.get(name);
+  // Accept either a bare filename ("atap-upvc.jpeg") or a Keystatic path
+  // ("/src/images/ref/atap-upvc.jpeg") and resolve by basename.
+  const filename = name.split("/").pop() as string;
+  const img = byName.get(filename);
   if (!img) throw new Error(`Missing image asset: ${name}`);
   return img;
 }
