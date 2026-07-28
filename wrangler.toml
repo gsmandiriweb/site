@@ -16,6 +16,12 @@
 name = "second-shepherd"
 compatibility_date = "2026-04-15"
 
+# Node.js compatibility is REQUIRED for Astro on Cloudflare Workers. Astro's
+# server runtime uses Node globals (Buffer, process, etc.) that workerd only
+# exposes when this flag is set; without it every request 500s with
+# "Buffer is not defined".
+compatibility_flags = ["nodejs_compat"]
+
 # Bindings injected by @astrojs/cloudflare for on-demand rendering
 # (Keystatic admin auth, Astro sessions). The SESSION KV MUST exist or
 # `wrangler deploy` fails. Create it once and paste its id:

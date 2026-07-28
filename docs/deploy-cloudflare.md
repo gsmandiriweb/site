@@ -39,8 +39,13 @@ npx wrangler kv namespace create SESSION
 repo. Uncomment the `[images]` block in `wrangler.toml` only if you adopt
 Cloudflare Images.)
 
-> `wrangler.toml` deliberately contains **only** `name`, `compatibility_date`
-> and bindings. Do **not** add `main` or `assets` — `@astrojs/cloudflare`
+> `wrangler.toml` deliberately contains **only** `name`, `compatibility_date`,
+> `compatibility_flags` and bindings. `compatibility_flags = ["nodejs_compat"]`
+> is **required** — Astro's server runtime uses Node globals (`Buffer`,
+> `process`, …) that workerd only exposes with this flag; without it every
+> request 500s with `Buffer is not defined` (including `/keystatic`).
+>
+> Do **not** add `main` or `assets` — `@astrojs/cloudflare`
 > injects them from the build output into the generated
 > `dist/server/wrangler.json`. Setting them manually breaks `astro build`,
 > because the entry does not exist yet when the adapter validates the config.
@@ -120,4 +125,13 @@ doesn't point to an existing file`** → `wrangler.toml` still declares
   build; make sure you deployed the current commit (base removed).
 - **`Could not resolve "node:..."`** → a dependency uses a Node API the
   Cloudflare runtime lacks; check the package for `node:` import support.
+- **HTTP 500 on every route (incl. `/keystatic`) with `Buffer is not defined`**
+  → the `nodejs_compat` compatibility flag is missing. It is set in
+  `wrangler.toml`; make sure you deployed the current commit (the generated
+  `dist/server/wrangler.json` should show `"compatibility_flags":["nodejs_compat"]`).
+- **HTTP 500 only on `/keystatic` / `/api/keystatic`** → different from the
+  `Buffer` issue above. Check (a) the three Keystatic env vars are set on the
+  Worker, and (b) the `SESSION` KV id in `wrangler.toml` matches a real
+  namespace in your account. Both are read at request time by the Keystatic
+  API.
 - **Hydration mismatches** → disable Cloudflare **Auto Minify** under Speed.
