@@ -12,13 +12,18 @@ export default config({
   collections: {
     blog: collection({
       label: "Blog",
-      slugField: "title",
+      slugField: "slug",
       path: "src/content/blog/*",
       // Frontmatter holds the fields; the markdown body maps to `body`.
       // extension:'md' keeps files as .md so Astro's content loader/render works.
+      // `slug` is the slugField (drives the filename, NOT written to frontmatter);
+      // `title` is a normal field so it's always serialized into frontmatter
+      // (Astro's blog schema requires it). Using `title` as the slugField made
+      // Keystatic skip writing it, which broke the build.
       format: { contentField: "body" },
       schema: {
         title: fields.text({ label: "Judul", validation: { isRequired: true } }),
+        slug: fields.slug({ name: { label: "Slug" } }),
         kicker: fields.text({ label: "Kicker" }),
         date: fields.date({ label: "Tanggal" }),
         image: fields.image({
