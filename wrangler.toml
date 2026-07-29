@@ -29,6 +29,11 @@ compatibility_flags = ["nodejs_compat"]
 #   npx wrangler kv namespace create SESSION
 kv_namespaces = [{ binding = "SESSION", id = "21a01da3e6264da0a9f7e7dc42c1e874" }]
 
+# Keystatic PAT auth secret.
+# Create at runtime with:
+#   wrangler secret put KEYSTATIC_GITHUB_PAT
+# (paste a GitHub PAT with the `repo` scope)
+
 # Optional: Cloudflare Images binding. The adapter declares this because it can
 # serve images via Cloudflare Images. This site serves images from the repo, so
 # it is left disabled. Uncomment + create the binding only if you switch to
