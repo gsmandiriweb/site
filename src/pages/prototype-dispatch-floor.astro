@@ -1,0 +1,592 @@
+---
+/*
+  PROTOTYPE · POV 3 "The Dispatch Floor" · THROWAWAY
+  Wayfinder ticket #13. Not production. Delete or absorb when the prototype
+  has answered its question: does a directional, in-motion operational hero
+  (material staged for dispatch, full-bleed) read as "BSM moves material" —
+  a real supply operation with industrial weight & scale — rather than a
+  static product photo or a brochure?
+
+  Self-contained: does NOT import Blueprint Field global.css or Base.astro.
+  Run: astro dev -> visit /prototype-dispatch-floor
+
+  DIRECTION CONTRACT (this prototype only, not a new DESIGN.md)
+  THESIS: BSM moves material. Scale is felt through the logistics operation,
+    not asserted through a number. The most direct servant of the destination's
+    primary register: industrial weight & scale = what a distributor does.
+    Refuses the static centered hero and any fabricated logistics metric.
+  OWN-WORLD: Dark loading-bay concrete ground; full-bleed warehouse/installed
+    photography composed directionally (left-to-right in-transit flow); a stamped
+    dispatch waybill placard carries the headline + CTA; specimens render as
+    units on skid plates with freight tags (specs as shipping labels, not
+    dimension lines); categories as a loading-schedule board; reach proven
+    photographically (installed shots = "arrived at a project"), not a map.
+    Signal-orange reserved for the WhatsApp quote CTA only.
+  STORY: A visitor meets material in motion, feels a real supply operation
+    moving stock from yard to project across 34 provinsi, and requests a quote.
+  FIRST VIEWPORT: A full-bleed warehouse-stock photo composed directionally; a
+    stamped waybill placard (offset, in-transit) carries "Material bergerak.
+    Harga pabrik. Sampai proyek." and a primary WhatsApp quote CTA. The 34
+    provinsi reach reads as a stamped manifest mark, not a counter.
+  FORM: Dispatch Floor (POV 3), one of four locked POVs (ticket #8); a prototype
+    variant, not a concept-seed roll. Seed: wayfinder #13.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+    finish review, the verdict, and DESIGN.md.
+*/
+import { Image } from "astro:assets";
+import { imageAsset } from "../utils/images.ts";
+import { categories, brcShowcase } from "../data/catalog.ts";
+import { u, waLink } from "../utils/url.ts";
+
+const wa = waLink();
+const waBrc = waLink(
+  "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang, pintu, aksesoris). Mohon info harga pabrik, stok, pengiriman. Terima kasih."
+);
+
+// Hero: warehouse stock staged for dispatch (full-bleed, directional).
+const heroImg = imageAsset("pagar-brc-tumpukan-stok-gudang-1.jpg");
+
+// The dispatch lane: staged -> loaded -> arrived (left-to-right operational flow).
+const lane = [
+  { img: imageAsset("pagar-brc-tumpukan-stok-gudang-2.jpg"), stage: "01 · STAGING", cap: "Tumpukan panel di gudang" },
+  { img: imageAsset("pagar-brc-set-tiang-rebah-1.jpg"), stage: "02 · BUNDLING", cap: "Set tiang direbahkan, siap angkut" },
+  { img: imageAsset("pagar-brc-terpasang-outdoor-1.jpg"), stage: "03 · ARRIVED", cap: "Terpasang di proyek" },
+];
+
+// Reach proof: installed shots = "this arrived at a project" (photographic, not a map).
+const reach = [
+  imageAsset("pagar-brc-terpasang-outdoor-1.jpg"),
+  imageAsset("pagar-brc-terpasang-grendel-outdoor.jpg"),
+  imageAsset("pagar-brc-terpasang-ujung-atas-outdoor.jpg"),
+  imageAsset("pagar-brc-tumpukan-stok-gudang-1.jpg"),
+];
+---
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROTOTYPE · Dispatch Floor · BSM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- NAV: stamped on the bay's top rail -->
+  <nav class="nav">
+    <a class="nav__brand" href={u("/")}>BSM</a>
+    <div class="nav__links">
+      <a href={u("/")}>Beranda</a>
+      <a href={u("/katalog")}>Katalog</a>
+      <a href={u("/pagar-brc")}>Pagar BRC</a>
+    </div>
+    <a class="nav__wa" href={wa} target="_blank" rel="noopener">WhatsApp</a>
+  </nav>
+
+  <!-- ===================== HERO · the dispatch bay ===================== -->
+  <section class="bay hero-bay" aria-labelledby="hero-title">
+    <Image src={heroImg} alt="Tumpukan pagar BRC disiapkan untuk pengiriman di gudang BSM Surabaya" fill loading="eager" fetchpriority="high" class="bay__img" />
+    <div class="bay__scrim"></div>
+
+    <!-- Directional waybill placard: offset, in-transit -->
+    <div class="waybill">
+      <div class="waybill__rule"></div>
+      <span class="waybill__stamp">MANIFEST · DISPATCH · SBY</span>
+      <h1 class="waybill__title" id="hero-title">Material bergerak.<br />Harga pabrik.<br />Sampai proyek.</h1>
+      <p class="waybill__lede">CV Bangun Sarana Makmur menggerakkan material bangunan dari gudang Surabaya ke proyek di 34 provinsi. Bukan brosur: ini lantai dispatch nyata, stok disiapkan, dibundel, dikirim.</p>
+      <div class="waybill__actions">
+        <a class="cta cta--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+        <a class="cta cta--ghost" href="#lini">Lihat Lini BRC</a>
+      </div>
+      <div class="waybill__reach">
+        <span class="waybill__reach-no">34</span>
+        <span class="waybill__reach-lbl">provinsi terjangkau · bukan angka klaim, tapi jejak pengiriman nyata</span>
+      </div>
+    </div>
+
+    <div class="bay__scroll">↓ gulir ke lantai dispatch</div>
+  </section>
+
+  <!-- ===================== DISPATCH LANE · staged -> loaded -> arrived ===================== -->
+  <section class="floor lane-section" id="lantai" aria-labelledby="lane-title">
+    <header class="floor__head">
+      <span class="rail">LANTAI DISPATCH · ALUR MATERIAL</span>
+      <h2 id="lane-title">Dari gudang, ke jalan, ke proyek</h2>
+      <p class="floor__sub">Material tidak diam. Setiap unit melewati tiga tahap: disiapkan di gudang, dibundel siap angkut, tiba dan terpasang. Ini bukan klaim logistik, ini foto nyata dari setiap tahap.</p>
+    </header>
+
+    <div class="lane">
+      {lane.map((l, i) => (
+        <figure class={`lane__cell lane__cell--${i + 1}`}>
+          <div class="lane__photo">
+            <Image src={l.img} alt={l.cap} width={720} height={540} loading="lazy" class="lane__img" />
+          </div>
+          <figcaption class="lane__cap">
+            <span class="lane__stage">{l.stage}</span>
+            <span class="lane__desc">{l.cap}</span>
+          </figcaption>
+          {i < lane.length - 1 && <span class="lane__arrow" aria-hidden="true">→</span>}
+        </figure>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===================== LOADING SCHEDULE · the 6 categories as route cards ===================== -->
+  <section class="floor schedule-section" id="katalog" aria-labelledby="sched-title">
+    <header class="floor__head">
+      <span class="rail">PAPAN MUATAN · 6 KELOMPOK MATERIAL</span>
+      <h2 id="sched-title">Satu sumber, enam kelompok, satu pengiriman</h2>
+      <p class="floor__sub">Enam kelompok material dirakit di satu gudang. Pesan dari beberapa kelompok sekaligus, kirim dalam satu muatan. BRC adalah pintu masuk; seluruh katalog ada di belakangnya.</p>
+    </header>
+    <div class="schedule">
+      {categories.map((c) => (
+        <a class="route-card" href={u(`/kategori/${c.slug}`)}>
+          <span class="route-card__no">RUTE {String(categories.indexOf(c) + 1).padStart(2, "0")}</span>
+          <span class="route-card__name">{c.name}</span>
+          <span class="route-card__count">{c.count} lini · {c.lines[0]} →</span>
+          <span class="route-card__status">READY STOCK</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===================== FREIGHT · BRC specimens as units on skid plates ===================== -->
+  <section class="floor freight-section" id="lini" aria-labelledby="freight-title">
+    <header class="floor__head">
+      <span class="rail">MUATAN · PAGAR BRC</span>
+      <h2 id="freight-title">Apa yang bergerak dari lantai ini</h2>
+      <p class="floor__sub">Setiap unit BRC adalah muatan nyata: panel, tiang, pintu, aksesoris. Spesifikasi tertulis di tag pengiriman, bukan garis dimensi. Minta penawaran per unit langsung dari tag.</p>
+    </header>
+
+    <div class="freight">
+      {brcShowcase.items.map((s, i) => (
+        <article class="skid">
+          <div class="skid__plate">
+            <div class="skid__photo">
+              <Image src={imageAsset(s.angles[0])} alt={s.name} width={560} height={560} loading="lazy" class="skid__img" />
+            </div>
+            <span class="skid__load">UNIT {String(i + 1).padStart(2, "0")} · BRC</span>
+          </div>
+          <div class="freight-tag">
+            <span class="freight-tag__hole"></span>
+            <span class="freight-tag__name">{s.name}</span>
+            <dl class="freight-tag__specs">
+              {s.specs.map((sp) => (
+                <div class="freight-tag__spec"><dt>{sp.k}</dt><dd>{sp.v}</dd></div>
+              ))}
+            </dl>
+            <a class="freight-tag__wa" href={waLink(s.waContext)} target="_blank" rel="noopener">Minta penawaran unit ini →</a>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <div class="freight__order">
+      <a class="cta cta--primary cta--lg" href={waBrc} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
+    </div>
+  </section>
+
+  <!-- ===================== REACH PROOF · arrived at a project (photographic, not a map) ===================== -->
+  <section class="floor reach-section" aria-labelledby="reach-title">
+    <header class="floor__head floor__head--light">
+      <span class="rail">BUKTI JANGKAUAN · TERPASANG DI LAPANGAN</span>
+      <h2 id="reach-title">34 provinsi, dibuktikan dengan foto, bukan peta titik</h2>
+      <p class="floor__sub">Setiap foto di bawah adalah pagar BRC yang tiba dan terpasang di proyek nyata. Ini jejak pengiriman, bukan klaim angka. Skala BSM terasa dari material yang sudah sampai.</p>
+    </header>
+    <div class="reach-grid">
+      {reach.map((img, i) => (
+        <figure class={`reach-tile reach-tile--${i + 1}`}>
+          <Image src={img} alt="Pagar BRC terpasang di proyek" width={640} height={480} loading="lazy" class="reach-tile__img" />
+          <figcaption class="reach-tile__cap">TERPASANG · PROYEK</figcaption>
+        </figure>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===================== DISPATCH COUNTER · the order desk ===================== -->
+  <section class="floor counter-section" id="kontak" aria-labelledby="counter-title">
+    <div class="counter">
+      <span class="rail">MEJA DISPATCH · WHOLESALE</span>
+      <h2 id="counter-title">Siap bergerak? Minta harga pabrik untuk proyek Anda.</h2>
+      <p class="counter__sub">Hubungi tim sales BSM via WhatsApp. Harga pabrik, stok gudang, dan pengiriman ke 34 provinsi dalam satu obrolan. Konsultasi gratis, kirim Surabaya gratis.</p>
+      <a class="cta cta--primary cta--lg" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
+      <p class="counter__addr">Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472 · bsmbangun@yahoo.co.id</p>
+    </div>
+  </section>
+
+  <footer class="proto-footer">
+    <span>PROTOTYPE POV 3 · The Dispatch Floor · THROWAWAY · wayfinder #13</span>
+  </footer>
+
+<style>
+  :root {
+    /* The loading-bay ground: dark industrial concrete */
+    --concrete: #202327;
+    --concrete-deep: #16181b;
+    --concrete-line: #34383e;     /* expansion joint / bay line */
+    --concrete-grain: #0d0e10;
+    /* Reading text on the bay */
+    --ink: #ece9e2;
+    --ink-soft: #9aa0a8;
+    --rail-ink: #c9b48a;           /* the one industrial accent (manifest stamp) */
+    /* Freight tag (shipping label) */
+    --tag-paper: #efe9da;
+    --tag-ink: #1a1d20;
+    --tag-ink-soft: #5a5f66;
+    /* CTA */
+    --signal: #e8551e;
+    --signal-deep: #c8430f;
+    --signal-darker: #a8360b;
+    --fd: "Archivo", "Arial Narrow", sans-serif;
+    --fb: "Hanken Grotesk", system-ui, sans-serif;
+    --fm: "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--concrete);
+    color: var(--ink);
+    font-family: var(--fb);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+
+  /* The concrete floor: a real loading-bay surface. The grain is a low-opacity
+     noise (concrete texture), not decorative stripes. Expansion joints are
+     real bay lines. */
+  .floor {
+    position: relative;
+    padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem);
+  }
+  .floor::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(90deg, transparent 0, transparent 119px, var(--concrete-line) 119px, var(--concrete-line) 120px),
+      radial-gradient(var(--concrete-grain) 1px, transparent 1.2px);
+    background-size: auto, 3px 3px;
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .floor > * { position: relative; z-index: 1; }
+
+  .rail {
+    font-family: var(--fm);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--rail-ink);
+  }
+  .floor__head { max-width: 60ch; margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+  .floor__head h2 {
+    font-family: var(--fd); font-weight: 700; font-stretch: 112%;
+    font-size: clamp(1.7rem, 4vw, 2.8rem);
+    line-height: 1.04; letter-spacing: -0.01em;
+    margin: 0.7rem 0 1rem; text-wrap: balance;
+  }
+  .floor__sub { color: var(--ink-soft); max-width: 56ch; }
+
+  /* ---- NAV ---- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem clamp(1rem, 4vw, 3rem);
+    background: rgba(22, 24, 27, 0.86);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--concrete-line);
+  }
+  .nav__brand { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: 1.4rem; letter-spacing: -0.02em; }
+  .nav__links { display: flex; gap: 1.5rem; }
+  .nav__links a { font-family: var(--fm); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); transition: color 0.2s; }
+  .nav__links a:hover { color: var(--ink); }
+  .nav__wa { font-family: var(--fm); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; background: var(--signal-deep); color: #fff; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600; }
+  @media (max-width: 640px) { .nav__links { display: none; } }
+
+  /* ---- CTAs ---- */
+  .cta {
+    display: inline-flex; align-items: center;
+    font-family: var(--fm); font-size: 0.8rem; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 600;
+    padding: 14px 28px; border-radius: 4px;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .cta--primary { background: var(--signal-deep); color: #fff; }
+  .cta--primary:hover { background: var(--signal-darker); transform: translateY(-1px); }
+  .cta--ghost { background: transparent; color: var(--ink); border: 1px solid var(--ink-soft); }
+  .cta--ghost:hover { border-color: var(--ink); }
+  .cta--lg { font-size: 0.9rem; padding: 18px 36px; }
+
+  /* ===================== HERO BAY ===================== */
+  .hero-bay {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    padding: 0;
+  }
+  .bay__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  /* Directional scrim: heavier left (where the waybill sits), fading right
+     so the photo's in-transit direction reads. */
+  .bay__scrim {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(90deg, rgba(13, 14, 16, 0.82) 0%, rgba(13, 14, 16, 0.45) 45%, rgba(13, 14, 16, 0.15) 75%, rgba(13, 14, 16, 0.55) 100%),
+      linear-gradient(180deg, rgba(13, 14, 16, 0.35) 0%, transparent 30%, rgba(13, 14, 16, 0.7) 100%);
+  }
+  .bay__scroll {
+    position: absolute; bottom: 1.5rem; right: clamp(1rem, 5vw, 4rem);
+    font-family: var(--fm); font-size: 0.7rem; letter-spacing: 0.1em;
+    color: var(--ink-soft); z-index: 3;
+  }
+
+  /* The waybill placard: a stamped shipping manifest, offset and in-transit.
+     Sits bottom-left, angled slightly to reinforce motion on desktop. */
+  .waybill {
+    position: relative; z-index: 2;
+    margin: 0 clamp(1rem, 5vw, 4rem) clamp(3rem, 7vh, 5rem);
+    max-width: 34rem;
+    padding: 1.6rem 1.8rem 1.8rem;
+    background: rgba(18, 20, 23, 0.78);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--concrete-line);
+    border-radius: 4px;
+    box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.7);
+  }
+  @media (min-width: 900px) {
+    .waybill { transform: skewX(-3deg); }
+    .waybill > * { transform: skewX(3deg); }
+  }
+  .waybill__rule { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--rail-ink); }
+  .waybill__stamp {
+    display: block;
+    font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--rail-ink);
+    margin-bottom: 0.9rem;
+  }
+  .waybill__title {
+    font-family: var(--fd); font-weight: 800; font-stretch: 125%;
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    line-height: 0.96; letter-spacing: -0.02em;
+    margin-bottom: 1.2rem; text-wrap: balance;
+  }
+  .waybill__lede { color: rgba(236, 233, 226, 0.88); font-size: 1.05rem; max-width: 46ch; margin-bottom: 1.8rem; }
+  .waybill__actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.6rem; }
+  .waybill__reach {
+    display: flex; align-items: baseline; gap: 0.7rem;
+    padding-top: 1.1rem;
+    border-top: 1px dashed rgba(201, 180, 138, 0.35);
+  }
+  .waybill__reach-no {
+    font-family: var(--fd); font-weight: 800; font-stretch: 125%;
+    font-size: 2.4rem; line-height: 1; color: var(--rail-ink);
+  }
+  .waybill__reach-lbl {
+    font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.06em;
+    color: var(--ink-soft); line-height: 1.4; max-width: 22ch;
+  }
+
+  /* ===================== DISPATCH LANE ===================== */
+  .lane-section { padding-top: clamp(3.5rem, 8vw, 6rem); }
+  .lane {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: clamp(1rem, 2.5vw, 2rem);
+    align-items: stretch;
+  }
+  @media (max-width: 820px) { .lane { grid-template-columns: 1fr; } }
+  .lane__cell {
+    position: relative;
+    display: flex; flex-direction: column; gap: 0.9rem;
+  }
+  .lane__photo {
+    position: relative;
+    border-radius: 6px; overflow: hidden;
+    aspect-ratio: 4 / 3;
+    background: var(--concrete-deep);
+    box-shadow: 0 14px 28px -14px rgba(0, 0, 0, 0.7);
+  }
+  .lane__img { width: 100%; height: 100%; object-fit: cover; }
+  .lane__cap { display: flex; flex-direction: column; gap: 0.2rem; }
+  .lane__stage { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rail-ink); }
+  .lane__desc { font-size: 0.95rem; color: var(--ink); }
+  /* The in-transit arrow between stages (desktop only) */
+  .lane__arrow {
+    position: absolute; top: 38%; right: -1.3rem;
+    font-family: var(--fd); font-weight: 800; font-size: 1.6rem;
+    color: var(--rail-ink); z-index: 2;
+  }
+  @media (max-width: 820px) { .lane__arrow { display: none; } }
+
+  /* ===================== LOADING SCHEDULE ===================== */
+  .schedule-section { padding-top: 0; }
+  .schedule {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.8rem, 1.6vw, 1.2rem);
+  }
+  @media (max-width: 860px) { .schedule { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .schedule { grid-template-columns: 1fr; } }
+  .route-card {
+    position: relative;
+    display: flex; flex-direction: column; gap: 0.35rem;
+    padding: 1.1rem 1.2rem;
+    background: linear-gradient(180deg, #262a2f, #1c1f23);
+    border: 1px solid var(--concrete-line);
+    border-top: 1px solid var(--rail-ink);
+    border-radius: 6px;
+    box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.6);
+    transition: transform 0.2s, border-top-color 0.2s;
+  }
+  .route-card:hover { transform: translateX(3px); border-top-color: #e6c98a; }
+  .route-card__no { font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
+  .route-card__name { font-family: var(--fd); font-weight: 700; font-stretch: 108%; font-size: 1.15rem; letter-spacing: -0.01em; color: var(--ink); }
+  .route-card__count { font-family: var(--fm); font-size: 0.68rem; color: var(--ink-soft); }
+  .route-card__status {
+    margin-top: 0.4rem;
+    font-family: var(--fm); font-size: 0.6rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--rail-ink);
+  }
+
+  /* ===================== FREIGHT · BRC on skid plates ===================== */
+  .freight-section { padding-top: 0; }
+  .freight {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(1.4rem, 3vw, 2.4rem);
+  }
+  @media (max-width: 980px) { .freight { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .freight { grid-template-columns: 1fr; } }
+  .freight__order { margin-top: clamp(2.5rem, 5vw, 3.5rem); text-align: center; }
+
+  .skid { display: flex; flex-direction: column; gap: 0; }
+  /* The skid plate: a pallet/skid the specimen sits on, reading as a loaded unit */
+  .skid__plate {
+    position: relative;
+    background: linear-gradient(180deg, #2a2e33, #1d2024);
+    border: 1px solid var(--concrete-line);
+    border-radius: 8px 8px 0 0;
+    padding: 14px 14px 18px;
+    box-shadow: 0 18px 30px -12px rgba(0, 0, 0, 0.65);
+  }
+  .skid__photo {
+    position: relative;
+    border-radius: 5px; overflow: hidden;
+    aspect-ratio: 1 / 1;
+    background: var(--concrete-deep);
+    box-shadow: inset 0 0 0 1px rgba(215, 221, 227, 0.1);
+  }
+  .skid__img { width: 100%; height: 100%; object-fit: cover; }
+  .skid__load {
+    position: absolute; bottom: 6px; left: 14px;
+    font-family: var(--fm); font-size: 0.58rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-soft);
+  }
+  /* The freight tag hangs below the skid plate */
+  .freight-tag {
+    position: relative;
+    background: var(--tag-paper);
+    color: var(--tag-ink);
+    border-radius: 0 0 6px 6px;
+    padding: 0.9rem 1rem 1rem;
+    box-shadow: 0 12px 22px -12px rgba(0, 0, 0, 0.6);
+    font-family: var(--fm);
+  }
+  .freight-tag__hole {
+    position: absolute; top: -6px; left: 1.2rem;
+    width: 12px; height: 6px;
+    background: var(--concrete);
+    border-radius: 0 0 12px 12px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  .freight-tag__name {
+    display: block;
+    font-family: var(--fd); font-weight: 700; font-stretch: 112%;
+    font-size: 1.05rem; letter-spacing: -0.01em; color: var(--tag-ink);
+    margin-bottom: 0.6rem;
+  }
+  .freight-tag__specs { display: flex; flex-direction: column; gap: 0; }
+  .freight-tag__spec {
+    display: flex; gap: 0.6rem;
+    border-top: 1px dashed rgba(26, 29, 32, 0.22);
+    padding: 0.28rem 0;
+    font-size: 0.72rem; line-height: 1.4;
+  }
+  .freight-tag__spec dt {
+    flex: 0 0 7.5rem;
+    color: var(--tag-ink); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.6rem;
+  }
+  .freight-tag__spec dd { color: var(--tag-ink-soft); }
+  .freight-tag__wa {
+    display: inline-block; margin-top: 0.7rem;
+    font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--signal-darker); font-weight: 600;
+    border-bottom: 1px solid rgba(168, 54, 11, 0.4);
+    padding-bottom: 1px;
+  }
+  .freight-tag__wa:hover { color: #8a2d09; border-bottom-color: #8a2d09; }
+
+  /* ===================== REACH PROOF ===================== */
+  .reach-section { background: var(--concrete-deep); }
+  .reach-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(0.8rem, 1.6vw, 1.2rem);
+  }
+  @media (max-width: 980px) { .reach-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .reach-grid { grid-template-columns: 1fr; } }
+  .reach-tile {
+    position: relative;
+    border-radius: 6px; overflow: hidden;
+    aspect-ratio: 4 / 3;
+    box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.7);
+  }
+  .reach-tile__img { width: 100%; height: 100%; object-fit: cover; }
+  .reach-tile__cap {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 0.6rem 0.8rem;
+    background: linear-gradient(180deg, transparent, rgba(13, 14, 16, 0.85));
+    font-family: var(--fm); font-size: 0.6rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-soft);
+  }
+
+  /* ===================== DISPATCH COUNTER ===================== */
+  .counter-section { background: var(--concrete-deep); padding-bottom: clamp(3rem, 8vw, 6rem); }
+  .counter { max-width: 46rem; margin: 0 auto; text-align: center; }
+  .counter .rail { display: block; margin-bottom: 1rem; }
+  .counter h2 {
+    font-family: var(--fd); font-weight: 800; font-stretch: 125%;
+    font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1; letter-spacing: -0.02em;
+    margin-bottom: 1.2rem; text-wrap: balance;
+  }
+  .counter__sub { color: var(--ink-soft); max-width: 48ch; margin: 0 auto 2rem; }
+  .counter__addr {
+    font-family: var(--fm); font-size: 0.7rem; letter-spacing: 0.06em;
+    color: var(--ink-soft); margin-top: 2rem; line-height: 1.7;
+  }
+
+  /* ===================== FOOTER ===================== */
+  .proto-footer {
+    padding: 1.4rem; text-align: center;
+    background: var(--concrete-deep);
+    border-top: 1px solid var(--concrete-line);
+  }
+  .proto-footer span {
+    font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-soft);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cta, .route-card, .waybill, .waybill > * { transition: none; transform: none; }
+    .cta:hover, .route-card:hover { transform: none; }
+  }
+</style>
+</body>
+</html>
