@@ -80,28 +80,41 @@ const proof = brcShowcase.proof.slice(0, 5);
 
   <!-- ===================== HERO · you're standing in the yard ===================== -->
   <section class="hero" aria-labelledby="hero-title">
-    <div class="hero__photo" data-parallax-layer="-0.12">
+    <!-- Cursor-driven head-turn parallax: the back photo shifts with the cursor
+         like turning your head in the space. Two layers for real depth. -->
+    <div class="hero__photo hero__photo--far" data-parallax-layer="-0.12" data-cursor-parallax="-18">
       <Image src={heroImg} alt="Tumpukan pagar BRC di gudang BSM Surabaya" width={1600} height={2000} loading="eager" fetchpriority="high" class="hero__img" />
     </div>
+    <!-- A foreground steel frame: a rack/structure in the yard that the visitor
+         looks past. Parallaxes opposite the back photo for head-turn depth. -->
+    <div class="hero__structure" data-cursor-parallax="10" aria-hidden="true">
+      <span class="hero__rail hero__rail--top"></span>
+      <span class="hero__rail hero__rail--left"></span>
+      <span class="hero__stencil">GUDANG · SBY</span>
+    </div>
     <div class="hero__scrim"></div>
+
     <div class="hero__content" data-reveal>
-      <span class="hero__eyebrow">DISTRIBUTOR MATERIAL · GUDANG SURABAYA</span>
-      <h1 class="hero__title" id="hero-title">Material bangunan.<br />Harga pabrik.<br />Siap kirim.</h1>
+      <h1 class="hero__title" id="hero-title">
+        <span class="hero__title-line" data-line>Material bangunan.</span>
+        <span class="hero__title-line" data-line>Harga pabrik.</span>
+        <span class="hero__title-line hero__title-line--accent" data-line>Siap kirim.</span>
+      </h1>
       <p class="hero__lede">Anda berdiri di gudang CV Bangun Sarana Makmur. Pagar BRC, atap, bondek, dan seluruh kebutuhan proyek konstruksi tertumpuk di sekitar Anda. Langsung dari sini, kirim ke 34 provinsi.</p>
       <div class="hero__actions">
-        <a class="cta cta--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+        <a class="cta cta--primary" href={wa} target="blank" rel="noopener">Minta Penawaran</a>
         <a class="cta cta--ghost" href="#stok">Lihat Stok BRC</a>
       </div>
     </div>
-    <div class="hero__scroll" data-reveal><span>gulir · masuk lebih dalam</span> ↓</div>
-  </section>
 
-  <!-- ===================== YARD MARKERS · stamped on the ground ===================== -->
-  <section class="markers" aria-label="Penanda gudang" data-reveal>
-    <div class="markers__cell"><b>34</b><span>Provinsi terjangkau</span></div>
-    <div class="markers__cell"><b>6</b><span>Kelompok material</span></div>
-    <div class="markers__cell"><b>READY</b><span>Stok gudang</span></div>
-    <div class="markers__cell"><b>FREE</b><span>Kirim Surabaya</span></div>
+    <!-- Scale read as the environment, not a metric strip: a single stamped yard
+         placard naming the reach, anchored to the floor of the yard. -->
+    <div class="hero__placard" data-reveal>
+      <span class="hero__placard-no">34</span>
+      <span class="hero__placard-lbl">provinsi terjangkau — jejak pengiriman nyata, bukan angka klaim</span>
+    </div>
+
+    <div class="hero__scroll" data-reveal><span>gulir · masuk lebih dalam</span> ↓</div>
   </section>
 
   <!-- ===================== WALK THE YARD · full-bleed break 1 ===================== -->
@@ -254,6 +267,22 @@ const proof = brcShowcase.proof.slice(0, 5);
   }
   if (!reduceMotion) window.addEventListener("pointermove", onPointer, { passive: true });
 
+  // ---- Cursor head-turn parallax: the hero photo + foreground structure shift
+  //      with the cursor like turning your head in the space. Two layers move
+  //      opposite for real depth. rAF-throttled, disabled on reduced-motion. ----
+  const parallaxEls = Array.from(document.querySelectorAll<HTMLElement>("[data-cursor-parallax]"));
+  let rafPar = 0, px = 0.5, cpx = 0.5;
+  function onParallax(e: PointerEvent) { px = e.clientX / window.innerWidth; if (!rafPar) rafPar = requestAnimationFrame(parTick); }
+  function parTick() {
+    cpx += (px - cpx) * 0.08;
+    for (const el of parallaxEls) {
+      const amt = parseFloat(el.dataset.cursorParallax || "0");
+      el.style.transform = `translateX(${(cpx - 0.5) * amt}px)`;
+    }
+    if (Math.abs(px - cpx) > 0.001) rafPar = requestAnimationFrame(parTick); else rafPar = 0;
+  }
+  if (!reduceMotion) window.addEventListener("pointermove", onParallax, { passive: true });
+
   // ---- GSAP motion orchestration ----
   (async () => {
     if (reduceMotion) return;
@@ -262,10 +291,14 @@ const proof = brcShowcase.proof.slice(0, 5);
     gsap.registerPlugin(ScrollTrigger);
     if (document.fonts?.ready) await document.fonts.ready;
 
-    // Hero entrance.
+    // Hero entrance: the placard + scroll reveal, and the headline LINES
+    // assemble in — each line rises from its clip (stenciled signage mounting up).
     const heroReveals = gsap.utils.toArray<HTMLElement>(".hero [data-reveal]");
     gsap.set(heroReveals, { autoAlpha: 0, y: 30 });
     gsap.to(heroReveals, { autoAlpha: 1, y: 0, duration: 1.0, ease: "power3.out", stagger: 0.12, delay: 0.2 });
+    const heroLines = gsap.utils.toArray<HTMLElement>(".hero__title-line");
+    gsap.set(heroLines, { yPercent: 105 });
+    gsap.to(heroLines, { yPercent: 0, duration: 0.9, ease: "power3.out", stagger: 0.1, delay: 0.35 });
 
     // Stock rises into view as you walk past (material you stand among).
     const mounts = gsap.utils.toArray<HTMLElement>("[data-mount]");
@@ -352,24 +385,55 @@ const proof = brcShowcase.proof.slice(0, 5);
   .cta--ghost:hover { border-color: var(--yard-light); background: rgba(255,255,255,0.04); }
   .cta--lg { font-size: 0.9rem; padding: 18px 38px; }
 
-  /* ===================== HERO ===================== */
+  /* ===================== HERO · you're standing in the yard ===================== */
   .hero { position: relative; min-height: 100vh; display: flex; align-items: flex-end; overflow: hidden; }
-  .hero__photo { position: absolute; inset: -8% 0; will-change: transform; }
+  /* Two depth layers parallax with the cursor (head-turn) + scroll. */
+  .hero__photo { position: absolute; inset: -8% -4%; will-change: transform; }
+  .hero__photo--far { z-index: 0; }
   .hero__img { width: 100%; height: 100%; object-fit: cover; }
-  .hero__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12,13,16,0.5) 0%, rgba(12,13,16,0.15) 35%, rgba(12,13,16,0.92) 100%), linear-gradient(90deg, rgba(12,13,16,0.5) 0%, transparent 60%); }
-  .hero__content { position: relative; z-index: 2; padding: 0 clamp(1rem, 5vw, 4rem) clamp(4rem, 8vh, 6rem); max-width: 40rem; }
-  .hero__eyebrow { font-family: var(--fm); font-size: 0.72rem; letter-spacing: 0.16em; color: var(--yard-accent); display: block; margin-bottom: 1.1rem; }
-  .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2.6rem, 7vw, 5.2rem); line-height: 0.94; letter-spacing: -0.02em; margin-bottom: 1.5rem; text-wrap: balance; }
-  .hero__lede { font-size: 1.12rem; color: rgba(245,245,244,0.88); max-width: 48ch; margin-bottom: 2rem; }
+  /* A foreground steel structure (rack rail + stencil) the visitor looks past.
+     Parallaxes opposite the back photo for real head-turn depth. */
+  .hero__structure { position: absolute; inset: 0; z-index: 1; pointer-events: none; will-change: transform; }
+  .hero__rail { position: absolute; background: linear-gradient(90deg, transparent, rgba(201,180,138,0.5), transparent); }
+  .hero__rail--top { top: 14%; left: 0; right: 0; height: 2px; }
+  .hero__rail--left { top: 14%; bottom: 0; left: 4%; width: 2px; background: linear-gradient(180deg, rgba(201,180,138,0.5), transparent); }
+  .hero__stencil {
+    position: absolute; top: 16%; left: 5%;
+    font-family: var(--fm); font-size: clamp(0.7rem, 1.4vw, 0.95rem);
+    letter-spacing: 0.4em; text-transform: uppercase; color: rgba(201,180,138,0.55);
+    /* stenciled: the letters read as cut/painted onto the steel, not web text */
+    -webkit-text-stroke: 1px rgba(201,180,138,0.25); color: transparent;
+  }
+  .hero__scrim {
+    position: absolute; inset: 0; z-index: 2;
+    background:
+      linear-gradient(180deg, rgba(12,13,16,0.35) 0%, transparent 30%, rgba(12,13,16,0.55) 70%, rgba(12,13,16,0.96) 100%),
+      linear-gradient(90deg, rgba(12,13,16,0.55) 0%, transparent 55%);
+  }
+  .hero__content { position: relative; z-index: 3; padding: 0 clamp(1rem, 5vw, 4rem) clamp(4rem, 9vh, 7rem); max-width: 42rem; }
+  /* The headline reads as signage that belongs to the yard: oversized, tight,
+     the third line carries the only color (the signal), like a stamped grade. */
+  .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2.8rem, 8vw, 6rem); line-height: 0.92; letter-spacing: -0.025em; margin-bottom: 1.6rem; text-wrap: balance; }
+  .hero__title-line { display: block; overflow: hidden; }
+  .hero__title-line--accent { color: var(--yard-accent); }
+  .hero__lede { font-size: 1.12rem; color: rgba(245,245,244,0.9); max-width: 46ch; margin-bottom: 2rem; }
   .hero__actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-  .hero__scroll { position: absolute; bottom: 1.5rem; right: clamp(1rem, 5vw, 4rem); z-index: 2; font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.1em; color: var(--yard-steel); display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
-
-  /* ===================== YARD MARKERS · stamped on the ground ===================== */
-  .markers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(130,138,147,0.16); }
-  .markers__cell { background: rgba(20, 22, 26, 0.86); backdrop-filter: blur(4px); padding: clamp(1.6rem, 4vw, 2.4rem) 1.5rem; }
-  .markers__cell b { display: block; font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1; margin-bottom: 0.4rem; color: var(--yard-light); }
-  .markers__cell span { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yard-steel); }
-  @media (max-width: 640px) { .markers { grid-template-columns: repeat(2, 1fr); } }
+  /* The yard placard: scale read as the environment, not a metric strip. A
+     single stamped plate anchored to the floor, naming the reach honestly. */
+  .hero__placard {
+    position: absolute; z-index: 3; bottom: clamp(4rem, 9vh, 7rem); right: clamp(1rem, 5vw, 4rem);
+    display: flex; align-items: baseline; gap: 0.8rem;
+    padding: 0.9rem 1.2rem;
+    background: rgba(12,13,16,0.6); backdrop-filter: blur(6px);
+    border: 1px solid rgba(201,180,138,0.3); border-radius: 3px;
+    max-width: 22rem;
+  }
+  .hero__placard-no { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2rem, 4vw, 2.8rem); line-height: 1; color: var(--beam); }
+  .hero__placard-lbl { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.06em; color: var(--yard-steel); line-height: 1.4; }
+  @media (max-width: 720px) {
+    .hero__placard { position: static; max-width: none; margin: 1.5rem clamp(1rem, 5vw, 4rem) 0; }
+  }
+  .hero__scroll { position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 3; font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.12em; color: var(--yard-steel); display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
 
   /* ===================== WALK THE YARD · full-bleed breaks ===================== */
   .yard-break { position: relative; height: 75vh; min-height: 480px; overflow: hidden; display: flex; align-items: flex-end; }
