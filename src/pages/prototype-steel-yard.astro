@@ -93,6 +93,7 @@ const proof = brcShowcase.proof.slice(0, 5);
       <span class="hero__stencil">GUDANG · SBY</span>
     </div>
     <div class="hero__scrim"></div>
+    <div class="hero__legibility" aria-hidden="true"></div>
 
     <div class="hero__content" data-reveal>
       <h1 class="hero__title" id="hero-title">
@@ -386,7 +387,7 @@ const proof = brcShowcase.proof.slice(0, 5);
   .cta--lg { font-size: 0.9rem; padding: 18px 38px; }
 
   /* ===================== HERO · you're standing in the yard ===================== */
-  .hero { position: relative; min-height: 100vh; display: flex; align-items: flex-end; overflow: hidden; }
+  .hero { position: relative; min-height: 100vh; display: flex; align-items: flex-end; overflow: hidden; padding-top: 5.5rem; /* clear the fixed navbar, never let content overflow up into it */ }
   /* Two depth layers parallax with the cursor (head-turn) + scroll. */
   .hero__photo { position: absolute; inset: -8% -4%; will-change: transform; }
   .hero__photo--far { z-index: 0; }
@@ -410,7 +411,18 @@ const proof = brcShowcase.proof.slice(0, 5);
       linear-gradient(180deg, rgba(12,13,16,0.35) 0%, transparent 30%, rgba(12,13,16,0.55) 70%, rgba(12,13,16,0.96) 100%),
       linear-gradient(90deg, rgba(12,13,16,0.55) 0%, transparent 55%);
   }
-  .hero__content { position: relative; z-index: 3; padding: 0 clamp(1rem, 5vw, 4rem) clamp(4rem, 9vh, 7rem); max-width: 42rem; }
+  /* Localized legibility plate behind the headline + lede: a stronger
+     bottom-left scrim so the text is always readable regardless of the photo,
+     wherever the content block lands (it's tall on short viewports). Full
+     height, gradient darkest at the bottom-left text region. z-index 2. */
+  .hero__legibility {
+    position: absolute; z-index: 2; inset: 0;
+    background:
+      radial-gradient(120% 90% at 0% 100%, rgba(12,13,16,0.92) 0%, rgba(12,13,16,0.55) 38%, transparent 70%),
+      linear-gradient(180deg, transparent 0%, rgba(12,13,16,0.35) 40%, rgba(12,13,16,0.8) 75%, rgba(12,13,16,0.96) 100%);
+    pointer-events: none;
+  }
+  .hero__content { position: relative; z-index: 3; padding: 0 clamp(1rem, 5vw, 4rem) clamp(3.5rem, 8vh, 6rem); max-width: 42rem; }
   /* The headline reads as signage that belongs to the yard: oversized, tight,
      the third line carries the only color (the signal), like a stamped grade. */
   .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2.8rem, 8vw, 6rem); line-height: 0.92; letter-spacing: -0.025em; margin-bottom: 1.6rem; text-wrap: balance; }
