@@ -8,23 +8,29 @@
   collapse into "a catalog grid of product cards" (the "books" failure mode)?
 
   Self-contained: does NOT import Blueprint Field global.css or Base.astro.
-  Run: astro dev → visit /prototype-material-library
+  Run: astro dev -> visit /prototype-material-library
 
   DIRECTION CONTRACT (this prototype only, not a new DESIGN.md)
   THESIS: Real steel, curated and mounted. BSM's sample wall — the supplier's
     reference library of real cut specimens, each tagged with honest specs.
     Refuses the catalog-grid-of-cards default and the "books" impression.
-  OWN-WORLD: Dark perforated hardboard sample-room wall; galvanized-steel
-    specimen photography mounted onto it with real offset shadows + pin marks;
-    printed paper specimen tags (mono) hung beside each sample carrying specs
+  OWN-WORLD: A LIVING perforated-steel sample wall — an OGL fragment shader
+    renders the pegboard ground as reactive galvanized steel: raking light
+    drifts and follows the cursor, holes catch sheen, spangle noise reads as
+    real metal, scroll parallax gives depth. Galvanized-steel specimen
+    photography MOUNTS onto it (scroll-driven, GSAP-orchestrated) with real
+    offset shadows + pin marks; printed paper specimen tags (mono) carry specs
     as a supplier tags real stock; ink text; one industrial accent for tags;
     signal-orange reserved for the WhatsApp quote CTA only.
-  STORY: A visitor meets a curated wall of real BRC specimens, reads each as a
-    physical mounted object with an honest spec tag, and asks for a quote.
-  FIRST VIEWPORT: A straight-on sample wall: panel, tiang, pintu mounted large
-    with shadows and tags; placard headline "Baja asli. Dirakit. Ditagih spesifikasinya.";
-    a stamped WhatsApp quote CTA. The pegboard ground reads as a real wall.
-  FORM: Material Library (POV 4), one of four locked POVs (ticket #8); this is a
+  STORY: A visitor meets a curated wall of real BRC specimens that lives and
+    breathes — light rakes across the steel as they move, specimens mount as
+    they scroll — reads each as a physical object with an honest spec tag, and
+    asks for a quote.
+  FIRST VIEWPORT: A straight-on sample wall: the shader ground is alive (light
+    follows the cursor); panel/tiang/pintu mount large with shadows and tags;
+    placard headline "Baja asli. Dirakit. Ditagih spesifikasinya."; a stamped
+    WhatsApp quote CTA. The wall is a real, lit surface, not a flat texture.
+  FORM: Material Library (POV 4), one of four locked POVs (ticket #8); a
     prototype variant, not a concept-seed roll. Seed: wayfinder #12.
   FINISH: unreviewed and undocumented is unfinished; this build ends with the
     finish review, the verdict, and DESIGN.md.
@@ -39,14 +45,11 @@ const waBrc = waLink(
   "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang, pintu, aksesoris). Mohon info harga pabrik, stok, pengiriman. Terima kasih."
 );
 
-// Hero specimens: the straight-on sample wall's anchor pieces.
 const heroSpecimens = [
   brcShowcase.items.find((i) => i.slug === "pagar-brc-panel")!,
   brcShowcase.items.find((i) => i.slug === "pintu-pagar-brc")!,
   brcShowcase.items.find((i) => i.slug === "tiang-brc")!,
 ];
-
-// Proof photos: "where this sample comes from / where it goes".
 const proof = brcShowcase.proof.slice(0, 4);
 ---
 <!doctype html>
@@ -60,7 +63,13 @@ const proof = brcShowcase.proof.slice(0, 4);
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <!-- NAV: stamped label on the wall's top rail -->
+  <!-- The living wall: a fixed full-bleed shader canvas behind everything.
+       The shader renders the pegboard as reactive galvanized steel. Sections
+       above it are transparent/translucent so the wall shows through. -->
+  <div class="wall-canvas" data-material-wall aria-hidden="true"></div>
+  <div class="wall-fallback" aria-hidden="true"></div>
+
+  <!-- NAV -->
   <nav class="nav">
     <a class="nav__brand" href={u("/")}>BSM</a>
     <div class="nav__links">
@@ -73,7 +82,7 @@ const proof = brcShowcase.proof.slice(0, 4);
 
   <!-- ===================== HERO · the sample wall ===================== -->
   <section class="wall hero-wall" aria-labelledby="hero-title">
-    <div class="wall__placard">
+    <div class="wall__placard" data-reveal>
       <span class="placard__index">PUSTAKA MATERIAL · No. 01 / BRC</span>
       <h1 class="placard__title" id="hero-title">Baja asli.<br />Dirakit.<br />Ditagih spesifikasinya.</h1>
       <p class="placard__lede">Dinding contoh CV Bangun Sarana Makmur: setiap spesimen pagar BRC dipasang, diberi tag, dan diperiksa. Ini bukan brosur. Ini gudang contoh nyata: panel dilas titik, digalvanis, siap Anda bandingkan dari setiap sisi.</p>
@@ -85,7 +94,7 @@ const proof = brcShowcase.proof.slice(0, 4);
 
     <div class="hero-mounts">
       {heroSpecimens.map((s, i) => (
-        <figure class={`mount mount--hero mount--${i + 1}`}>
+        <figure class={`mount mount--hero mount--${i + 1}`} data-mount data-reveal>
           <div class="mount__pin mount__pin--tl"></div>
           <div class="mount__pin mount__pin--tr"></div>
           <div class="mount__photo">
@@ -104,18 +113,20 @@ const proof = brcShowcase.proof.slice(0, 4);
         </figure>
       ))}
     </div>
+
+    <div class="hero__scroll" data-reveal><span>gulir · dinding ini hidup</span> ↓</div>
   </section>
 
   <!-- ===================== LIBRARY INDEX · the 6 categories as racked labels ===================== -->
   <section class="wall wall--index" id="katalog" aria-labelledby="index-title">
-    <header class="wall__head">
+    <header class="wall__head" data-reveal>
       <span class="rail">RAK INDEKS · 6 KELOMPOK MATERIAL</span>
       <h2 id="index-title">Satu sumber untuk seluruh proyek</h2>
       <p class="wall__sub">Enam kelompok material dirakit di satu gudang. BRC adalah pintu masuk; seluruh katalog ada di rak di belakangnya.</p>
     </header>
     <div class="rack">
       {categories.map((c) => (
-        <a class="rack-label" href={u(`/kategori/${c.slug}`)}>
+        <a class="rack-label" data-mount href={u(`/kategori/${c.slug}`)}>
           <span class="rack-label__cat">Rak {c.slug}</span>
           <span class="rack-label__name">{c.name}</span>
           <span class="rack-label__count">{c.count} lini · {c.lines[0]} →</span>
@@ -126,15 +137,15 @@ const proof = brcShowcase.proof.slice(0, 4);
 
   <!-- ===================== THE COLLECTION · BRC mounted on the wall ===================== -->
   <section class="wall wall--collection" id="koleksi" aria-labelledby="coll-title">
-    <header class="wall__head">
+    <header class="wall__head" data-reveal>
       <span class="rail">KOLEKSI · PAGAR BRC</span>
       <h2 id="coll-title">Setiap spesimen dipasang dan ditagih</h2>
-      <p class="wall__sub">Bukan foto produk di kartu putih. Ini baja galvanis asli, dipasang di dinding contoh, dengan tag spesifikasi seperti gudang menandai stok nyata.</p>
+      <p class="wall__sub">Bukan foto produk di kartu putih. Ini baja galvanis asli, dipasang di dinding contoh, dengan tag spesifikasi seperti gudang menandai stok nyata. Arahkan kursor ke sebuah spesimen untuk memperdekatkan.</p>
     </header>
 
     <div class="collection collection--curated">
       {brcShowcase.items.map((s, i) => (
-        <article class={`mount mount--coll mount--coll-${i + 1}`} tabindex="0">
+        <article class={`mount mount--coll mount--coll-${i + 1}`} tabindex="0" data-mount>
           <div class="mount__pin mount__pin--tl"></div>
           <div class="mount__pin mount__pin--tr"></div>
           <div class="mount__photo">
@@ -155,27 +166,26 @@ const proof = brcShowcase.proof.slice(0, 4);
       ))}
     </div>
 
-    <!-- Quiet passage: how to read this wall (pacing after the dense collection) -->
-    <aside class="reading-note">
+    <aside class="reading-note" data-reveal>
       <span class="rail">CARA BACA DINDING INI</span>
       <p>Setiap spesimen dipasang dengan dua pin dan satu tag. Tag bukan label pemasaran: itu catatan gudang. Dimensi, diameter kawat, mesh, finishing, asal. Bila sebuah kunci tidak tertera, berarti tidak berlaku untuk unit itu. Bila Anda ragu, minta penawaran per unit, dan tim sales akan memverifikasi spesifikasi hari ini.</p>
     </aside>
 
-    <div class="collection__order">
+    <div class="collection__order" data-reveal>
       <a class="cta cta--primary cta--lg" href={waBrc} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
     </div>
   </section>
 
   <!-- ===================== ASAL & TUJUAN · proof photos mounted as reference ===================== -->
   <section class="wall wall--proof" aria-labelledby="proof-title">
-    <header class="wall__head wall__head--light">
+    <header class="wall__head wall__head--light" data-reveal>
       <span class="rail">ASAL & TUJUAN · DI LAPANGAN</span>
       <h2 id="proof-title">Dari mana contoh ini datang, ke mana ia pergi</h2>
       <p class="wall__sub">Setiap spesimen di atas adalah bukti dari gudang dan lapangan nyata. Foto terpasang ini dipasang di dinding sebagai referensi, bukan klaim, tapi jejak.</p>
     </header>
     <div class="proof-wall">
       {proof.map((p, i) => (
-        <figure class={`proof-mount proof-mount--${i + 1}`}>
+        <figure class={`proof-mount proof-mount--${i + 1}`} data-mount>
           <div class="mount__pin mount__pin--tl"></div>
           <div class="mount__pin mount__pin--tr"></div>
           <div class="mount__photo">
@@ -189,7 +199,7 @@ const proof = brcShowcase.proof.slice(0, 4);
 
   <!-- ===================== ORDER COUNTER · the wall's quote desk ===================== -->
   <section class="wall wall--counter" id="kontak" aria-labelledby="counter-title">
-    <div class="counter">
+    <div class="counter" data-reveal>
       <span class="rail">MEJA PESAN · WHOLESALE</span>
       <h2 id="counter-title">Siap pesan? Bandingkan spesimen, lalu minta harga pabrik.</h2>
       <p class="counter__sub">Hubungi tim sales BSM via WhatsApp. Harga pabrik, stok gudang, dan pengiriman ke 34 provinsi dalam satu obrolan.</p>
@@ -202,30 +212,102 @@ const proof = brcShowcase.proof.slice(0, 4);
     <span>PROTOTYPE POV 4 · The Material Library · THROWAWAY · wayfinder #12</span>
   </footer>
 
+<script>
+  // ---- The living wall: lazy-init the OGL shader after first paint. ----
+  // No-WebGL / reduced-motion -> the CSS fallback wall shows (static pegboard).
+  const wallContainer = document.querySelector<HTMLElement>("[data-material-wall]");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let disposeWall: (() => void) | null | undefined = undefined;
+
+  async function maybeStartWall() {
+    if (disposeWall !== undefined) return; // already attempted
+    if (!wallContainer) return;
+    if (reduceMotion) { disposeWall = null; return; }
+    try {
+      const { initMaterialWall } = await import("../scripts/materialLibraryShader.ts");
+      disposeWall = initMaterialWall(wallContainer);
+    } catch {
+      disposeWall = null; // shader failed -> CSS fallback
+    }
+  }
+  // Lazy-init after first paint so the shader never blocks LCP.
+  window.addEventListener("load", maybeStartWall, { once: true });
+  // Fallback if load already fired.
+  if (document.readyState === "complete") maybeStartWall();
+
+  // ---- GSAP motion orchestration ----
+  // Hero entrance (choreographed on load) + scroll-driven specimen mounting
+  // (specimens "mount onto the wall" as they enter view). Reduced-motion ->
+  // everything visible immediately, no animation.
+  (async () => {
+    if (reduceMotion) return;
+    const gsap = (await import("gsap")).default;
+    const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Wait for fonts so the entrance doesn't jolt on font swap.
+    if (document.fonts?.ready) await document.fonts.ready;
+
+    // --- Hero entrance: placard + mounts choreograph in. ---
+    const heroReveals = gsap.utils.toArray<HTMLElement>(".hero-wall [data-reveal]");
+    gsap.set(heroReveals, { autoAlpha: 0, y: 28 });
+    gsap.to(heroReveals, {
+      autoAlpha: 1, y: 0, duration: 0.9, ease: "power3.out", stagger: 0.12, delay: 0.15,
+    });
+
+    // --- Scroll-driven mounting: specimens mount onto the wall as they enter. ---
+    // The "mount" gesture: translateZ (via scale + y) + shadow deepen + pin drop.
+    const mounts = gsap.utils.toArray<HTMLElement>("[data-mount]:not(.hero-wall [data-mount])");
+    mounts.forEach((el) => {
+      gsap.set(el, { autoAlpha: 0, y: 40, scale: 0.94, rotateX: 6 });
+      ScrollTrigger.create({
+        trigger: el, start: "top 88%", once: true,
+        onEnter: () => {
+          gsap.to(el, {
+            autoAlpha: 1, y: 0, scale: 1, rotateX: 0,
+            duration: 0.8, ease: "power2.out",
+          });
+          // Pins drop in slightly after the mount settles.
+          const pins = el.querySelectorAll<HTMLElement>(".mount__pin");
+          if (pins.length) {
+            gsap.fromTo(pins, { scaleY: 0 }, { scaleY: 1, duration: 0.3, ease: "back.out(2)", stagger: 0.05, delay: 0.3 });
+          }
+        },
+      });
+    });
+
+    // --- Section heads reveal. ---
+    const heads = gsap.utils.toArray<HTMLElement>(".wall__head[data-reveal], .reading-note[data-reveal], .collection__order[data-reveal], .counter[data-reveal]");
+    heads.forEach((el) => {
+      gsap.set(el, { autoAlpha: 0, y: 24 });
+      ScrollTrigger.create({
+        trigger: el, start: "top 85%", once: true,
+        onEnter: () => gsap.to(el, { autoAlpha: 1, y: 0, duration: 0.8, ease: "power2.out" }),
+      });
+    });
+
+    ScrollTrigger.refresh();
+  })();
+</script>
+
 <style>
   :root {
-    /* The sample-room wall: dark perforated hardboard */
-    --board: #1a1d22;          /* hardboard face */
-    --board-deep: #121418;      /* recessed / footer */
-    --board-hole: #0e1014;      /* pegboard hole */
-    --board-rail: #252a30;      /* mounting rail */
-    --board-rail-hover: #323840; /* rail hover */
-    /* Specimen + tag surfaces */
-    --tag-paper: #f5f2eb;       /* printed paper specimen tag — manila, not yellowed */
-    --tag-paper-deep: #e9e5db;
-    --tag-ink: #181b1f;
-    --tag-ink-soft: #565b62;
-    /* Reading text on the dark wall */
-    --ink: #edeae4;            /* headlines / body on board */
-    --ink-soft: #9399a0;        /* secondary on board */
-    --rail-ink: #d4bd8e;        /* industrial brass rail label */
-    --rail-ink-dim: #a6976e;    /* dimmed brass */
-    /* Steel specimens */
-    --steel-edge: #cdd4db;
-    /* CTA */
-    --signal: #e85d2c;
-    --signal-deep: #c54718;
-    --signal-darker: #a5380e;
+    /* The sample-room wall: dark perforated hardboard (shader + CSS fallback) */
+    --board: #1a1d22;
+    --board-deep: #121418;
+    --board-hole: #0e1014;
+    --board-rail: #2b3036;
+    --tag-paper: #f3efe4;
+    --tag-paper-deep: #e6e0d1;
+    --tag-ink: #1a1d20;
+    --tag-ink-soft: #5a5f66;
+    --ink: #ece9e2;
+    --ink-soft: #9aa0a8;
+    --rail-ink: #c9b48a;
+    --steel-edge: #d7dde3;
+    --signal: #e8551e;
+    --signal-deep: #c8430f;
+    --signal-darker: #a8360b;
     --fd: "Archivo", "Arial Narrow", sans-serif;
     --fb: "Hanken Grotesk", system-ui, sans-serif;
     --fm: "JetBrains Mono", ui-monospace, monospace;
@@ -234,60 +316,48 @@ const proof = brcShowcase.proof.slice(0, 4);
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
-    background: var(--board);
+    background: var(--board-deep);
     color: var(--ink);
     font-family: var(--fb);
     font-size: 1.0625rem;
-    line-height: 1.65;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* subtle grain on the board surface */
-    background-image:
-      radial-gradient(var(--board-hole) 0.8px, transparent 1px),
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    background-size: 28px 28px, 256px 256px;
-    background-position: 0 0;
+    overflow-x: hidden;
   }
   img { display: block; max-width: 100%; }
   a { color: inherit; text-decoration: none; }
 
-  /* The pegboard ground — real perforated hardboard, the supplier's sample wall.
-     Holes are geometry (a material), not decoration. */
-  .wall {
-    position: relative;
-    padding: clamp(3.5rem, 8vw, 6.5rem) clamp(1rem, 5vw, 4rem);
+  /* ---- The living wall: fixed full-bleed shader canvas ---- */
+  .wall-canvas {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
   }
-  .wall::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(var(--board-hole) 1.2px, transparent 1.4px);
-    background-size: 28px 28px;
-    background-position: 0 0;
-    opacity: 0.45;
-    pointer-events: none;
-    z-index: 0;
+  .wall-canvas canvas { display: block; width: 100%; height: 100%; }
+  /* CSS fallback: static pegboard, shown until/instead of the shader. The
+     shader canvas renders opaque over it, so the fallback only shows when
+     WebGL is unavailable or reduced-motion is set. */
+  .wall-fallback {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-color: var(--board);
+    background-image: radial-gradient(var(--board-hole) 1.5px, transparent 1.6px);
+    background-size: 22px 22px;
+    opacity: 0.6;
   }
-  .wall > * { position: relative; z-index: 1; }
+  /* Once the shader is live, hide the fallback dots (the shader is opaque). */
+  .wall-canvas:not(:empty) ~ .wall-fallback { opacity: 0; }
 
-  .rail {
-    font-family: var(--fm);
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--rail-ink);
-  }
-  .wall__head { max-width: 60ch; margin-bottom: clamp(2.5rem, 5vw, 4rem); }
-  .wall__head--light .rail { color: var(--rail-ink-dim); }
+  /* Sections sit above the fixed wall; most are transparent so the wall shows. */
+  .wall { position: relative; z-index: 1; padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem); }
+  /* Opaque-ish sections (proof, counter) read as recessed bays in the wall. */
+  .wall--proof, .wall--counter { background: rgba(18, 20, 24, 0.86); backdrop-filter: blur(2px); }
+
+  .rail { font-family: var(--fm); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--rail-ink); }
+  .wall__head { max-width: 60ch; margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+  .wall__head--light .rail { color: var(--rail-ink); }
   .wall__head h2 {
-    font-family: var(--fd);
-    font-weight: 700;
-    font-stretch: 112%;
-    font-size: clamp(1.75rem, 4vw, 2.9rem);
-    line-height: 1.06;
-    letter-spacing: -0.015em;
-    margin: 0.75rem 0 1.1rem;
-    text-wrap: balance;
+    font-family: var(--fd); font-weight: 700; font-stretch: 112%;
+    font-size: clamp(1.7rem, 4vw, 2.8rem); line-height: 1.04; letter-spacing: -0.01em;
+    margin: 0.7rem 0 1rem; text-wrap: balance;
   }
   .wall__sub { color: var(--ink-soft); max-width: 56ch; }
 
@@ -295,38 +365,30 @@ const proof = brcShowcase.proof.slice(0, 4);
   .nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0.85rem clamp(1rem, 4vw, 3rem);
-    background: rgba(18, 20, 24, 0.88);
-    backdrop-filter: blur(14px) saturate(1.2);
-    -webkit-backdrop-filter: blur(14px) saturate(1.2);
-    border-bottom: 1px solid rgba(37, 42, 48, 0.7);
+    padding: 0.9rem clamp(1rem, 4vw, 3rem);
+    background: rgba(18, 20, 24, 0.7); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--board-rail);
   }
   .nav__brand { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: 1.4rem; letter-spacing: -0.02em; }
-  .nav__links { display: flex; gap: 1.6rem; align-items: center; }
-  .nav__links a { font-family: var(--fm); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); transition: color 0.2s; }
+  .nav__links { display: flex; gap: 1.5rem; }
+  .nav__links a { font-family: var(--fm); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); transition: color 0.2s; }
   .nav__links a:hover { color: var(--ink); }
-  .nav__wa {
-    font-family: var(--fm); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
-    background: var(--signal-deep); color: #fcfaf6;
-    padding: 0.5rem 1.1rem; border-radius: 4px; font-weight: 600;
-    transition: background 0.2s, transform 0.15s;
-  }
-  .nav__wa:hover { background: var(--signal-darker); transform: translateY(-1px); }
+  .nav__wa { font-family: var(--fm); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; background: var(--signal-deep); color: #fff; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600; }
   @media (max-width: 640px) { .nav__links { display: none; } }
 
   /* ---- CTAs ---- */
   .cta {
     display: inline-flex; align-items: center;
-    font-family: var(--fm); font-size: 0.78rem; letter-spacing: 0.12em;
+    font-family: var(--fm); font-size: 0.8rem; letter-spacing: 0.1em;
     text-transform: uppercase; font-weight: 600;
-    padding: 15px 30px; border-radius: 4px;
+    padding: 14px 28px; border-radius: 4px;
     transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   }
-  .cta--primary { background: var(--signal-deep); color: #fcfaf6; }
-  .cta--primary:hover { background: var(--signal-darker); transform: translateY(-1px); box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.5); }
+  .cta--primary { background: var(--signal-deep); color: #fff; box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.6); }
+  .cta--primary:hover { background: var(--signal-darker); transform: translateY(-2px); box-shadow: 0 10px 22px -8px rgba(0, 0, 0, 0.65); }
   .cta--ghost { background: transparent; color: var(--ink); border: 1px solid var(--ink-soft); }
-  .cta--ghost:hover { border-color: var(--ink); background: rgba(255, 255, 255, 0.03); }
-  .cta--lg { font-size: 0.88rem; padding: 18px 38px; }
+  .cta--ghost:hover { border-color: var(--ink); background: rgba(255, 255, 255, 0.04); }
+  .cta--lg { font-size: 0.9rem; padding: 18px 38px; }
 
   /* ===================== HERO WALL ===================== */
   .hero-wall {
@@ -350,6 +412,11 @@ const proof = brcShowcase.proof.slice(0, 4);
   }
   .placard__lede { color: var(--ink-soft); font-size: 1.1rem; max-width: 48ch; margin-bottom: 2.2rem; line-height: 1.65; }
   .placard__actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .hero__scroll {
+    position: absolute; bottom: 1.5rem; left: clamp(1rem, 5vw, 4rem);
+    font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.1em; color: var(--ink-soft);
+    display: flex; flex-direction: column; gap: 0.3rem;
+  }
 
   .hero-mounts {
     display: grid;
@@ -357,6 +424,7 @@ const proof = brcShowcase.proof.slice(0, 4);
     grid-template-rows: auto auto;
     gap: clamp(1.4rem, 3.2vw, 2.6rem);
     align-items: start;
+    perspective: 1200px;
   }
   .hero-mounts .mount--1 { grid-row: 1 / span 2; }
   @media (max-width: 640px) {
@@ -364,173 +432,103 @@ const proof = brcShowcase.proof.slice(0, 4);
     .hero-mounts .mount--1 { grid-row: auto; }
   }
 
-  /* ===================== MOUNT · the core "physical specimen on a wall" unit ===================== */
+  /* ===================== MOUNT · the core physical-specimen unit ===================== */
   .mount {
     position: relative;
-    background: linear-gradient(175deg, #22262c, #181b20);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, #23272c, #1a1d21);
+    border: 1px solid var(--board-rail);
     border-radius: 10px;
     padding: 14px 14px 0;
-    /* THE anti-"books" discipline: a real offset drop shadow = a physical object
-       mounted off the wall, not a card sitting in a grid. Three-layer depth. */
     box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.3),
-      0 1px 2px rgba(0, 0, 0, 0.35),
-      0 16px 28px -10px rgba(0, 0, 0, 0.6),
-      0 28px 48px -16px rgba(0, 0, 0, 0.45);
-    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.35s ease;
-  }
-  .mount:hover {
-    transform: translateY(-5px);
-    box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.3),
-      0 1px 2px rgba(0, 0, 0, 0.35),
-      0 22px 36px -10px rgba(0, 0, 0, 0.65),
-      0 38px 60px -16px rgba(0, 0, 0, 0.5);
+      0 1px 1px rgba(0, 0, 0, 0.4),
+      0 18px 30px -10px rgba(0, 0, 0, 0.65),
+      0 30px 50px -16px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.4s;
+    transform-style: preserve-3d;
   }
   .mount--hero { padding: 16px 16px 0; }
-  /* Pin marks — physical evidence the specimen is fastened to the board */
   .mount__pin {
     position: absolute; z-index: 3;
-    width: 8px; height: 8px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #7a8290, #2a2e34 65%);
-    box-shadow:
-      0 0.5px 1px rgba(0, 0, 0, 0.5),
-      0 1px 3px rgba(0, 0, 0, 0.4);
+    width: 11px; height: 11px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #6b7280, #2a2e33 70%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    transform-origin: top center;
   }
-  .mount__pin--tl { top: 5px; left: 5px; }
-  .mount__pin--tr { top: 5px; right: 5px; }
+  .mount__pin--tl { top: 7px; left: 7px; }
+  .mount__pin--tr { top: 7px; right: 7px; }
 
   .mount__photo {
     position: relative;
-    border-radius: 5px;
-    overflow: hidden;
-    background: #0d0e11;
-    /* a faint inner steel edge so the photo reads as a mounted plate, not a bleed */
-    box-shadow: inset 0 0 0 1px rgba(205, 212, 219, 0.1);
+    border-radius: 6px; overflow: hidden;
+    background: #0e0f12;
+    box-shadow: inset 0 0 0 1px rgba(215, 221, 227, 0.12);
   }
   .mount__img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .mount--hero .mount__photo { aspect-ratio: 1 / 1; }
   .mount--coll .mount__photo { aspect-ratio: 1 / 1; }
 
+  /* Specimen inspection: hover/focus lifts the mount forward (turn a sample
+     toward you) with a deeper shadow. Keyboard-accessible. */
+  .mount--coll:hover, .mount--coll:focus-within {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.4),
+      0 32px 50px -12px rgba(0, 0, 0, 0.75),
+      0 50px 80px -16px rgba(0, 0, 0, 0.6);
+    z-index: 4;
+  }
+  .mount--coll:focus-visible { outline: 2px solid var(--rail-ink); outline-offset: 4px; }
+
   /* ===================== TAG · the printed paper specimen tag ===================== */
   .tag {
     position: relative;
-    margin: 14px 4px 18px;
-    padding: 0.8rem 0.95rem 0.9rem;
+    margin: 12px 4px 16px;
+    padding: 0.7rem 0.9rem 0.85rem;
     background: var(--tag-paper);
     color: var(--tag-ink);
     border-radius: 3px;
-    /* a tag hangs below the specimen — a soft offset shadow lifts it off the board */
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.3),
-      0 6px 14px -6px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.6);
     font-family: var(--fm);
   }
-  /* subtle paper fiber texture */
-  .tag::after {
-    content: "";
-    position: absolute; inset: 0; border-radius: 3px;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none; z-index: 0;
-  }
-  .tag > * { position: relative; z-index: 1; }
-  /* the hang-hole punched in the tag */
   .tag__hole {
-    position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
-    width: 10px; height: 5px;
+    position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    width: 12px; height: 6px;
     background: var(--board);
-    border-radius: 0 0 10px 10px;
-    box-shadow: inset 0 0.5px 1.5px rgba(0, 0, 0, 0.4);
-    z-index: 2;
+    border-radius: 0 0 12px 12px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
   }
-  .tag__no {
-    display: block;
-    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--tag-ink-soft); margin-bottom: 0.3rem;
-    position: relative; z-index: 1;
-  }
-  .tag__name {
-    display: block;
-    font-family: var(--fd); font-weight: 700; font-stretch: 112%;
-    font-size: 1.05rem; letter-spacing: -0.01em; color: var(--tag-ink);
-    margin-bottom: 0.6rem;
-    position: relative; z-index: 1;
-  }
-  .tag__specs { display: block; position: relative; z-index: 1; }
-  .tag__spec {
-    display: block;
-    font-size: 0.7rem; line-height: 1.5;
-    color: var(--tag-ink-soft);
-    border-top: 1px dashed rgba(24, 27, 31, 0.2);
-    padding: 0.3rem 0;
-  }
-  .tag__spec b {
-    display: inline-block; min-width: 7.5rem;
-    color: var(--tag-ink); font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.58rem;
-  }
-  .tag__wa {
-    display: inline-block; margin-top: 0.65rem;
-    font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--signal-darker); font-weight: 600;
-    border-bottom: 1px solid rgba(165, 56, 14, 0.35);
-    padding-bottom: 1px;
-    position: relative; z-index: 1;
-    transition: color 0.2s, border-color 0.2s;
-  }
+  .tag__no { display: block; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tag-ink-soft); margin-bottom: 0.25rem; }
+  .tag__name { display: block; font-family: var(--fd); font-weight: 700; font-stretch: 112%; font-size: 1.05rem; letter-spacing: -0.01em; color: var(--tag-ink); margin-bottom: 0.55rem; }
+  .tag__specs { display: block; }
+  .tag__spec { display: block; font-size: 0.72rem; line-height: 1.45; color: var(--tag-ink-soft); border-top: 1px dashed rgba(26, 29, 32, 0.22); padding: 0.28rem 0; }
+  .tag__spec b { display: inline-block; min-width: 7.5rem; color: var(--tag-ink); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.6rem; }
+  .tag__wa { display: inline-block; margin-top: 0.6rem; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--signal-darker); font-weight: 600; border-bottom: 1px solid rgba(168, 54, 11, 0.4); padding-bottom: 1px; }
   .tag__wa:hover { color: #8a2d09; border-bottom-color: #8a2d09; }
 
   /* ===================== LIBRARY INDEX RACK ===================== */
   .wall--index { padding-bottom: clamp(3rem, 7vw, 5.5rem); }
-  .rack {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: clamp(0.9rem, 1.8vw, 1.3rem);
-  }
+  .rack { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(0.9rem, 1.8vw, 1.3rem); }
   @media (max-width: 860px) { .rack { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 540px) { .rack { grid-template-columns: 1fr; } }
   .rack-label {
-    position: relative;
-    display: flex; flex-direction: column; gap: 0.4rem;
+    position: relative; display: flex; flex-direction: column; gap: 0.4rem;
     padding: 1.2rem 1.3rem;
-    background: linear-gradient(175deg, #22262c, #191c21);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(175deg, rgba(34, 38, 44, 0.92), rgba(25, 28, 33, 0.92));
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--board-rail);
     border-top: 1px solid var(--rail-ink);
     border-radius: 6px;
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.3),
-      0 8px 20px -10px rgba(0, 0, 0, 0.55);
-    transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-top-color 0.25s, box-shadow 0.25s;
+    box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.6);
+    transition: transform 0.25s, border-top-color 0.25s, box-shadow 0.25s;
   }
-  .rack-label:hover {
-    transform: translateX(4px);
-    border-top-color: #e2cc94;
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.3),
-      0 12px 26px -10px rgba(0, 0, 0, 0.6);
-  }
-  .rack-label__cat {
-    font-family: var(--fm); font-size: 0.6rem; letter-spacing: 0.15em;
-    text-transform: uppercase; color: var(--ink-soft);
-  }
-  .rack-label__name {
-    font-family: var(--fd); font-weight: 700; font-stretch: 108%;
-    font-size: 1.15rem; letter-spacing: -0.01em; color: var(--ink);
-  }
-  .rack-label__count {
-    font-family: var(--fm); font-size: 0.66rem; color: var(--ink-soft);
-  }
+  .rack-label:hover { transform: translateX(4px); border-top-color: #e6c98a; box-shadow: 0 14px 28px -12px rgba(0, 0, 0, 0.65); }
+  .rack-label__cat { font-family: var(--fm); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-soft); }
+  .rack-label__name { font-family: var(--fd); font-weight: 700; font-stretch: 108%; font-size: 1.15rem; letter-spacing: -0.01em; color: var(--ink); }
+  .rack-label__count { font-family: var(--fm); font-size: 0.66rem; color: var(--ink-soft); }
 
-  /* ===================== COLLECTION GRID · curated, varied ===================== */
+  /* ===================== COLLECTION · curated, varied ===================== */
   .wall--collection { padding-top: 0; }
-  .collection {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: clamp(1.4rem, 3vw, 2.4rem);
-  }
-  /* Varied specimen sizes: a curated wall, not a uniform grid.
-     Larger anchor pieces, smaller satellite specimens. */
+  .collection { display: grid; grid-template-columns: repeat(6, 1fr); gap: clamp(1.4rem, 3vw, 2.4rem); perspective: 1400px; }
   .mount--coll-1 { grid-column: span 3; }
   .mount--coll-2 { grid-column: span 3; }
   .mount--coll-3 { grid-column: span 2; }
@@ -546,20 +544,6 @@ const proof = brcShowcase.proof.slice(0, 4);
   @media (max-width: 560px) { .collection { grid-template-columns: 1fr; } }
   .collection__order { margin-top: clamp(3rem, 6vw, 4rem); text-align: center; }
 
-  /* Specimen inspection: hover/focus lifts the mount forward (the "turn a
-     sample toward you" gesture) and the tag sharpens. Keyboard-accessible. */
-  .mount--coll { transition: transform 0.35s cubic-bezier(0.2,0.7,0.3,1), box-shadow 0.35s; }
-  .mount--coll:hover, .mount--coll:focus-within {
-    transform: translateY(-6px) scale(1.015);
-    box-shadow:
-      0 1px 1px rgba(0, 0, 0, 0.4),
-      0 28px 44px -12px rgba(0, 0, 0, 0.72),
-      0 44px 70px -16px rgba(0, 0, 0, 0.55);
-    z-index: 4;
-  }
-  .mount--coll:focus-visible { outline: 2px solid var(--rail-ink); outline-offset: 4px; }
-
-  /* Quiet passage: how to read the wall (pacing after density) */
   .reading-note {
     margin-top: clamp(3rem, 6vw, 4.5rem);
     padding: clamp(1.6rem, 4vw, 2.4rem) clamp(1.4rem, 3vw, 2rem);
@@ -570,77 +554,34 @@ const proof = brcShowcase.proof.slice(0, 4);
   .reading-note p { color: var(--ink-soft); font-size: 1rem; line-height: 1.7; }
 
   /* ===================== PROOF WALL ===================== */
-  .wall--proof {
-    background: var(--board-deep);
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  }
-  .proof-wall {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: clamp(1.1rem, 2.2vw, 1.8rem);
-  }
+  .proof-wall { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(1rem, 2vw, 1.6rem); }
   @media (max-width: 980px) { .proof-wall { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 560px) { .proof-wall { grid-template-columns: 1fr; } }
   .proof-mount {
-    background: linear-gradient(175deg, #22262c, #181b20);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, #23272c, #1a1d21);
+    border: 1px solid var(--board-rail);
     border-radius: 8px;
     padding: 12px 12px 0;
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.3),
-      0 12px 24px -10px rgba(0, 0, 0, 0.55);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-  }
-  .proof-mount:hover {
-    transform: translateY(-3px);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.3),
-      0 18px 30px -10px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 14px 26px -12px rgba(0, 0, 0, 0.65);
   }
   .proof-mount .mount__photo { aspect-ratio: 4 / 3; }
-  .proof-caption {
-    font-family: var(--fm); font-size: 0.64rem; letter-spacing: 0.11em;
-    text-transform: uppercase; color: var(--ink-soft);
-    text-align: center; padding: 0.75rem 0 0.9rem;
-  }
+  .proof-caption { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); text-align: center; padding: 0.7rem 0 0.9rem; }
 
   /* ===================== ORDER COUNTER ===================== */
-  .wall--counter { background: var(--board-deep); padding-bottom: clamp(3.5rem, 8vw, 6.5rem); }
-  .counter {
-    max-width: 46rem; margin: 0 auto; text-align: center;
-    background: linear-gradient(175deg, rgba(34, 38, 44, 0.5), rgba(24, 27, 32, 0.5));
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 4vw, 3rem);
-  }
-  .counter .rail { display: block; margin-bottom: 1.1rem; }
-  .counter h2 {
-    font-family: var(--fd); font-weight: 800; font-stretch: 125%;
-    font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.02; letter-spacing: -0.02em;
-    margin-bottom: 1.2rem; text-wrap: balance;
-  }
+  .wall--counter { padding-bottom: clamp(3rem, 8vw, 6rem); }
+  .counter { max-width: 46rem; margin: 0 auto; text-align: center; }
+  .counter .rail { display: block; margin-bottom: 1rem; }
+  .counter h2 { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1; letter-spacing: -0.02em; margin-bottom: 1.2rem; text-wrap: balance; }
   .counter__sub { color: var(--ink-soft); max-width: 48ch; margin: 0 auto 2rem; }
-  .counter__addr {
-    font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.07em;
-    color: var(--ink-soft); margin-top: 2rem; line-height: 1.8;
-  }
+  .counter__addr { font-family: var(--fm); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--ink-soft); margin-top: 2rem; line-height: 1.7; }
 
   /* ===================== FOOTER ===================== */
-  .proto-footer {
-    padding: 1.5rem; text-align: center;
-    background: var(--board-deep);
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-  }
-  .proto-footer span {
-    font-family: var(--fm); font-size: 0.64rem; letter-spacing: 0.11em;
-    text-transform: uppercase; color: var(--ink-soft);
-  }
+  .proto-footer { position: relative; z-index: 1; padding: 1.4rem; text-align: center; background: var(--board-deep); border-top: 1px solid var(--board-rail); }
+  .proto-footer span { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
 
-  /* Reduced motion: drop the hover lifts */
   @media (prefers-reduced-motion: reduce) {
-    .mount, .cta, .rack-label, .proof-mount { transition: none; }
-    .mount:hover, .rack-label:hover, .proof-mount:hover { transform: none; }
+    .cta, .mount, .rack-label { transition: none; }
+    .mount--coll:hover, .mount--coll:focus-within, .cta:hover, .rack-label:hover { transform: none; }
   }
 </style>
 </body>
