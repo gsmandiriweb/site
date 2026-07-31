@@ -1,40 +1,68 @@
 ---
 /*
-  PROTOTYPE — POV 1 "The Steel Yard" · THROWAWAY
+  PROTOTYPE · POV 1 "The Steel Yard" · THROWAWAY
   Wayfinder ticket #11. Not production. Delete or absorb when the prototype
   has answered its question: does a full-bleed yard photo read as "material
   immersion" (you're standing in the yard) rather than "a nice product photo"?
+
   Self-contained: does NOT import Blueprint Field global.css or Base.astro.
-  Run: astro dev → visit /prototype-steel-yard
+  Run: astro dev -> visit /prototype-steel-yard
+
+  DIRECTION CONTRACT (this prototype only, not a new DESIGN.md)
+  THESIS: You're standing in BSM's yard. Full-bleed, ground-level real
+    photography surrounds the visitor; the interface recedes behind the
+    environment. The page is a place, not a document about stock.
+    Refuses the centered hero, the card grid, and the "nice photo" read.
+  OWN-WORLD: Dark steel-yard ground; full-bleed ground-level photography
+    filling viewports with slow CSS parallax (moving through the space);
+    headline + CTA stamped over the material; specimens read as stock you
+    stand among (large, environmental, asymmetric), not a tidy grid; full-bleed
+    photographic breaks pace the scroll like walking the yard. Signal-orange
+    reserved for the WhatsApp quote CTA only.
+  STORY: A visitor is dropped into BSM's yard, surrounded by real stacked
+    material, feels the scale of a real supply operation, and asks for a quote.
+  FIRST VIEWPORT: A full-bleed ground-level yard-stock photo fills the screen;
+    a slow parallax reinforces moving through the space; headline "Material
+    bangunan. Harga pabrik. Siap kirim." sits over the material with a primary
+    WhatsApp CTA. The first viewport is the yard, not a header about it.
+  FORM: Steel Yard (POV 1), one of four locked POVs (ticket #8); a prototype
+    variant, not a concept-seed roll. Seed: wayfinder #11.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+    finish review, the verdict, and DESIGN.md.
 */
 import { Image } from "astro:assets";
 import { imageAsset } from "../utils/images.ts";
-import { categories, brcProducts } from "../data/catalog.ts";
+import { categories, brcShowcase } from "../data/catalog.ts";
 import { u, waLink } from "../utils/url.ts";
 
 const wa = waLink();
 const waBrc = waLink(
   "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang, pintu, aksesoris). Mohon info harga pabrik, stok, pengiriman. Terima kasih."
 );
+
+// The yard: full-bleed ground-level shots the visitor walks through.
 const heroImg = imageAsset("pagar-brc-tumpukan-stok-gudang-1.jpg");
-const yardImgs = [
-  imageAsset("pagar-brc-terpasang-outdoor-1.jpg"),
-  imageAsset("pagar-brc-tumpukan-stok-gudang-2.jpg"),
-  imageAsset("tiang-brc-dengan-panel-perspektif-1.jpg"),
-];
+const yardBreak1 = imageAsset("pagar-brc-tumpukan-stok-gudang-2.jpg");
+const yardBreak2 = imageAsset("pagar-brc-terpasang-outdoor-1.jpg");
+
+// BRC specimens as stock you stand among — large, environmental, asymmetric.
+const yardStock = brcShowcase.items;
+
+// Proof: installed/warehouse shots, the yard's reach.
+const proof = brcShowcase.proof.slice(0, 5);
 ---
 <!doctype html>
 <html lang="id">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PROTOTYPE — Steel Yard · BSM</title>
+  <title>PROTOTYPE · Steel Yard · BSM</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <!-- NAV: minimal, stamped on steel -->
+  <!-- NAV: minimal, recedes behind the environment -->
   <nav class="nav">
     <a class="nav__brand" href={u("/")}>BSM</a>
     <div class="nav__links">
@@ -45,174 +73,314 @@ const yardImgs = [
     <a class="nav__wa" href={wa} target="_blank" rel="noopener">WhatsApp</a>
   </nav>
 
-  <!-- HERO: you're standing in the yard -->
-  <section class="hero">
-    <Image src={heroImg} alt="Tumpukan pagar BRC di gudang BSM Surabaya" width={1600} height={2000} loading="eager" fetchpriority="high" class="hero__img" />
+  <!-- ===================== HERO · you're standing in the yard ===================== -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero__layer hero__layer--back">
+      <Image src={heroImg} alt="Tumpukan pagar BRC di gudang BSM Surabaya" width={1600} height={2000} loading="eager" fetchpriority="high" class="hero__img" />
+    </div>
     <div class="hero__scrim"></div>
     <div class="hero__content">
-      <span class="hero__eyebrow">DISTRIBUTOR MATERIAL · SURABAYA</span>
-      <h1 class="hero__title">Material bangunan.<br />Harga pabrik.<br />Siap kirim.</h1>
-      <p class="hero__lede">CV Bangun Sarana Makmur — pagar BRC, atap, bondek, dan seluruh kebutuhan proyek konstruksi. Langsung dari gudang, kirim ke 34 provinsi.</p>
+      <span class="hero__eyebrow">DISTRIBUTOR MATERIAL · GUDANG SURABAYA</span>
+      <h1 class="hero__title" id="hero-title">Material bangunan.<br />Harga pabrik.<br />Siap kirim.</h1>
+      <p class="hero__lede">Anda berdiri di gudang CV Bangun Sarana Makmur. Pagar BRC, atap, bondek, dan seluruh kebutuhan proyek konstruksi tertumpuk di sekitar Anda. Langsung dari sini, kirim ke 34 provinsi.</p>
       <div class="hero__actions">
         <a class="cta cta--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
-        <a class="cta cta--ghost" href={u("/katalog")}>Lihat Katalog</a>
+        <a class="cta cta--ghost" href="#stok">Lihat Stok BRC</a>
       </div>
     </div>
-    <div class="hero__scroll">↓ gulir</div>
+    <div class="hero__scroll"><span>gulir · masuk lebih dalam</span> ↓</div>
   </section>
 
-  <!-- TRUST: stamped on the dark ground -->
-  <section class="trust">
-    <div class="trust__cell"><b>34</b><span>Provinsi terjangkau</span></div>
-    <div class="trust__cell"><b>6</b><span>Kelompok produk</span></div>
-    <div class="trust__cell"><b>READY</b><span>Stok gudang</span></div>
-    <div class="trust__cell"><b>FREE</b><span>Kirim Surabaya</span></div>
+  <!-- ===================== YARD MARKERS · stamped on the ground ===================== -->
+  <section class="markers" aria-label="Penanda gudang">
+    <div class="markers__cell"><b>34</b><span>Provinsi terjangkau</span></div>
+    <div class="markers__cell"><b>6</b><span>Kelompok material</span></div>
+    <div class="markers__cell"><b>READY</b><span>Stok gudang</span></div>
+    <div class="markers__cell"><b>FREE</b><span>Kirim Surabaya</span></div>
   </section>
-  <!-- CATEGORIES: what's in the yard -->
-  <section class="yard-section" id="katalog">
-    <div class="yard-section__head">
-      <span class="label">Katalog Material</span>
-      <h2>Satu sumber untuk seluruh proyek</h2>
+
+  <!-- ===================== WALK THE YARD · full-bleed break 1 ===================== -->
+  <section class="yard-break" aria-label="Tumpukan stok di gudang">
+    <Image src={yardBreak1} alt="Tumpukan pagar BRC disiapkan di gudang BSM" width={1600} height={2000} loading="lazy" class="yard-break__img" />
+    <div class="yard-break__scrim"></div>
+    <div class="yard-break__cap">
+      <span class="yard-break__no">01 / 03</span>
+      <p>Setiap panel dilas titik dan digalvanis sebelum tumpukan ini terbentuk. Stok yang Anda lihat bukan ilustrasi — ini foto gudang hari ini.</p>
     </div>
-    <div class="cat-grid">
-      {categories.map((c) => (
-        <a class="cat-card" href={u(`/kategori/${c.slug}`)}>
-          <Image src={imageAsset(c.image)} alt={c.name} width={600} height={400} loading="lazy" class="cat-card__img" />
-          <div class="cat-card__overlay"></div>
-          <div class="cat-card__body">
+  </section>
+
+  <!-- ===================== THE STOCK · BRC specimens you stand among ===================== -->
+  <section class="stock" id="stok" aria-labelledby="stock-title">
+    <header class="stock__head">
+      <span class="rail">STOK GUDANG · PAGAR BRC</span>
+      <h2 id="stock-title">Apa yang ada di sekitar Anda</h2>
+      <p class="stock__sub">Enam unit BRC, masing-masing foto nyata dari gudang. Bukan kartu produk di grid rapi — ini material yang tertumpuk di lantai ini. Periksa spesifikasinya, lalu minta penawaran per unit.</p>
+    </header>
+
+    <div class="stock__yard">
+      {yardStock.map((s, i) => (
+        <article class={`stock-item stock-item--${i + 1}`}>
+          <div class="stock-item__photo">
+            <Image src={imageAsset(s.angles[0])} alt={s.name} width={720} height={720} loading="lazy" class="stock-item__img" />
+          </div>
+          <div class="stock-item__meta">
+            <span class="stock-item__no">UNIT {String(i + 1).padStart(2, "0")} · BRC</span>
+            <h3 class="stock-item__name">{s.name}</h3>
+            <dl class="stock-item__specs">
+              {s.specs.map((sp) => (
+                <div class="stock-item__spec"><dt>{sp.k}</dt><dd>{sp.v}</dd></div>
+              ))}
+            </dl>
+            <a class="stock-item__wa" href={waLink(s.waContext)} target="_blank" rel="noopener">Minta penawaran unit ini →</a>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <div class="stock__order">
+      <a class="cta cta--primary cta--lg" href={waBrc} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
+    </div>
+  </section>
+
+  <!-- ===================== WALK THE YARD · full-bleed break 2 ===================== -->
+  <section class="yard-break" aria-label="Pagar BRC terpasang di proyek">
+    <Image src={yardBreak2} alt="Pagar BRC terpasang di proyek" width={1600} height={2000} loading="lazy" class="yard-break__img" />
+    <div class="yard-break__scrim"></div>
+    <div class="yard-break__cap">
+      <span class="yard-break__no">02 / 03</span>
+      <p>Dari tumpukan di gudang, material bergerak ke proyek. Foto ini bukan stok — ini pagar BRC yang sudah tiba dan terpasang. Jejak pengiriman nyata.</p>
+    </div>
+  </section>
+
+  <!-- ===================== THE CATALOG · six families in the yard ===================== -->
+  <section class="catalog" id="katalog" aria-labelledby="cat-title">
+    <header class="catalog__head">
+      <span class="rail">KATALOG · 6 KELOMPOK MATERIAL</span>
+      <h2 id="cat-title">Satu gudang, enam kelompok, satu pengiriman</h2>
+      <p class="catalog__sub">Bukan spesialis satu lini. BRC adalah pintu masuk; di belakangnya ada atap, dinding, pintu, struktur, dan utilitas. Pesan dari beberapa kelompok sekaligus, kirim dalam satu muatan.</p>
+    </header>
+    <div class="catalog__grid">
+      {categories.map((c, i) => (
+        <a class={`cat-tile cat-tile--${i + 1}`} href={u(`/kategori/${c.slug}`)}>
+          <Image src={imageAsset(c.image)} alt={c.name} width={600} height={450} loading="lazy" class="cat-tile__img" />
+          <div class="cat-tile__overlay"></div>
+          <div class="cat-tile__body">
+            <span class="cat-tile__no">RAK {String(i + 1).padStart(2, "0")}</span>
             <b>{c.name}</b>
-            <span>{c.count} lini produk →</span>
+            <span class="cat-tile__count">{c.count} lini · {c.lines[0]} →</span>
           </div>
         </a>
       ))}
     </div>
   </section>
 
-  <!-- FEATURED BRC: real specimens, what's in the yard -->
-  <section class="yard-section yard-section--dark" id="brc">
-    <div class="yard-section__head">
-      <span class="label">Produk Unggulan · BRC</span>
-      <h2>Pagar BRC: diproduksi, dilas, siap kirim</h2>
-    </div>
-    <div class="brc-grid">
-      {brcProducts.map((p) => (
-        <a class="brc-card" href={waLink(`Halo BSM, saya butuh penawaran "${p.name}" (${p.spec}). Mohon info harga pabrik, stok, pengiriman. Terima kasih.`)} target="_blank" rel="noopener">
-          <Image src={imageAsset(p.image)} alt={p.name} width={500} height={500} loading="lazy" class="brc-card__img" />
-          <div class="brc-card__body">
-            <b>{p.name}</b>
-            <span>{p.spec}</span>
-          </div>
-        </a>
+  <!-- ===================== WALK THE YARD · full-bleed break 3 (reach proof) ===================== -->
+  <section class="yard-break yard-break--proof" aria-label="Bukti jangkauan">
+    <div class="reach-strip">
+      {proof.map((p, i) => (
+        <figure class={`reach-tile reach-tile--${i + 1}`}>
+          <Image src={imageAsset(p.image)} alt={p.caption} width={640} height={480} loading="lazy" class="reach-tile__img" />
+          <figcaption class="reach-tile__cap">{p.caption}</figcaption>
+        </figure>
       ))}
     </div>
-    <a class="cta cta--primary" href={waBrc} target="_blank" rel="noopener" style="margin-top:2rem">Minta penawaran BRC lengkap →</a>
+    <div class="yard-break__cap yard-break__cap--reach">
+      <span class="yard-break__no">03 / 03</span>
+      <p>34 provinsi, dibuktikan dengan foto, bukan peta titik. Setiap bingkai di bawah adalah pagar BRC yang tiba dan terpasang di proyek nyata.</p>
+    </div>
   </section>
 
-  <!-- YARD PROOF: real installed/stock photography -->
-  <section class="yard-proof">
-    {yardImgs.map((img, i) => (
-      <div class={`yard-proof__tile yard-proof__tile--${i + 1}`}>
-        <Image src={img} alt="Pagar BRC di lapangan" width={800} height={600} loading="lazy" class="yard-proof__img" />
-      </div>
-    ))}
-  </section>
-
-  <!-- CONTACT: stamped on steel -->
-  <section class="contact" id="kontak">
-    <h2>Siap bangun? Minta penawaran sekarang.</h2>
-    <p>Hubungi tim sales BSM via WhatsApp untuk harga pabrik, stok, dan pengiriman ke proyek Anda.</p>
-    <a class="cta cta--primary cta--lg" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
-    <p class="contact__addr">Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472</p>
+  <!-- ===================== THE CLOSE · stamped on steel ===================== -->
+  <section class="close" id="kontak" aria-labelledby="close-title">
+    <div class="close__inner">
+      <span class="rail">MEJA PESAN · WHOLESALE</span>
+      <h2 id="close-title">Siap bangun? Minta penawaran dari gudang ini.</h2>
+      <p class="close__sub">Hubungi tim sales BSM via WhatsApp. Harga pabrik, stok gudang, dan pengiriman ke 34 provinsi dalam satu obrolan. Konsultasi gratis, kirim Surabaya gratis.</p>
+      <a class="cta cta--primary cta--lg" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
+      <p class="close__addr">Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472 · bsmbangun@yahoo.co.id</p>
+    </div>
   </section>
 
   <footer class="proto-footer">
-    <span>PROTOTYPE POV 1 — The Steel Yard · THROWAWAY · wayfinder #11</span>
+    <span>PROTOTYPE POV 1 · The Steel Yard · THROWAWAY · wayfinder #11</span>
   </footer>
+
 <style>
   :root {
-    --yard-dark: #1a1d20; --yard-darker: #0f1112; --yard-steel: #828a93;
-    --yard-light: #f5f5f4; --yard-mid: #2a2e33;
-    --yard-accent: #e8551e; --yard-accent-deep: #c8430f;
+    --yard-dark: #1a1d20; --yard-darker: #0f1112; --yard-mid: #23272c;
+    --yard-steel: #828a93; --yard-light: #f5f5f4;
+    --yard-accent: #e8551e; --yard-accent-deep: #c8430f; --yard-accent-darker: #a8360b;
     --fd: "Archivo","Arial Narrow",sans-serif; --fb: "Hanken Grotesk",system-ui,sans-serif;
     --fm: "JetBrains Mono",ui-monospace,monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--yard-darker); color: var(--yard-light); font-family: var(--fb); font-size: 1.0625rem; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--yard-darker); color: var(--yard-light);
+    font-family: var(--fb); font-size: 1.0625rem; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
   img { display: block; max-width: 100%; } a { color: inherit; text-decoration: none; }
-  .label { font-family: var(--fm); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--yard-steel); }
+  .rail { font-family: var(--fm); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--yard-accent); }
 
-  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1rem clamp(1rem,4vw,3rem); background: rgba(15,17,18,.85); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(107,114,128,.2); }
-  .nav__brand { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: 1.4rem; letter-spacing: -.02em; }
+  /* ---- NAV ---- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem clamp(1rem, 4vw, 3rem);
+    background: rgba(15, 17, 18, 0.82); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(130, 138, 147, 0.2);
+  }
+  .nav__brand { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: 1.4rem; letter-spacing: -0.02em; }
   .nav__links { display: flex; gap: 1.5rem; }
-  .nav__links a { font-family: var(--fm); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--yard-steel); transition: color .2s; }
+  .nav__links a { font-family: var(--fm); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yard-steel); transition: color 0.2s; }
   .nav__links a:hover { color: var(--yard-light); }
-  .nav__wa { font-family: var(--fm); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; background: var(--yard-accent-deep); color: #fff; padding: .5rem 1rem; border-radius: 4px; font-weight: 600; }
+  .nav__wa { font-family: var(--fm); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; background: var(--yard-accent-deep); color: #fff; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600; }
   @media (max-width: 640px) { .nav__links { display: none; } }
 
-  .hero { position: relative; min-height: 100vh; display: flex; align-items: flex-end; overflow: hidden; }
-  .hero__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .hero__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,17,18,.4) 0%, rgba(15,17,18,.2) 40%, rgba(15,17,18,.85) 100%); }
-  .hero__content { position: relative; z-index: 2; padding: 0 clamp(1rem,5vw,4rem) 5rem; max-width: 900px; }
-  .hero__eyebrow { font-family: var(--fm); font-size: .72rem; letter-spacing: .14em; color: var(--yard-accent); display: block; margin-bottom: 1rem; }
-  .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2.6rem,7vw,5rem); line-height: .95; letter-spacing: -.02em; margin-bottom: 1.5rem; text-wrap: balance; }
-  .hero__lede { font-size: 1.15rem; color: rgba(245,245,244,.85); max-width: 55ch; margin-bottom: 2rem; }
+  /* ---- CTAs ---- */
+  .cta {
+    display: inline-flex; align-items: center;
+    font-family: var(--fm); font-size: 0.8rem; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 600;
+    padding: 14px 28px; border-radius: 4px;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .cta--primary { background: var(--yard-accent-deep); color: #fff; }
+  .cta--primary:hover { background: var(--yard-accent-darker); transform: translateY(-1px); }
+  .cta--ghost { background: transparent; color: var(--yard-light); border: 1px solid var(--yard-steel); }
+  .cta--ghost:hover { border-color: var(--yard-light); }
+  .cta--lg { font-size: 0.9rem; padding: 18px 36px; }
+
+  /* ===================== HERO · the yard, with slow parallax ===================== */
+  .hero {
+    position: relative; min-height: 100vh; display: flex; align-items: flex-end;
+    overflow: hidden;
+  }
+  .hero__layer { position: absolute; inset: 0; }
+  .hero__layer--back { height: 118%; top: 0; }
+  .hero__img { width: 100%; height: 100%; object-fit: cover; }
+  /* Slow CSS parallax: the back layer drifts slower than the scroll, reinforcing
+     moving *through* the yard. Pure transform on scroll, no JS, no shader. */
+  @supports (animation-timeline: scroll()) {
+    .hero__layer--back { animation: yard-parallax linear; animation-timeline: scroll(); animation-range: 0 100vh; }
+    @keyframes yard-parallax { from { transform: translateY(0); } to { transform: translateY(-12%); } }
+  }
+  .hero__scrim {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(15,17,18,0.55) 0%, rgba(15,17,18,0.15) 35%, rgba(15,17,18,0.92) 100%),
+      linear-gradient(90deg, rgba(15,17,18,0.5) 0%, transparent 60%);
+  }
+  .hero__content { position: relative; z-index: 2; padding: 0 clamp(1rem, 5vw, 4rem) clamp(4rem, 8vh, 6rem); max-width: 40rem; }
+  .hero__eyebrow { font-family: var(--fm); font-size: 0.72rem; letter-spacing: 0.16em; color: var(--yard-accent); display: block; margin-bottom: 1.1rem; }
+  .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2.6rem, 7vw, 5.2rem); line-height: 0.94; letter-spacing: -0.02em; margin-bottom: 1.5rem; text-wrap: balance; }
+  .hero__lede { font-size: 1.12rem; color: rgba(245,245,244,0.88); max-width: 48ch; margin-bottom: 2rem; }
   .hero__actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-  .hero__scroll { position: absolute; bottom: 1.5rem; right: clamp(1rem,5vw,4rem); font-family: var(--fm); font-size: .7rem; letter-spacing: .1em; color: var(--yard-steel); z-index: 2; }
+  .hero__scroll {
+    position: absolute; bottom: 1.5rem; right: clamp(1rem, 5vw, 4rem); z-index: 2;
+    font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.1em; color: var(--yard-steel);
+    display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem;
+  }
 
-  .cta { display: inline-flex; align-items: center; font-family: var(--fm); font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; padding: 14px 28px; border-radius: 4px; transition: background .2s, border-color .2s; }
-  .cta--primary { background: var(--yard-accent-deep); color: #fff; } .cta--primary:hover { background: #a8360b; }
-  .cta--ghost { background: transparent; color: var(--yard-light); border: 1px solid var(--yard-steel); } .cta--ghost:hover { border-color: var(--yard-light); }
-  .cta--lg { font-size: .9rem; padding: 18px 36px; }
-  .trust { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(107,114,128,.15); }
-  .trust__cell { background: var(--yard-dark); padding: 2rem 1.5rem; text-align: center; }
-  .trust__cell b { display: block; font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: 2rem; margin-bottom: .3rem; }
-  .trust__cell span { font-family: var(--fm); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--yard-steel); }
-  @media (max-width: 640px) { .trust { grid-template-columns: repeat(2,1fr); } }
+  /* ===================== YARD MARKERS ===================== */
+  .markers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(130,138,147,0.18); }
+  .markers__cell { background: var(--yard-dark); padding: clamp(1.6rem, 4vw, 2.4rem) 1.5rem; }
+  .markers__cell b { display: block; font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1; margin-bottom: 0.4rem; color: var(--yard-light); }
+  .markers__cell span { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yard-steel); }
+  @media (max-width: 640px) { .markers { grid-template-columns: repeat(2, 1fr); } }
 
-  .yard-section { padding: clamp(3rem,8vw,6rem) clamp(1rem,5vw,4rem); background: var(--yard-dark); }
-  .yard-section--dark { background: var(--yard-darker); }
-  .yard-section__head { margin-bottom: 3rem; }
-  .yard-section__head .label { display: block; margin-bottom: .6rem; color: var(--yard-accent); }
-  .yard-section__head h2 { font-family: var(--fd); font-weight: 700; font-stretch: 112%; font-size: clamp(1.6rem,4vw,2.6rem); line-height: 1.05; letter-spacing: -.01em; }
+  /* ===================== WALK THE YARD · full-bleed breaks ===================== */
+  .yard-break { position: relative; height: 70vh; min-height: 460px; overflow: hidden; display: flex; align-items: flex-end; }
+  .yard-break__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .yard-break__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,17,18,0.2) 0%, transparent 40%, rgba(15,17,18,0.88) 100%); }
+  .yard-break__cap { position: relative; z-index: 2; padding: 0 clamp(1rem, 5vw, 4rem) clamp(2rem, 5vh, 3rem); max-width: 44rem; }
+  .yard-break__no { font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.16em; color: var(--yard-accent); display: block; margin-bottom: 0.7rem; }
+  .yard-break__cap p { font-size: 1.08rem; color: rgba(245,245,244,0.92); max-width: 42ch; }
+  .yard-break__cap--reach { max-width: 50rem; }
+  /* Break 3 = reach proof strip, taller */
+  .yard-break--proof { height: auto; min-height: 0; display: block; padding: clamp(3rem, 7vw, 5rem) 0; background: var(--yard-darker); }
+  .yard-break--proof .yard-break__scrim { display: none; }
+  .reach-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+  @media (max-width: 900px) { .reach-strip { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px) { .reach-strip { grid-template-columns: repeat(2, 1fr); } }
+  .reach-tile { position: relative; aspect-ratio: 4/3; overflow: hidden; }
+  .reach-tile__img { width: 100%; height: 100%; object-fit: cover; }
+  .reach-tile__cap { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.5rem 0.7rem; background: linear-gradient(180deg, transparent, rgba(15,17,18,0.85)); font-family: var(--fm); font-size: 0.56rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yard-steel); }
+  .yard-break--proof .yard-break__cap { padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 5vw, 4rem) 0; }
 
-  .cat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
-  @media (max-width: 768px) { .cat-grid { grid-template-columns: repeat(2,1fr); } }
-  @media (max-width: 480px) { .cat-grid { grid-template-columns: 1fr; } }
-  .cat-card { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 3/2; }
-  .cat-card__img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
-  .cat-card:hover .cat-card__img { transform: scale(1.05); }
-  .cat-card__overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(15,17,18,.9) 100%); }
-  .cat-card__body { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.2rem; z-index: 2; }
-  .cat-card__body b { display: block; font-family: var(--fd); font-weight: 600; font-size: 1.1rem; margin-bottom: .2rem; }
-  .cat-card__body span { font-family: var(--fm); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--yard-steel); }
+  /* ===================== THE STOCK · BRC specimens you stand among ===================== */
+  .stock { padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem) clamp(2rem, 5vw, 3rem); background: var(--yard-dark); }
+  .stock__head { max-width: 60ch; margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+  .stock__head .rail { display: block; margin-bottom: 0.7rem; }
+  .stock__head h2 { font-family: var(--fd); font-weight: 700; font-stretch: 112%; font-size: clamp(1.7rem, 4vw, 2.8rem); line-height: 1.04; letter-spacing: -0.01em; margin-bottom: 1rem; text-wrap: balance; }
+  .stock__sub { color: var(--yard-steel); max-width: 56ch; }
+  /* Asymmetric yard layout: specimens vary in size, not a uniform grid.
+     Reads as stock you walk past, not a catalog page. */
+  .stock__yard { display: grid; grid-template-columns: repeat(6, 1fr); gap: clamp(1rem, 2vw, 1.6rem); }
+  .stock-item { grid-column: span 2; display: flex; flex-direction: column; }
+  /* Vary the spans so the rhythm isn't a tidy grid */
+  .stock-item--1 { grid-column: span 3; }
+  .stock-item--2 { grid-column: span 3; }
+  .stock-item--3 { grid-column: span 2; }
+  .stock-item--4 { grid-column: span 2; }
+  .stock-item--5 { grid-column: span 2; }
+  .stock-item--6 { grid-column: span 6; flex-direction: row; }
+  @media (max-width: 860px) {
+    .stock__yard { grid-template-columns: 1fr; }
+    .stock-item, .stock-item--1, .stock-item--2, .stock-item--3, .stock-item--4, .stock-item--5, .stock-item--6 { grid-column: span 1; flex-direction: column; }
+  }
+  .stock-item__photo { position: relative; overflow: hidden; background: var(--yard-mid); border-radius: 6px; aspect-ratio: 1/1; }
+  .stock-item--6 .stock-item__photo { aspect-ratio: 16/9; flex: 1 1 60%; }
+  .stock-item__img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .stock-item:hover .stock-item__img { transform: scale(1.04); }
+  .stock-item__meta { padding: 1rem 0.2rem 0; }
+  .stock-item--6 .stock-item__meta { padding: 0 0 0 1.4rem; display: flex; flex-direction: column; justify-content: center; }
+  .stock-item__no { font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--yard-steel); }
+  .stock-item__name { font-family: var(--fd); font-weight: 700; font-stretch: 108%; font-size: 1.2rem; letter-spacing: -0.01em; margin: 0.3rem 0 0.7rem; }
+  .stock-item__specs { display: flex; flex-direction: column; }
+  .stock-item__spec { display: flex; gap: 0.6rem; border-top: 1px solid rgba(130,138,147,0.22); padding: 0.3rem 0; font-size: 0.78rem; }
+  .stock-item__spec dt { flex: 0 0 7.5rem; font-family: var(--fm); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yard-steel); padding-top: 0.1rem; }
+  .stock-item__spec dd { color: var(--yard-light); }
+  .stock-item__wa { display: inline-block; margin-top: 0.8rem; font-family: var(--fm); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yard-accent); font-weight: 600; border-bottom: 1px solid rgba(232,85,30,0.4); padding-bottom: 1px; }
+  .stock-item__wa:hover { color: var(--yard-accent-darker); border-bottom-color: var(--yard-accent-darker); }
+  .stock__order { margin-top: clamp(2.5rem, 5vw, 3.5rem); text-align: center; }
 
-  .brc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
-  @media (max-width: 768px) { .brc-grid { grid-template-columns: repeat(2,1fr); } }
-  @media (max-width: 480px) { .brc-grid { grid-template-columns: 1fr; } }
-  .brc-card { border-radius: 8px; overflow: hidden; background: var(--yard-mid); transition: transform .3s; }
-  .brc-card:hover { transform: translateY(-4px); }
-  .brc-card__img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-  .brc-card__body { padding: 1rem 1.2rem 1.4rem; }
-  .brc-card__body b { display: block; font-family: var(--fd); font-weight: 600; font-size: 1rem; margin-bottom: .2rem; }
-  .brc-card__body span { font-size: .85rem; color: var(--yard-steel); }
+  /* ===================== THE CATALOG ===================== */
+  .catalog { padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem); background: var(--yard-darker); }
+  .catalog__head { max-width: 60ch; margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+  .catalog__head .rail { display: block; margin-bottom: 0.7rem; }
+  .catalog__head h2 { font-family: var(--fd); font-weight: 700; font-stretch: 112%; font-size: clamp(1.7rem, 4vw, 2.8rem); line-height: 1.04; letter-spacing: -0.01em; margin-bottom: 1rem; text-wrap: balance; }
+  .catalog__sub { color: var(--yard-steel); max-width: 56ch; }
+  .catalog__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(0.8rem, 1.6vw, 1.2rem); }
+  @media (max-width: 860px) { .catalog__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .catalog__grid { grid-template-columns: 1fr; } }
+  .cat-tile { position: relative; border-radius: 6px; overflow: hidden; aspect-ratio: 4/3; }
+  .cat-tile__img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .cat-tile:hover .cat-tile__img { transform: scale(1.05); }
+  .cat-tile__overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(15,17,18,0.92) 100%); }
+  .cat-tile__body { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.1rem 1.2rem; z-index: 2; }
+  .cat-tile__no { font-family: var(--fm); font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--yard-accent); display: block; margin-bottom: 0.3rem; }
+  .cat-tile__body b { display: block; font-family: var(--fd); font-weight: 600; font-size: 1.1rem; margin-bottom: 0.2rem; }
+  .cat-tile__count { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.06em; color: var(--yard-steel); }
 
-  .yard-proof { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 2px; }
-  @media (max-width: 768px) { .yard-proof { grid-template-columns: 1fr; } }
-  .yard-proof__tile { overflow: hidden; aspect-ratio: 4/3; }
-  .yard-proof__img { width: 100%; height: 100%; object-fit: cover; }
+  /* ===================== THE CLOSE ===================== */
+  .close { padding: clamp(4rem, 10vw, 8rem) clamp(1rem, 5vw, 4rem); background: var(--yard-darker); }
+  .close__inner { max-width: 46rem; margin: 0 auto; text-align: center; }
+  .close__inner .rail { display: block; margin-bottom: 1rem; }
+  .close__inner h2 { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 0.98; letter-spacing: -0.02em; margin-bottom: 1.4rem; text-wrap: balance; }
+  .close__sub { color: var(--yard-steel); max-width: 48ch; margin: 0 auto 2rem; }
+  .close__addr { font-family: var(--fm); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--yard-steel); margin-top: 2rem; line-height: 1.7; }
 
-  .contact { text-align: center; padding: clamp(4rem,10vw,8rem) clamp(1rem,5vw,4rem); background: var(--yard-darker); }
-  .contact h2 { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2rem,5vw,3.5rem); line-height: .98; letter-spacing: -.02em; margin-bottom: 1.5rem; }
-  .contact p { color: var(--yard-steel); max-width: 50ch; margin: 0 auto 2rem; }
-  .contact__addr { font-family: var(--fm); font-size: .72rem; letter-spacing: .08em; margin-top: 2rem; }
-
-  .proto-footer { padding: 1.5rem; text-align: center; background: var(--yard-darker); border-top: 1px solid rgba(130,138,147,.15); }
-    .proto-footer span { font-family: var(--fm); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--yard-steel); }
+  /* ===================== FOOTER ===================== */
+  .proto-footer { padding: 1.4rem; text-align: center; background: var(--yard-darker); border-top: 1px solid rgba(130,138,147,0.15); }
+  .proto-footer span { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yard-steel); }
 
   @media (prefers-reduced-motion: reduce) {
-    .cta, .brc-card, .cat-card__img { transition: none; }
-    .brc-card:hover { transform: none; }
-    .cat-card:hover .cat-card__img { transform: none; }
+    .hero__layer--back { animation: none; }
+    .cta, .stock-item__img, .cat-tile__img { transition: none; }
+    .stock-item:hover .stock-item__img, .cat-tile:hover .cat-tile__img { transform: none; }
+    .cta:hover { transform: none; }
   }
 </style>
 </body>

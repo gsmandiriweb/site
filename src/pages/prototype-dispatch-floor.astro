@@ -117,7 +117,7 @@ const reach = [
 
     <div class="lane">
       {lane.map((l, i) => (
-        <figure class={`lane__cell lane__cell--${i + 1}`}>
+        <figure class={`lane__cell lane__cell--${i + 1}`} style={`--lane-i:${i}`}>
           <div class="lane__photo">
             <Image src={l.img} alt={l.cap} width={720} height={540} loading="lazy" class="lane__img" />
           </div>
@@ -129,6 +129,12 @@ const reach = [
         </figure>
       ))}
     </div>
+
+    <!-- Manifest detail: the operation in numbers (honest ones only) -->
+    <aside class="manifest-note">
+      <span class="rail">CATATAN MANIFEST</span>
+      <p>Tiga tahap, satu alur. Tidak ada tonnage, tidak ada armada, tidak ada estimasi waktu yang diabu-abukan. Yang ada: stok nyata di gudang, dibundel siap angkut, terpasang di proyek. Skala BSM terbaca dari material yang sudah bergerak, bukan dari angka yang diklaim.</p>
+    </aside>
   </section>
 
   <!-- ===================== LOADING SCHEDULE · the 6 categories as route cards ===================== -->
@@ -157,6 +163,14 @@ const reach = [
       <h2 id="freight-title">Apa yang bergerak dari lantai ini</h2>
       <p class="floor__sub">Setiap unit BRC adalah muatan nyata: panel, tiang, pintu, aksesoris. Spesifikasi tertulis di tag pengiriman, bukan garis dimensi. Minta penawaran per unit langsung dari tag.</p>
     </header>
+
+    <!-- Manifest strip: the freight section reads as a loading manifest -->
+    <div class="manifest-strip" aria-hidden="true">
+      <span>MANIFEST NO. BRC-01</span>
+      <span>ASAL · GUDANG SBY</span>
+      <span>STATUS · READY STOCK</span>
+      <span>6 UNIT · SIAP MUAT</span>
+    </div>
 
     <div class="freight">
       {brcShowcase.items.map((s, i) => (
@@ -424,6 +438,38 @@ const reach = [
   }
   @media (max-width: 820px) { .lane__arrow { display: none; } }
 
+  /* In-transit animation: the lane cells slide in left-to-right as the section
+     enters view, reinforcing the operational flow. Scroll-timeline, no JS;
+     falls back to visible (no animation) where unsupported. */
+  @supports (animation-timeline: view()) {
+    .lane__cell {
+      animation: lane-flow linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+    @keyframes lane-flow {
+      from { opacity: 0; transform: translateX(-24px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .lane__arrow {
+      animation: arrow-pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes arrow-pulse {
+      0%, 100% { transform: translateX(0); opacity: 0.7; }
+      50% { transform: translateX(4px); opacity: 1; }
+    }
+  }
+
+  /* Manifest detail passage (pacing after the lane) */
+  .manifest-note {
+    margin-top: clamp(2.5rem, 5vw, 3.5rem);
+    padding: clamp(1.4rem, 3.5vw, 2rem) clamp(1.2rem, 2.8vw, 1.8rem);
+    border-left: 1px solid var(--rail-ink);
+    max-width: 54ch;
+  }
+  .manifest-note .rail { display: block; margin-bottom: 0.7rem; }
+  .manifest-note p { color: var(--ink-soft); font-size: 1rem; line-height: 1.7; }
+
   /* ===================== LOADING SCHEDULE ===================== */
   .schedule-section { padding-top: 0; }
   .schedule {
@@ -456,6 +502,17 @@ const reach = [
 
   /* ===================== FREIGHT · BRC on skid plates ===================== */
   .freight-section { padding-top: 0; }
+  /* Manifest strip: a waybill header row above the freight grid */
+  .manifest-strip {
+    display: flex; flex-wrap: wrap; gap: clamp(1rem, 3vw, 2.4rem);
+    padding: 0.9rem 1.2rem;
+    margin-bottom: clamp(1.6rem, 3vw, 2.4rem);
+    border-top: 1px solid var(--rail-ink);
+    border-bottom: 1px solid rgba(201,180,138,0.28);
+    font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-soft);
+  }
+  .manifest-strip span { white-space: nowrap; }
   .freight {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -586,6 +643,7 @@ const reach = [
   @media (prefers-reduced-motion: reduce) {
     .cta, .route-card, .waybill, .waybill > * { transition: none; transform: none; }
     .cta:hover, .route-card:hover { transform: none; }
+    .lane__cell, .lane__arrow { animation: none; }
   }
 </style>
 </body>
