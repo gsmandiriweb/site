@@ -1,0 +1,219 @@
+---
+/*
+  PROTOTYPE — POV 1 "The Steel Yard" · THROWAWAY
+  Wayfinder ticket #11. Not production. Delete or absorb when the prototype
+  has answered its question: does a full-bleed yard photo read as "material
+  immersion" (you're standing in the yard) rather than "a nice product photo"?
+  Self-contained: does NOT import Blueprint Field global.css or Base.astro.
+  Run: astro dev → visit /prototype-steel-yard
+*/
+import { Image } from "astro:assets";
+import { imageAsset } from "../utils/images.ts";
+import { categories, brcProducts } from "../data/catalog.ts";
+import { u, waLink } from "../utils/url.ts";
+
+const wa = waLink();
+const waBrc = waLink(
+  "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang, pintu, aksesoris). Mohon info harga pabrik, stok, pengiriman. Terima kasih."
+);
+const heroImg = imageAsset("pagar-brc-tumpukan-stok-gudang-1.jpg");
+const yardImgs = [
+  imageAsset("pagar-brc-terpasang-outdoor-1.jpg"),
+  imageAsset("pagar-brc-tumpukan-stok-gudang-2.jpg"),
+  imageAsset("tiang-brc-dengan-panel-perspektif-1.jpg"),
+];
+---
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROTOTYPE — Steel Yard · BSM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- NAV: minimal, stamped on steel -->
+  <nav class="nav">
+    <a class="nav__brand" href={u("/")}>BSM</a>
+    <div class="nav__links">
+      <a href={u("/")}>Beranda</a>
+      <a href={u("/katalog")}>Katalog</a>
+      <a href={u("/pagar-brc")}>Pagar BRC</a>
+    </div>
+    <a class="nav__wa" href={wa} target="_blank" rel="noopener">WhatsApp</a>
+  </nav>
+
+  <!-- HERO: you're standing in the yard -->
+  <section class="hero">
+    <Image src={heroImg} alt="Tumpukan pagar BRC di gudang BSM Surabaya" width={1600} height={2000} loading="eager" fetchpriority="high" class="hero__img" />
+    <div class="hero__scrim"></div>
+    <div class="hero__content">
+      <span class="hero__eyebrow">DISTRIBUTOR MATERIAL · SURABAYA</span>
+      <h1 class="hero__title">Material bangunan.<br />Harga pabrik.<br />Siap kirim.</h1>
+      <p class="hero__lede">CV Bangun Sarana Makmur — pagar BRC, atap, bondek, dan seluruh kebutuhan proyek konstruksi. Langsung dari gudang, kirim ke 34 provinsi.</p>
+      <div class="hero__actions">
+        <a class="cta cta--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+        <a class="cta cta--ghost" href={u("/katalog")}>Lihat Katalog</a>
+      </div>
+    </div>
+    <div class="hero__scroll">↓ gulir</div>
+  </section>
+
+  <!-- TRUST: stamped on the dark ground -->
+  <section class="trust">
+    <div class="trust__cell"><b>34</b><span>Provinsi terjangkau</span></div>
+    <div class="trust__cell"><b>6</b><span>Kelompok produk</span></div>
+    <div class="trust__cell"><b>READY</b><span>Stok gudang</span></div>
+    <div class="trust__cell"><b>FREE</b><span>Kirim Surabaya</span></div>
+  </section>
+  <!-- CATEGORIES: what's in the yard -->
+  <section class="yard-section" id="katalog">
+    <div class="yard-section__head">
+      <span class="label">Katalog Material</span>
+      <h2>Satu sumber untuk seluruh proyek</h2>
+    </div>
+    <div class="cat-grid">
+      {categories.map((c) => (
+        <a class="cat-card" href={u(`/kategori/${c.slug}`)}>
+          <Image src={imageAsset(c.image)} alt={c.name} width={600} height={400} loading="lazy" class="cat-card__img" />
+          <div class="cat-card__overlay"></div>
+          <div class="cat-card__body">
+            <b>{c.name}</b>
+            <span>{c.count} lini produk →</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- FEATURED BRC: real specimens, what's in the yard -->
+  <section class="yard-section yard-section--dark" id="brc">
+    <div class="yard-section__head">
+      <span class="label">Produk Unggulan · BRC</span>
+      <h2>Pagar BRC: diproduksi, dilas, siap kirim</h2>
+    </div>
+    <div class="brc-grid">
+      {brcProducts.map((p) => (
+        <a class="brc-card" href={waLink(`Halo BSM, saya butuh penawaran "${p.name}" (${p.spec}). Mohon info harga pabrik, stok, pengiriman. Terima kasih.`)} target="_blank" rel="noopener">
+          <Image src={imageAsset(p.image)} alt={p.name} width={500} height={500} loading="lazy" class="brc-card__img" />
+          <div class="brc-card__body">
+            <b>{p.name}</b>
+            <span>{p.spec}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+    <a class="cta cta--primary" href={waBrc} target="_blank" rel="noopener" style="margin-top:2rem">Minta penawaran BRC lengkap →</a>
+  </section>
+
+  <!-- YARD PROOF: real installed/stock photography -->
+  <section class="yard-proof">
+    {yardImgs.map((img, i) => (
+      <div class={`yard-proof__tile yard-proof__tile--${i + 1}`}>
+        <Image src={img} alt="Pagar BRC di lapangan" width={800} height={600} loading="lazy" class="yard-proof__img" />
+      </div>
+    ))}
+  </section>
+
+  <!-- CONTACT: stamped on steel -->
+  <section class="contact" id="kontak">
+    <h2>Siap bangun? Minta penawaran sekarang.</h2>
+    <p>Hubungi tim sales BSM via WhatsApp untuk harga pabrik, stok, dan pengiriman ke proyek Anda.</p>
+    <a class="cta cta--primary cta--lg" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
+    <p class="contact__addr">Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472</p>
+  </section>
+
+  <footer class="proto-footer">
+    <span>PROTOTYPE POV 1 — The Steel Yard · THROWAWAY · wayfinder #11</span>
+  </footer>
+<style>
+  :root {
+    --yard-dark: #1a1d20; --yard-darker: #0f1112; --yard-steel: #828a93;
+    --yard-light: #f5f5f4; --yard-mid: #2a2e33;
+    --yard-accent: #e8551e; --yard-accent-deep: #c8430f;
+    --fd: "Archivo","Arial Narrow",sans-serif; --fb: "Hanken Grotesk",system-ui,sans-serif;
+    --fm: "JetBrains Mono",ui-monospace,monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--yard-darker); color: var(--yard-light); font-family: var(--fb); font-size: 1.0625rem; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  img { display: block; max-width: 100%; } a { color: inherit; text-decoration: none; }
+  .label { font-family: var(--fm); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--yard-steel); }
+
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1rem clamp(1rem,4vw,3rem); background: rgba(15,17,18,.85); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(107,114,128,.2); }
+  .nav__brand { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: 1.4rem; letter-spacing: -.02em; }
+  .nav__links { display: flex; gap: 1.5rem; }
+  .nav__links a { font-family: var(--fm); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--yard-steel); transition: color .2s; }
+  .nav__links a:hover { color: var(--yard-light); }
+  .nav__wa { font-family: var(--fm); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; background: var(--yard-accent-deep); color: #fff; padding: .5rem 1rem; border-radius: 4px; font-weight: 600; }
+  @media (max-width: 640px) { .nav__links { display: none; } }
+
+  .hero { position: relative; min-height: 100vh; display: flex; align-items: flex-end; overflow: hidden; }
+  .hero__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,17,18,.4) 0%, rgba(15,17,18,.2) 40%, rgba(15,17,18,.85) 100%); }
+  .hero__content { position: relative; z-index: 2; padding: 0 clamp(1rem,5vw,4rem) 5rem; max-width: 900px; }
+  .hero__eyebrow { font-family: var(--fm); font-size: .72rem; letter-spacing: .14em; color: var(--yard-accent); display: block; margin-bottom: 1rem; }
+  .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2.6rem,7vw,5rem); line-height: .95; letter-spacing: -.02em; margin-bottom: 1.5rem; text-wrap: balance; }
+  .hero__lede { font-size: 1.15rem; color: rgba(245,245,244,.85); max-width: 55ch; margin-bottom: 2rem; }
+  .hero__actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .hero__scroll { position: absolute; bottom: 1.5rem; right: clamp(1rem,5vw,4rem); font-family: var(--fm); font-size: .7rem; letter-spacing: .1em; color: var(--yard-steel); z-index: 2; }
+
+  .cta { display: inline-flex; align-items: center; font-family: var(--fm); font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; padding: 14px 28px; border-radius: 4px; transition: background .2s, border-color .2s; }
+  .cta--primary { background: var(--yard-accent-deep); color: #fff; } .cta--primary:hover { background: #a8360b; }
+  .cta--ghost { background: transparent; color: var(--yard-light); border: 1px solid var(--yard-steel); } .cta--ghost:hover { border-color: var(--yard-light); }
+  .cta--lg { font-size: .9rem; padding: 18px 36px; }
+  .trust { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(107,114,128,.15); }
+  .trust__cell { background: var(--yard-dark); padding: 2rem 1.5rem; text-align: center; }
+  .trust__cell b { display: block; font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: 2rem; margin-bottom: .3rem; }
+  .trust__cell span { font-family: var(--fm); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--yard-steel); }
+  @media (max-width: 640px) { .trust { grid-template-columns: repeat(2,1fr); } }
+
+  .yard-section { padding: clamp(3rem,8vw,6rem) clamp(1rem,5vw,4rem); background: var(--yard-dark); }
+  .yard-section--dark { background: var(--yard-darker); }
+  .yard-section__head { margin-bottom: 3rem; }
+  .yard-section__head .label { display: block; margin-bottom: .6rem; color: var(--yard-accent); }
+  .yard-section__head h2 { font-family: var(--fd); font-weight: 700; font-stretch: 112%; font-size: clamp(1.6rem,4vw,2.6rem); line-height: 1.05; letter-spacing: -.01em; }
+
+  .cat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+  @media (max-width: 768px) { .cat-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 480px) { .cat-grid { grid-template-columns: 1fr; } }
+  .cat-card { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 3/2; }
+  .cat-card__img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+  .cat-card:hover .cat-card__img { transform: scale(1.05); }
+  .cat-card__overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(15,17,18,.9) 100%); }
+  .cat-card__body { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.2rem; z-index: 2; }
+  .cat-card__body b { display: block; font-family: var(--fd); font-weight: 600; font-size: 1.1rem; margin-bottom: .2rem; }
+  .cat-card__body span { font-family: var(--fm); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--yard-steel); }
+
+  .brc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+  @media (max-width: 768px) { .brc-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 480px) { .brc-grid { grid-template-columns: 1fr; } }
+  .brc-card { border-radius: 8px; overflow: hidden; background: var(--yard-mid); transition: transform .3s; }
+  .brc-card:hover { transform: translateY(-4px); }
+  .brc-card__img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+  .brc-card__body { padding: 1rem 1.2rem 1.4rem; }
+  .brc-card__body b { display: block; font-family: var(--fd); font-weight: 600; font-size: 1rem; margin-bottom: .2rem; }
+  .brc-card__body span { font-size: .85rem; color: var(--yard-steel); }
+
+  .yard-proof { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 2px; }
+  @media (max-width: 768px) { .yard-proof { grid-template-columns: 1fr; } }
+  .yard-proof__tile { overflow: hidden; aspect-ratio: 4/3; }
+  .yard-proof__img { width: 100%; height: 100%; object-fit: cover; }
+
+  .contact { text-align: center; padding: clamp(4rem,10vw,8rem) clamp(1rem,5vw,4rem); background: var(--yard-darker); }
+  .contact h2 { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2rem,5vw,3.5rem); line-height: .98; letter-spacing: -.02em; margin-bottom: 1.5rem; }
+  .contact p { color: var(--yard-steel); max-width: 50ch; margin: 0 auto 2rem; }
+  .contact__addr { font-family: var(--fm); font-size: .72rem; letter-spacing: .08em; margin-top: 2rem; }
+
+  .proto-footer { padding: 1.5rem; text-align: center; background: var(--yard-darker); border-top: 1px solid rgba(130,138,147,.15); }
+    .proto-footer span { font-family: var(--fm); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--yard-steel); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cta, .brc-card, .cat-card__img { transition: none; }
+    .brc-card:hover { transform: none; }
+    .cat-card:hover .cat-card__img { transform: none; }
+  }
+</style>
+</body>
+</html>
