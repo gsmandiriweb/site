@@ -1,0 +1,546 @@
+---
+/*
+  PROTOTYPE · POV 4 "The Material Library" · THROWAWAY
+  Wayfinder ticket #12. Not production. Delete or absorb when the prototype
+  has answered its question: does a wall of real BRC specimens, curated and
+  MOUNTED as physical samples with paper spec tags, read as "real steel on a
+  supplier's sample wall" (crafted precision, object-as-evidence), or does it
+  collapse into "a catalog grid of product cards" (the "books" failure mode)?
+
+  Self-contained: does NOT import Blueprint Field global.css or Base.astro.
+  Run: astro dev → visit /prototype-material-library
+
+  DIRECTION CONTRACT (this prototype only, not a new DESIGN.md)
+  THESIS: Real steel, curated and mounted. BSM's sample wall — the supplier's
+    reference library of real cut specimens, each tagged with honest specs.
+    Refuses the catalog-grid-of-cards default and the "books" impression.
+  OWN-WORLD: Dark perforated hardboard sample-room wall; galvanized-steel
+    specimen photography mounted onto it with real offset shadows + pin marks;
+    printed paper specimen tags (mono) hung beside each sample carrying specs
+    as a supplier tags real stock; ink text; one industrial accent for tags;
+    signal-orange reserved for the WhatsApp quote CTA only.
+  STORY: A visitor meets a curated wall of real BRC specimens, reads each as a
+    physical mounted object with an honest spec tag, and asks for a quote.
+  FIRST VIEWPORT: A straight-on sample wall: panel, tiang, pintu mounted large
+    with shadows and tags; placard headline "Baja asli. Dirakit. Ditagih spesifikasinya.";
+    a stamped WhatsApp quote CTA. The pegboard ground reads as a real wall.
+  FORM: Material Library (POV 4), one of four locked POVs (ticket #8); this is a
+    prototype variant, not a concept-seed roll. Seed: wayfinder #12.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+    finish review, the verdict, and DESIGN.md.
+*/
+import { Image } from "astro:assets";
+import { imageAsset } from "../utils/images.ts";
+import { categories, brcShowcase } from "../data/catalog.ts";
+import { u, waLink } from "../utils/url.ts";
+
+const wa = waLink();
+const waBrc = waLink(
+  "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang, pintu, aksesoris). Mohon info harga pabrik, stok, pengiriman. Terima kasih."
+);
+
+// Hero specimens: the straight-on sample wall's anchor pieces.
+const heroSpecimens = [
+  brcShowcase.items.find((i) => i.slug === "pagar-brc-panel")!,
+  brcShowcase.items.find((i) => i.slug === "pintu-pagar-brc")!,
+  brcShowcase.items.find((i) => i.slug === "tiang-brc")!,
+];
+
+// Proof photos: "where this sample comes from / where it goes".
+const proof = brcShowcase.proof.slice(0, 4);
+---
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROTOTYPE · Material Library · BSM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- NAV: stamped label on the wall's top rail -->
+  <nav class="nav">
+    <a class="nav__brand" href={u("/")}>BSM</a>
+    <div class="nav__links">
+      <a href={u("/")}>Beranda</a>
+      <a href={u("/katalog")}>Katalog</a>
+      <a href={u("/pagar-brc")}>Pagar BRC</a>
+    </div>
+    <a class="nav__wa" href={wa} target="_blank" rel="noopener">WhatsApp</a>
+  </nav>
+
+  <!-- ===================== HERO · the sample wall ===================== -->
+  <section class="wall hero-wall" aria-labelledby="hero-title">
+    <div class="wall__placard">
+      <span class="placard__index">PUSTAKA MATERIAL · No. 01 / BRC</span>
+      <h1 class="placard__title" id="hero-title">Baja asli.<br />Dirakit.<br />Ditagih spesifikasinya.</h1>
+      <p class="placard__lede">Dinding contoh CV Bangun Sarana Makmur: setiap spesimen pagar BRC dipasang, diberi tag, dan diperiksa. Ini bukan brosur. Ini gudang contoh nyata: panel dilas titik, digalvanis, siap Anda bandingkan dari setiap sisi.</p>
+      <div class="placard__actions">
+        <a class="cta cta--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+        <a class="cta cta--ghost" href="#koleksi">Lihat Koleksi BRC</a>
+      </div>
+    </div>
+
+    <div class="hero-mounts">
+      {heroSpecimens.map((s, i) => (
+        <figure class={`mount mount--hero mount--${i + 1}`}>
+          <div class="mount__pin mount__pin--tl"></div>
+          <div class="mount__pin mount__pin--tr"></div>
+          <div class="mount__photo">
+            <Image src={imageAsset(s.angles[0])} alt={s.name} width={640} height={640} loading={i === 0 ? "eager" : "lazy"} fetchpriority={i === 0 ? "high" : "auto"} class="mount__img" />
+          </div>
+          <figcaption class="tag">
+            <span class="tag__hole"></span>
+            <span class="tag__name">{s.name}</span>
+            <span class="tag__specs">
+              {s.specs.map((sp) => (
+                <span class="tag__spec"><b>{sp.k}</b> {sp.v}</span>
+              ))}
+            </span>
+            <a class="tag__wa" href={waLink(s.waContext)} target="_blank" rel="noopener">Minta penawaran →</a>
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===================== LIBRARY INDEX · the 6 categories as racked labels ===================== -->
+  <section class="wall wall--index" id="katalog" aria-labelledby="index-title">
+    <header class="wall__head">
+      <span class="rail">RAK INDEKS · 6 KELOMPOK MATERIAL</span>
+      <h2 id="index-title">Satu sumber untuk seluruh proyek</h2>
+      <p class="wall__sub">Enam kelompok material dirakit di satu gudang. BRC adalah pintu masuk; seluruh katalog ada di rak di belakangnya.</p>
+    </header>
+    <div class="rack">
+      {categories.map((c) => (
+        <a class="rack-label" href={u(`/kategori/${c.slug}`)}>
+          <span class="rack-label__cat">Rak {c.slug}</span>
+          <span class="rack-label__name">{c.name}</span>
+          <span class="rack-label__count">{c.count} lini · {c.lines[0]} →</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===================== THE COLLECTION · BRC mounted on the wall ===================== -->
+  <section class="wall wall--collection" id="koleksi" aria-labelledby="coll-title">
+    <header class="wall__head">
+      <span class="rail">KOLEKSI · PAGAR BRC</span>
+      <h2 id="coll-title">Setiap spesimen dipasang dan ditagih</h2>
+      <p class="wall__sub">Bukan foto produk di kartu putih. Ini baja galvanis asli, dipasang di dinding contoh, dengan tag spesifikasi seperti gudang menandai stok nyata.</p>
+    </header>
+
+    <div class="collection">
+      {brcShowcase.items.map((s) => (
+        <article class="mount mount--coll">
+          <div class="mount__pin mount__pin--tl"></div>
+          <div class="mount__pin mount__pin--tr"></div>
+          <div class="mount__photo">
+            <Image src={imageAsset(s.angles[0])} alt={s.name} width={560} height={560} loading="lazy" class="mount__img" />
+          </div>
+          <figcaption class="tag">
+            <span class="tag__hole"></span>
+            <span class="tag__no">BRC · {String(brcShowcase.items.indexOf(s) + 1).padStart(2, "0")}</span>
+            <span class="tag__name">{s.name}</span>
+            <span class="tag__specs">
+              {s.specs.map((sp) => (
+                <span class="tag__spec"><b>{sp.k}</b> {sp.v}</span>
+              ))}
+            </span>
+            <a class="tag__wa" href={waLink(s.waContext)} target="_blank" rel="noopener">Minta penawaran →</a>
+          </figcaption>
+        </article>
+      ))}
+    </div>
+
+    <div class="collection__order">
+      <a class="cta cta--primary cta--lg" href={waBrc} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
+    </div>
+  </section>
+
+  <!-- ===================== ASAL & TUJUAN · proof photos mounted as reference ===================== -->
+  <section class="wall wall--proof" aria-labelledby="proof-title">
+    <header class="wall__head wall__head--light">
+      <span class="rail">ASAL & TUJUAN · DI LAPANGAN</span>
+      <h2 id="proof-title">Dari mana contoh ini datang, ke mana ia pergi</h2>
+      <p class="wall__sub">Setiap spesimen di atas adalah bukti dari gudang dan lapangan nyata. Foto terpasang ini dipasang di dinding sebagai referensi, bukan klaim, tapi jejak.</p>
+    </header>
+    <div class="proof-wall">
+      {proof.map((p, i) => (
+        <figure class={`proof-mount proof-mount--${i + 1}`}>
+          <div class="mount__pin mount__pin--tl"></div>
+          <div class="mount__pin mount__pin--tr"></div>
+          <div class="mount__photo">
+            <Image src={imageAsset(p.image)} alt={p.caption} width={720} height={540} loading="lazy" class="mount__img" />
+          </div>
+          <figcaption class="proof-caption">{p.caption}</figcaption>
+        </figure>
+      ))}
+    </div>
+  </section>
+
+  <!-- ===================== ORDER COUNTER · the wall's quote desk ===================== -->
+  <section class="wall wall--counter" id="kontak" aria-labelledby="counter-title">
+    <div class="counter">
+      <span class="rail">MEJA PESAN · WHOLESALE</span>
+      <h2 id="counter-title">Siap pesan? Bandingkan spesimen, lalu minta harga pabrik.</h2>
+      <p class="counter__sub">Hubungi tim sales BSM via WhatsApp. Harga pabrik, stok gudang, dan pengiriman ke 34 provinsi dalam satu obrolan.</p>
+      <a class="cta cta--primary cta--lg" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
+      <p class="counter__addr">Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472 · bsmbangun@yahoo.co.id</p>
+    </div>
+  </section>
+
+  <footer class="proto-footer">
+    <span>PROTOTYPE POV 4 · The Material Library · THROWAWAY · wayfinder #12</span>
+  </footer>
+
+<style>
+  :root {
+    /* The sample-room wall: dark perforated hardboard */
+    --board: #1c1f23;          /* hardboard face */
+    --board-deep: #14161a;      /* recessed / footer */
+    --board-hole: #0c0d0f;      /* pegboard hole */
+    --board-rail: #2b3036;      /* mounting rail */
+    /* Specimen + tag surfaces */
+    --tag-paper: #f3efe4;       /* printed paper specimen tag */
+    --tag-paper-deep: #e6e0d1;
+    --tag-ink: #1a1d20;
+    --tag-ink-soft: #5a5f66;
+    /* Reading text on the dark wall */
+    --ink: #ece9e2;            /* headlines / body on board */
+    --ink-soft: #9aa0a8;        /* secondary on board */
+    --rail-ink: #c9b48a;        /* industrial brass-ish rail label (the one accent for tags) */
+    /* Steel specimens */
+    --steel-edge: #d7dde3;
+    /* CTA */
+    --signal: #e8551e;
+    --signal-deep: #c8430f;
+    --signal-darker: #a8360b;
+    --fd: "Archivo", "Arial Narrow", sans-serif;
+    --fb: "Hanken Grotesk", system-ui, sans-serif;
+    --fm: "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--board);
+    color: var(--ink);
+    font-family: var(--fb);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+
+  /* The pegboard ground — real perforated hardboard, the supplier's sample wall.
+     Holes are geometry (a material), not decoration. */
+  .wall {
+    position: relative;
+    padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem);
+  }
+  .wall::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(var(--board-hole) 1.5px, transparent 1.6px);
+    background-size: 22px 22px;
+    background-position: 0 0;
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wall > * { position: relative; z-index: 1; }
+
+  .rail {
+    font-family: var(--fm);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--rail-ink);
+  }
+  .wall__head { max-width: 60ch; margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+  .wall__head--light .rail { color: var(--rail-ink); }
+  .wall__head h2 {
+    font-family: var(--fd);
+    font-weight: 700;
+    font-stretch: 112%;
+    font-size: clamp(1.7rem, 4vw, 2.8rem);
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+    margin: 0.7rem 0 1rem;
+    text-wrap: balance;
+  }
+  .wall__sub { color: var(--ink-soft); max-width: 56ch; }
+
+  /* ---- NAV ---- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem clamp(1rem, 4vw, 3rem);
+    background: rgba(20, 22, 26, 0.86);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--board-rail);
+  }
+  .nav__brand { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: 1.4rem; letter-spacing: -0.02em; }
+  .nav__links { display: flex; gap: 1.5rem; }
+  .nav__links a { font-family: var(--fm); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); transition: color 0.2s; }
+  .nav__links a:hover { color: var(--ink); }
+  .nav__wa { font-family: var(--fm); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; background: var(--signal-deep); color: #fff; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600; }
+  @media (max-width: 640px) { .nav__links { display: none; } }
+
+  /* ---- CTAs ---- */
+  .cta {
+    display: inline-flex; align-items: center;
+    font-family: var(--fm); font-size: 0.8rem; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 600;
+    padding: 14px 28px; border-radius: 4px;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .cta--primary { background: var(--signal-deep); color: #fff; }
+  .cta--primary:hover { background: var(--signal-darker); transform: translateY(-1px); }
+  .cta--ghost { background: transparent; color: var(--ink); border: 1px solid var(--ink-soft); }
+  .cta--ghost:hover { border-color: var(--ink); }
+  .cta--lg { font-size: 0.9rem; padding: 18px 36px; }
+
+  /* ===================== HERO WALL ===================== */
+  .hero-wall {
+    min-height: 100vh;
+    padding-top: clamp(6rem, 14vh, 9rem);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+  @media (max-width: 980px) {
+    .hero-wall { grid-template-columns: 1fr; min-height: auto; padding-top: clamp(6rem, 12vh, 8rem); }
+  }
+  .wall__placard { max-width: 30rem; }
+  .placard__index { display: block; margin-bottom: 1.2rem; }
+  .placard__title {
+    font-family: var(--fd); font-weight: 800; font-stretch: 125%;
+    font-size: clamp(2.6rem, 6.5vw, 4.6rem);
+    line-height: 0.96; letter-spacing: -0.02em;
+    margin-bottom: 1.4rem; text-wrap: balance;
+  }
+  .placard__lede { color: var(--ink-soft); font-size: 1.1rem; max-width: 48ch; margin-bottom: 2rem; }
+  .placard__actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  .hero-mounts {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    grid-template-rows: auto auto;
+    gap: clamp(1.2rem, 3vw, 2.4rem);
+    align-items: start;
+  }
+  .hero-mounts .mount--1 { grid-row: 1 / span 2; }
+  @media (max-width: 640px) {
+    .hero-mounts { grid-template-columns: 1fr; }
+    .hero-mounts .mount--1 { grid-row: auto; }
+  }
+
+  /* ===================== MOUNT · the core "physical specimen on a wall" unit ===================== */
+  .mount {
+    position: relative;
+    background: linear-gradient(180deg, #23272c, #1a1d21);
+    border: 1px solid var(--board-rail);
+    border-radius: 10px;
+    padding: 14px 14px 0;
+    /* THE anti-"books" discipline: a real offset drop shadow = a physical object
+       mounted off the wall, not a card sitting in a grid. */
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.4),
+      0 18px 30px -10px rgba(0, 0, 0, 0.65),
+      0 30px 50px -16px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .mount:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.4),
+      0 24px 38px -10px rgba(0, 0, 0, 0.7),
+      0 40px 64px -16px rgba(0, 0, 0, 0.55);
+  }
+  .mount--hero { padding: 16px 16px 0; }
+  /* Pin marks — physical evidence the specimen is fastened to the board */
+  .mount__pin {
+    position: absolute; z-index: 3;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #6b7280, #2a2e33 70%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  }
+  .mount__pin--tl { top: 7px; left: 7px; }
+  .mount__pin--tr { top: 7px; right: 7px; }
+
+  .mount__photo {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #0e0f12;
+    /* a faint inner steel edge so the photo reads as a mounted plate, not a bleed */
+    box-shadow: inset 0 0 0 1px rgba(215, 221, 227, 0.12);
+  }
+  .mount__img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mount--hero .mount__photo { aspect-ratio: 1 / 1; }
+  .mount--coll .mount__photo { aspect-ratio: 1 / 1; }
+
+  /* ===================== TAG · the printed paper specimen tag ===================== */
+  .tag {
+    position: relative;
+    margin: 12px 4px 16px;
+    padding: 0.7rem 0.9rem 0.85rem;
+    background: var(--tag-paper);
+    color: var(--tag-ink);
+    border-radius: 3px;
+    /* a tag hangs below the specimen — a soft offset shadow lifts it off the board */
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.6);
+    font-family: var(--fm);
+  }
+  /* the hang-hole punched in the tag */
+  .tag__hole {
+    position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    width: 12px; height: 6px;
+    background: var(--board);
+    border-radius: 0 0 12px 12px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  .tag__no {
+    display: block;
+    font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--tag-ink-soft); margin-bottom: 0.25rem;
+  }
+  .tag__name {
+    display: block;
+    font-family: var(--fd); font-weight: 700; font-stretch: 112%;
+    font-size: 1.05rem; letter-spacing: -0.01em; color: var(--tag-ink);
+    margin-bottom: 0.55rem;
+  }
+  .tag__specs { display: block; }
+  .tag__spec {
+    display: block;
+    font-size: 0.72rem; line-height: 1.45;
+    color: var(--tag-ink-soft);
+    border-top: 1px dashed rgba(26, 29, 32, 0.22);
+    padding: 0.28rem 0;
+  }
+  .tag__spec b {
+    display: inline-block; min-width: 7.5rem;
+    color: var(--tag-ink); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.6rem;
+  }
+  .tag__wa {
+    display: inline-block; margin-top: 0.6rem;
+    font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--signal-darker); font-weight: 600;
+    border-bottom: 1px solid rgba(168, 54, 11, 0.4);
+    padding-bottom: 1px;
+  }
+  .tag__wa:hover { color: #8a2d09; border-bottom-color: #8a2d09; }
+
+  /* ===================== LIBRARY INDEX RACK ===================== */
+  .wall--index { padding-bottom: clamp(3rem, 7vw, 5rem); }
+  .rack {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.8rem, 1.6vw, 1.2rem);
+  }
+  @media (max-width: 860px) { .rack { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .rack { grid-template-columns: 1fr; } }
+  .rack-label {
+    position: relative;
+    display: flex; flex-direction: column; gap: 0.35rem;
+    padding: 1.1rem 1.2rem;
+    background: linear-gradient(180deg, #23272c, #1b1e22);
+    border: 1px solid var(--board-rail);
+    border-top: 1px solid var(--rail-ink);
+    border-radius: 6px;
+    box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.6);
+    transition: transform 0.2s, border-top-color 0.2s;
+  }
+  .rack-label:hover { transform: translateX(3px); border-top-color: #e6c98a; }
+  .rack-label__cat {
+    font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-soft);
+  }
+  .rack-label__name {
+    font-family: var(--fd); font-weight: 700; font-stretch: 108%;
+    font-size: 1.15rem; letter-spacing: -0.01em; color: var(--ink);
+  }
+  .rack-label__count {
+    font-family: var(--fm); font-size: 0.68rem; color: var(--ink-soft);
+  }
+
+  /* ===================== COLLECTION GRID ===================== */
+  .wall--collection { padding-top: 0; }
+  .collection {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(1.4rem, 3vw, 2.4rem);
+  }
+  @media (max-width: 980px) { .collection { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .collection { grid-template-columns: 1fr; } }
+  .collection__order { margin-top: clamp(2.5rem, 5vw, 3.5rem); text-align: center; }
+
+  /* ===================== PROOF WALL ===================== */
+  .wall--proof {
+    background: var(--board-deep);
+  }
+  .proof-wall {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(1rem, 2vw, 1.6rem);
+  }
+  @media (max-width: 980px) { .proof-wall { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .proof-wall { grid-template-columns: 1fr; } }
+  .proof-mount {
+    background: linear-gradient(180deg, #23272c, #1a1d21);
+    border: 1px solid var(--board-rail);
+    border-radius: 8px;
+    padding: 12px 12px 0;
+    box-shadow: 0 14px 26px -12px rgba(0, 0, 0, 0.65);
+  }
+  .proof-mount .mount__photo { aspect-ratio: 4 / 3; }
+  .proof-caption {
+    font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-soft);
+    text-align: center; padding: 0.7rem 0 0.9rem;
+  }
+
+  /* ===================== ORDER COUNTER ===================== */
+  .wall--counter { background: var(--board-deep); padding-bottom: clamp(3rem, 8vw, 6rem); }
+  .counter { max-width: 46rem; margin: 0 auto; text-align: center; }
+  .counter .rail { display: block; margin-bottom: 1rem; }
+  .counter h2 {
+    font-family: var(--fd); font-weight: 800; font-stretch: 125%;
+    font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1; letter-spacing: -0.02em;
+    margin-bottom: 1.2rem; text-wrap: balance;
+  }
+  .counter__sub { color: var(--ink-soft); max-width: 48ch; margin: 0 auto 2rem; }
+  .counter__addr {
+    font-family: var(--fm); font-size: 0.7rem; letter-spacing: 0.06em;
+    color: var(--ink-soft); margin-top: 2rem; line-height: 1.7;
+  }
+
+  /* ===================== FOOTER ===================== */
+  .proto-footer {
+    padding: 1.4rem; text-align: center;
+    background: var(--board-deep);
+    border-top: 1px solid var(--board-rail);
+  }
+  .proto-footer span {
+    font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-soft);
+  }
+
+  /* Reduced motion: drop the hover lifts */
+  @media (prefers-reduced-motion: reduce) {
+    .mount, .cta, .rack-label { transition: none; }
+    .mount:hover, .rack-label:hover { transform: none; }
+  }
+</style>
+</body>
+</html>
