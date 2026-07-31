@@ -230,6 +230,7 @@ const proof = brcShowcase.proof.slice(0, 4);
     try {
       const { initMaterialWall } = await import("../scripts/materialLibraryShader.ts");
       disposeWall = initMaterialWall(wallContainer);
+      if (disposeWall) document.body.classList.add("shader-live");
     } catch { disposeWall = null; }
   }
   window.addEventListener("load", maybeStartWall, { once: true });
@@ -349,8 +350,9 @@ const proof = brcShowcase.proof.slice(0, 4);
     background-image: radial-gradient(var(--board-hole) 1.5px, transparent 1.6px);
     background-size: 22px 22px;
     opacity: 0.6;
+    transition: opacity 0.6s;
   }
-  .wall-canvas:not(:empty) ~ .wall-fallback { opacity: 0; }
+  body.shader-live .wall-fallback { opacity: 0; }
   /* Cursor-light glow on the wall (a soft warm pool that follows the cursor) */
   .cursor-light {
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
