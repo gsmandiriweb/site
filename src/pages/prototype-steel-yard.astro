@@ -41,6 +41,7 @@ const waBrc = waLink(
 );
 
 const heroProduct = brcShowcase.items[0];
+const heroSecondary = brcShowcase.items[1];
 const yardBreak1 = imageAsset("pagar-brc-tumpukan-stok-gudang-2.jpg");
 const yardBreak2 = imageAsset("pagar-brc-terpasang-outdoor-1.jpg");
 const yardStock = brcShowcase.items;
@@ -55,6 +56,12 @@ const proof = brcShowcase.proof.slice(0, 5);
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script is:inline>
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.documentElement.classList.add("hero-motion-ready");
+      window.setTimeout(() => document.documentElement.classList.remove("hero-motion-ready"), 2800);
+    }
+  </script>
 </head>
 <body>
   <!-- NAV · quiet enough to let the product lead -->
@@ -70,44 +77,52 @@ const proof = brcShowcase.proof.slice(0, 5);
 
   <!-- ===================== HERO · one product, one action ===================== -->
   <section class="hero" aria-labelledby="hero-title">
-    <div class="hero__ambient" aria-hidden="true"></div>
+    <div class="hero__ambient" data-hero-shader aria-hidden="true"></div>
     <div class="hero__grid">
       <div class="hero__content" data-reveal>
+        <span class="hero__eyebrow">PAGAR BRC &amp; MATERIAL KONSTRUKSI</span>
         <h1 class="hero__title" id="hero-title">
-          <span class="hero__title-line" data-line>Material bangunan.</span>
-          <span class="hero__title-line" data-line>Harga pabrik.</span>
-          <span class="hero__title-line hero__title-line--accent" data-line>Siap kirim.</span>
+          <span class="hero__title-mask"><span class="hero__title-line" data-line>Mulai dari spesifikasi.</span></span>
+          <span class="hero__title-mask"><span class="hero__title-line hero__title-line--accent" data-line>Berangkat ke proyek.</span></span>
         </h1>
-        <p class="hero__lede">Pagar BRC, atap, bondek, dan kebutuhan proyek konstruksi dari satu sumber Surabaya. Mulai dari produk yang bisa Anda periksa, lalu minta penawaran untuk kebutuhan proyek Anda.</p>
+        <p class="hero__lede">BSM memasok pagar BRC, atap, bondek, dan material konstruksi dari Surabaya. Periksa spesifikasi produk, lalu sampaikan kebutuhan, volume, dan lokasi proyek untuk mendapatkan penawaran harga pabrik dengan pengiriman ke seluruh Indonesia.</p>
         <div class="hero__actions">
           <a class="cta cta--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
-          <a class="cta cta--ghost" href={u("/katalog")}>Lihat Katalog</a>
+          <a class="cta cta--ghost" href={u("/katalog")}>Telusuri Katalog</a>
         </div>
         <div class="hero__proof" aria-label="Informasi pengadaan BSM">
-          <div><b>34</b><span>provinsi terjangkau</span></div>
+          <div><b>34</b><span>provinsi pengiriman</span></div>
           <div><b>6</b><span>kelompok material</span></div>
-          <div><b>SBY</b><span>asal pengiriman</span></div>
+          <div><b>SBY</b><span>basis distribusi</span></div>
         </div>
       </div>
 
-      <a class="hero__plate-link" href={u("/pagar-brc")} aria-label="Lihat detail Pagar BRC Panel">
-        <figure class="hero__plate" data-reveal>
-          <div class="hero__plate-image">
-            <Image src={imageAsset(heroProduct.angles[0])} alt="Pagar BRC Panel, tampak perspektif" width={900} height={1600} loading="eager" fetchpriority="high" decoding="async" class="hero__plate-img" />
-            <span class="hero__plate-mark">BRC / 01</span>
+      <div class="hero__plate-stack">
+        <figure class="hero__plate-rear" aria-hidden="true">
+          <div class="hero__plate-rear-image">
+            <Image src={imageAsset(heroSecondary.angles[0])} alt="" width={900} height={1600} loading="lazy" decoding="async" class="hero__plate-rear-img" />
+            <span class="hero__plate-mark">BRC / 02</span>
           </div>
-          <figcaption class="hero__plate-caption">
-            <span class="hero__plate-label">PAGAR BRC PANEL · SPESIMEN UTAMA</span>
-            <b>{heroProduct.name}</b>
-            <span>Foto produk nyata · asal Surabaya</span>
-          </figcaption>
-          <dl class="hero__plate-specs">
-            {heroProduct.specs.slice(0, 4).map((spec) => (
-              <div><dt>{spec.k}</dt><dd>{spec.v}</dd></div>
-            ))}
-          </dl>
         </figure>
-      </a>
+        <a class="hero__plate-link" href={u("/pagar-brc")} aria-label="Lihat detail Pagar BRC Panel">
+          <figure class="hero__plate" data-reveal>
+            <div class="hero__plate-image">
+              <Image src={imageAsset(heroProduct.angles[0])} alt="Pagar BRC Panel, tampak perspektif" width={900} height={1600} loading="eager" fetchpriority="high" decoding="async" class="hero__plate-img" />
+              <span class="hero__plate-mark">BRC / 01</span>
+            </div>
+            <figcaption class="hero__plate-caption">
+              <span class="hero__plate-label">PAGAR BRC PANEL · PRODUK UNGGULAN</span>
+              <b>{heroProduct.name}</b>
+              <span>Foto produk nyata · didistribusikan dari Surabaya</span>
+            </figcaption>
+            <dl class="hero__plate-specs">
+              {heroProduct.specs.slice(0, 4).map((spec) => (
+                <div><dt>{spec.k}</dt><dd>{spec.v}</dd></div>
+              ))}
+            </dl>
+          </figure>
+        </a>
+      </div>
     </div>
     <div class="hero__scroll" data-reveal><span>gulir · lihat material lain</span> ↓</div>
   </section>
@@ -120,16 +135,16 @@ const proof = brcShowcase.proof.slice(0, 5);
     <div class="yard-break__scrim"></div>
     <div class="yard-break__cap" data-reveal>
       <span class="yard-break__no">01 / 03</span>
-      <p>Setiap panel dilas titik dan digalvanis sebelum tumpukan ini terbentuk. Stok yang Anda lihat bukan ilustrasi — ini foto gudang hari ini.</p>
+      <p>Periksa melalui foto dan spesifikasi: pagar BRC dengan dimensi, diameter kawat, mesh, finishing, dan asal yang tercatat. Bukti produk, bukan ilustrasi katalog.</p>
     </div>
   </section>
 
   <!-- ===================== THE STOCK · BRC specimens you stand among ===================== -->
   <section class="stock" id="stok" aria-labelledby="stock-title">
     <header class="stock__head" data-reveal>
-      <span class="rail">STOK GUDANG · PAGAR BRC</span>
-      <h2 id="stock-title">Apa yang ada di sekitar Anda</h2>
-      <p class="stock__sub">Enam unit BRC, masing-masing foto nyata dari gudang. Bukan kartu produk di grid rapi — ini material yang tertumpuk di lantai ini. Geser satu per satu, periksa spesifikasi, lalu minta penawaran per unit.</p>
+      <span class="rail">SPESIFIKASI PRODUK · PAGAR BRC</span>
+      <h2 id="stock-title">Pilih produk BRC sesuai kebutuhan proyek</h2>
+      <p class="stock__sub">Enam lini BRC dengan foto produk dan spesifikasi yang tersedia. Bandingkan dimensi, diameter kawat, mesh, dan finishing; lalu minta penawaran per unit.</p>
       <div class="rail-controls" aria-label="Navigasi stok BRC">
         <button class="rail-control" type="button" data-carousel-dir="prev" data-carousel-target="stock" aria-label="Produk BRC sebelumnya">←</button>
         <span class="rail-progress label" data-carousel-progress="stock" aria-live="polite">01 / 06</span>
@@ -171,7 +186,7 @@ const proof = brcShowcase.proof.slice(0, 5);
     <div class="yard-break__scrim"></div>
     <div class="yard-break__cap" data-reveal>
       <span class="yard-break__no">02 / 03</span>
-      <p>Dari tumpukan di gudang, material bergerak ke proyek. Foto ini bukan stok — ini pagar BRC yang sudah tiba dan terpasang. Jejak pengiriman nyata.</p>
+      <p>Dari basis distribusi di Surabaya ke lapangan: dokumentasi pagar BRC yang telah digunakan dan terpasang di proyek.</p>
     </div>
   </section>
 
@@ -179,8 +194,8 @@ const proof = brcShowcase.proof.slice(0, 5);
   <section class="catalog" id="katalog" aria-labelledby="cat-title">
     <header class="catalog__head" data-reveal>
       <span class="rail">KATALOG · 6 KELOMPOK MATERIAL</span>
-      <h2 id="cat-title">Satu gudang, enam kelompok, satu pengiriman</h2>
-      <p class="catalog__sub">Bukan spesialis satu lini. BRC adalah pintu masuk; di belakangnya ada atap, dinding, pintu, struktur, dan utilitas. Geser kelompok material satu per satu, lalu masuk ke lini yang Anda butuhkan.</p>
+      <h2 id="cat-title">Satu sumber untuk material proyek</h2>
+      <p class="catalog__sub">BSM menyediakan enam kelompok material konstruksi dari basis Surabaya. Mulai dari pagar BRC, lalu telusuri atap, dinding, pintu, struktur, dan utilitas untuk kebutuhan pengadaan Anda.</p>
       <div class="rail-controls" aria-label="Navigasi kelompok material">
         <button class="rail-control" type="button" data-carousel-dir="prev" data-carousel-target="categories" aria-label="Kelompok material sebelumnya">←</button>
         <span class="rail-progress label" data-carousel-progress="categories" aria-live="polite">01 / 06</span>
@@ -214,7 +229,7 @@ const proof = brcShowcase.proof.slice(0, 5);
     </div>
     <div class="yard-break__cap yard-break__cap--reach" data-reveal>
       <span class="yard-break__no">03 / 03</span>
-      <p>34 provinsi, dibuktikan dengan foto, bukan peta titik. Setiap bingkai di bawah adalah pagar BRC yang tiba dan terpasang di proyek nyata.</p>
+      <p>Pengiriman dari Surabaya ke 34 provinsi, dengan dokumentasi lapangan sebagai bukti penggunaan pagar BRC di proyek nyata.</p>
     </div>
   </section>
 
@@ -222,8 +237,8 @@ const proof = brcShowcase.proof.slice(0, 5);
   <section class="close" id="kontak" aria-labelledby="close-title">
     <div class="close__inner" data-reveal>
       <span class="rail">MEJA PESAN · WHOLESALE</span>
-      <h2 id="close-title">Siap bangun? Minta penawaran dari gudang ini.</h2>
-      <p class="close__sub">Hubungi tim sales BSM via WhatsApp. Harga pabrik, stok gudang, dan pengiriman ke 34 provinsi dalam satu obrolan. Konsultasi gratis, kirim Surabaya gratis.</p>
+      <h2 id="close-title">Sampaikan kebutuhan proyek Anda.</h2>
+      <p class="close__sub">Kirim kategori material, spesifikasi, jumlah, dan lokasi proyek melalui WhatsApp. Tim BSM akan menyiapkan informasi harga pabrik, ketersediaan, dan pengiriman. Konsultasi gratis; pengiriman Surabaya gratis.</p>
       <a class="cta cta--primary cta--lg" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
       <p class="close__addr">Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472 · bsmbangun@yahoo.co.id</p>
     </div>
@@ -236,6 +251,40 @@ const proof = brcShowcase.proof.slice(0, 5);
 <script>
   // Motion is enhancement only: the hero remains fully visible without JS.
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // The hero shader is atmosphere only. CSS remains the visual floor if WebGL
+  // is unavailable, reduced motion is enabled, or the lazy enhancement fails.
+  const heroShaderContainer = document.querySelector<HTMLElement>("[data-hero-shader]");
+  let disposeHeroShader: (() => void) | null = null;
+  let cancelHeroShaderStart = () => {};
+  if (heroShaderContainer && !reduceMotion) {
+    let leavingPage = false;
+    const startHeroShader = async () => {
+      if (leavingPage) return;
+      try {
+        const { initSteelYardHeroShader } = await import("../scripts/steelYardHeroShader.ts");
+        if (!leavingPage) disposeHeroShader = initSteelYardHeroShader(heroShaderContainer);
+      } catch {
+        // The CSS gradient is intentionally a complete fallback.
+      }
+    };
+    const ric = (window as any).requestIdleCallback as
+      | ((callback: () => void, options?: { timeout: number }) => number)
+      | undefined;
+    const cancelRic = (window as any).cancelIdleCallback as ((id: number) => void) | undefined;
+    if (typeof ric === "function") {
+      const idleId = ric(startHeroShader, { timeout: 1600 });
+      cancelHeroShaderStart = () => cancelRic?.(idleId);
+    } else {
+      window.addEventListener("load", startHeroShader, { once: true });
+      cancelHeroShaderStart = () => {
+        leavingPage = true;
+        window.removeEventListener("load", startHeroShader);
+      };
+    }
+    const markLeaving = () => { leavingPage = true; };
+    window.addEventListener("pagehide", markLeaving, { once: true });
+  }
 
   // The lower stock/catalog surfaces use a restrained shared spotlight. Keep
   // that interaction lightweight; the hero itself does not depend on it.
@@ -268,6 +317,8 @@ const proof = brcShowcase.proof.slice(0, 5);
   if (!reduceMotion) window.addEventListener("pointermove", updatePointer, { passive: true });
   window.addEventListener("pagehide", () => {
     if (pointerRaf) cancelAnimationFrame(pointerRaf);
+    cancelHeroShaderStart();
+    disposeHeroShader?.();
   }, { once: true });
 
   // ---- Native carousel enhancement ----
@@ -330,13 +381,17 @@ const proof = brcShowcase.proof.slice(0, 5);
     if (document.fonts?.ready) await document.fonts.ready;
 
     // Hero entrance: the product plate and headline assemble in with a
-    // restrained rise; the content is already visible before this enhancement.
-    const heroReveals = gsap.utils.toArray<HTMLElement>(".hero [data-reveal]");
-    gsap.set(heroReveals, { autoAlpha: 0, y: 30 });
-    gsap.to(heroReveals, { autoAlpha: 1, y: 0, duration: 1.0, ease: "power3.out", stagger: 0.12, delay: 0.2 });
-    const heroLines = gsap.utils.toArray<HTMLElement>(".hero__title-line");
-    gsap.set(heroLines, { yPercent: 105 });
-    gsap.to(heroLines, { yPercent: 0, duration: 0.9, ease: "power3.out", stagger: 0.1, delay: 0.35 });
+    // restrained rise. The head-level class is the only initial hide, so a
+    // successful animation cannot flash content invisible after first paint;
+    // its timeout restores the CSS floor if this enhancement fails. If the
+    // fallback already took over while imports were loading, leave the content
+    // visible instead of re-hiding it here.
+    if (document.documentElement.classList.contains("hero-motion-ready")) {
+      const heroReveals = gsap.utils.toArray<HTMLElement>(".hero [data-reveal]");
+      gsap.set(heroReveals, { autoAlpha: 0, y: 30 });
+      document.documentElement.classList.remove("hero-motion-ready");
+      gsap.to(heroReveals, { autoAlpha: 1, y: 0, duration: 1.0, ease: "power3.out", stagger: 0.12, delay: 0.2 });
+    }
 
     // Stock rises into view as you walk past (material you stand among).
     const mounts = gsap.utils.toArray<HTMLElement>("[data-mount]");
@@ -415,52 +470,106 @@ const proof = brcShowcase.proof.slice(0, 5);
 
   /* ===================== HERO · one product, one action ===================== */
   .hero { position: relative; min-height: min(900px, 100svh); display: flex; align-items: center; overflow: hidden; padding: 7rem clamp(1rem, 5vw, 4rem) 4rem; background: var(--yard-darker); }
-  .hero__ambient { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(70% 90% at 78% 50%, rgba(201,180,138,0.14), transparent 52%), linear-gradient(112deg, #0c0d10 0%, #111419 48%, #1a1c20 100%); }
-  .hero__ambient::after { content: ""; position: absolute; inset: 0; opacity: 0.14; background-image: linear-gradient(90deg, rgba(130,138,147,0.24) 1px, transparent 1px), linear-gradient(rgba(130,138,147,0.18) 1px, transparent 1px); background-size: clamp(72px, 9vw, 120px) clamp(72px, 9vw, 120px); mask-image: linear-gradient(90deg, black, transparent 78%); }
+  .hero__ambient { position: absolute; inset: 0; pointer-events: none; overflow: hidden; background: radial-gradient(70% 90% at 78% 50%, rgba(201,180,138,0.14), transparent 52%), linear-gradient(112deg, #0c0d10 0%, #111419 48%, #1a1c20 100%); }
+  /* Static pattern layer: diagonal machined hatching gives the dark field a
+     steel-sheet texture without introducing another moving focal point. */
+  .hero__ambient::before { content: ""; position: absolute; inset: -20%; z-index: 1; opacity: 0.34; background: repeating-linear-gradient(135deg, rgba(201,180,138,0.08) 0 1px, transparent 1px 13px); mask-image: linear-gradient(115deg, black 0 22%, transparent 54%); transform: rotate(-3deg); }
+  /* Existing drafting grid, now paired with sparse registration dots on the
+     open side of the hero. The mask keeps both patterns away from the copy. */
+  .hero__ambient::after { content: ""; position: absolute; inset: 0; z-index: 1; opacity: 0.14; background-image: radial-gradient(circle at 1px 1px, rgba(201,180,138,0.5) 0 1px, transparent 1.5px), linear-gradient(90deg, rgba(130,138,147,0.24) 1px, transparent 1px), linear-gradient(rgba(130,138,147,0.18) 1px, transparent 1px); background-size: clamp(72px, 9vw, 120px) clamp(72px, 9vw, 120px); mask-image: linear-gradient(90deg, transparent 18%, black 52%, black 78%, transparent 100%); }
+  .hero__ambient canvas { position: relative; z-index: 0; opacity: 0.54; mix-blend-mode: screen; }
+  @media (max-width: 860px) { .hero__ambient::before { opacity: 0.2; } .hero__ambient::after { opacity: 0.1; } }
+  @media (prefers-reduced-motion: reduce) { .hero__ambient canvas { display: none; } }
   .hero__grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.08fr); align-items: center; gap: clamp(2.5rem, 7vw, 8rem); width: min(1180px, 100%); margin: 0 auto; }
-  .hero__content { max-width: 38rem; }
-  .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2.8rem, 6.5vw, 5.8rem); line-height: 0.92; letter-spacing: -0.025em; margin-bottom: 1.6rem; text-wrap: balance; }
-  .hero__title-line { display: block; overflow: hidden; }
+  .hero__content { max-width: 35rem; }
+  .hero__eyebrow { display: block; margin-bottom: 1rem; font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.16em; line-height: 1.3; color: var(--beam); }
+  .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 118%; font-size: clamp(2.35rem, 4.9vw, 4.45rem); line-height: 0.94; letter-spacing: -0.03em; margin-bottom: 1.2rem; text-wrap: balance; }
+  .hero__title-mask { display: block; overflow: hidden; }
+  .hero__title-line { display: block; }
   .hero__title-line--accent { color: var(--yard-accent); }
-  .hero__lede { font-size: clamp(1rem, 1.4vw, 1.12rem); color: rgba(245,245,244,0.82); max-width: 46ch; margin-bottom: 2rem; }
-  .hero__actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .hero__lede { font-size: clamp(1rem, 1.35vw, 1.1rem); line-height: 1.62; color: rgba(245,245,244,0.88); max-width: 43ch; margin-bottom: 2.15rem; }
+  .hero__actions { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+  .hero__actions .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 3.15rem; font-size: 0.76rem; letter-spacing: 0.11em; }
+  .hero__actions .cta--primary { min-width: 12.5rem; box-shadow: 0 8px 20px -10px rgba(0,0,0,0.82), inset 0 1px 0 rgba(255,255,255,0.12); }
+  .hero__actions .cta--primary:hover { box-shadow: 0 12px 26px -10px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.14); }
+  .hero__actions .cta--ghost { min-width: 10.5rem; background: rgba(130,138,147,0.09); border-color: rgba(130,138,147,0.48); }
+  .hero__actions .cta--ghost:hover { background: rgba(130,138,147,0.17); transform: translateY(-1px); }
   .hero__proof { display: flex; gap: clamp(1rem, 3vw, 2.2rem); margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid rgba(130,138,147,0.28); }
   .hero__proof div { display: grid; gap: 0.2rem; }
   .hero__proof b { font-family: var(--fd); font-size: 1.45rem; line-height: 1; color: var(--beam); }
-  .hero__proof span { font-family: var(--fm); font-size: 0.58rem; line-height: 1.35; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yard-steel); max-width: 9rem; }
+  .hero__proof span { font-family: var(--fm); font-size: 0.62rem; line-height: 1.35; letter-spacing: 0.06em; text-transform: uppercase; color: var(--yard-steel); max-width: 9rem; }
   .hero__plate-link { display: block; min-width: 0; }
-  .hero__plate { margin: 0; width: min(100%, 600px); margin-left: auto; padding: clamp(0.65rem, 1.4vw, 1rem); background: #171a1e; border: 1px solid rgba(201,180,138,0.38); box-shadow: 0 22px 56px -28px rgba(0,0,0,0.8); transform: rotate(1.2deg); transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease; }
-  .hero__plate-link:hover .hero__plate, .hero__plate-link:focus-visible .hero__plate { transform: rotate(0deg) translateY(-4px); border-color: var(--beam); box-shadow: 0 30px 70px -30px rgba(0,0,0,0.9); }
-  .hero__plate-image { position: relative; overflow: hidden; background: #25282c; aspect-ratio: 0.62 / 1; max-height: min(62vh, 640px); }
+  .hero__plate-stack { position: relative; width: min(100%, 600px); margin-left: auto; isolation: isolate; }
+  .hero__plate-rear { position: absolute; z-index: -1; top: 1.15rem; right: -1.35rem; width: 78%; margin: 0; padding: 0.65rem; background: linear-gradient(145deg, rgba(37,40,44,0.82), rgba(20,22,26,0.86)); border: 1px solid rgba(201,180,138,0.22); border-radius: 5px; transform: rotate(-3.2deg); opacity: 0.72; box-shadow: 0 22px 48px -30px rgba(0,0,0,0.9); pointer-events: none; }
+  .hero__plate-rear-image { position: relative; width: 100%; height: clamp(220px, 31svh, 315px); overflow: hidden; border-radius: 2px; background: #25282c; }
+  .hero__plate-rear-img { width: 100%; height: 100%; object-fit: cover; object-position: center; filter: saturate(0.62) contrast(0.94) brightness(0.72); }
+  .hero__plate-rear .hero__plate-mark { top: 0.7rem; right: 0.7rem; opacity: 0.8; }
+  .hero__plate { position: relative; margin: 0; width: 100%; margin-left: auto; padding: clamp(0.7rem, 1.5vw, 1.05rem); background: linear-gradient(145deg, rgba(37,40,44,0.98), rgba(20,22,26,0.98)); border: 1px solid rgba(255,255,255,0.08); border-top-color: rgba(201,180,138,0.52); border-radius: 5px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.055), 0 26px 64px -28px rgba(0,0,0,0.92); transform: rotate(1.2deg); transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease; }
+  .hero__plate::before { content: ""; position: absolute; top: 0.35rem; left: 12%; right: 12%; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,180,138,0.34), transparent); pointer-events: none; }
+  .hero__plate-link:hover .hero__plate, .hero__plate-link:focus-visible .hero__plate { transform: rotate(1.8deg) translateY(-4px) !important; border-top-color: var(--beam); box-shadow: inset 0 1px 1px rgba(255,255,255,0.07), 0 32px 76px -30px rgba(0,0,0,0.96); }
+  .hero__plate-image { position: relative; overflow: hidden; background: #25282c; width: 100%; height: clamp(280px, 38svh, 390px); border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), inset 0 -28px 36px -34px rgba(0,0,0,0.9); }
   .hero__plate-img { width: 100%; height: 100%; object-fit: cover; object-position: center center; filter: saturate(0.82) contrast(1.06); }
   .hero__plate-mark { position: absolute; top: 1rem; right: 1rem; padding: 0.35rem 0.55rem; background: rgba(12,13,16,0.78); color: var(--beam); font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.12em; }
-  .hero__plate-caption { display: grid; gap: 0.28rem; padding: 1rem 0.35rem 0.75rem; }
-  .hero__plate-label { font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.14em; color: var(--yard-accent); }
+  .hero__plate-caption { display: grid; gap: 0.28rem; padding: 0.75rem 0.35rem 0.55rem; }
+  .hero__plate-label { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.11em; color: var(--yard-accent); }
   .hero__plate-caption b { font-family: var(--fd); font-size: clamp(1.3rem, 2.4vw, 1.9rem); line-height: 1; }
   .hero__plate-caption > span:last-child { color: var(--yard-steel); font-size: 0.85rem; }
   .hero__plate-specs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid rgba(130,138,147,0.28); }
-  .hero__plate-specs div { min-width: 0; padding: 0.75rem 0.35rem 0.15rem; border-right: 1px solid rgba(130,138,147,0.18); }
+  .hero__plate-specs div { min-width: 0; padding: 0.6rem 0.35rem 0.15rem; border-right: 1px solid rgba(130,138,147,0.18); }
   .hero__plate-specs div:last-child { border-right: 0; }
-  .hero__plate-specs dt { font-family: var(--fm); font-size: 0.54rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yard-steel); }
-  .hero__plate-specs dd { margin-top: 0.2rem; font-size: clamp(0.72rem, 1vw, 0.86rem); color: var(--yard-light); overflow-wrap: anywhere; }
+  .hero__plate-specs dt { font-family: var(--fm); font-size: 0.62rem; line-height: 1.25; letter-spacing: 0.06em; text-transform: uppercase; color: var(--yard-steel); }
+  .hero__plate-specs dd { margin-top: 0.2rem; font-size: clamp(0.76rem, 1vw, 0.86rem); color: var(--yard-light); overflow-wrap: anywhere; }
   .hero__scroll { position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 2; font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.12em; color: var(--yard-steel); display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  /* Desktop hero is a compact scene, not a full-screen gate. The fixed height
+     makes the CTA and the beginning of the warehouse story visible together;
+     the portrait plate is sized inside that explicit budget. */
+  @media (min-width: 861px) {
+    .hero { height: auto; min-height: 0; padding: clamp(4rem, 7svh, 5rem) clamp(1rem, 5vw, 4rem) clamp(1rem, 2svh, 1.5rem); }
+    .hero__grid { gap: clamp(1.75rem, 4vw, 4rem); }
+    .hero__plate-image { height: clamp(260px, 40svh, 390px); }
+    .hero__scroll { display: none; }
+  }
+  @media (min-width: 1060px) and (max-height: 700px) {
+    .hero { min-height: 0; padding-top: 3.75rem; padding-bottom: 0.75rem; }
+    .hero__grid { gap: 1.5rem; }
+    .hero__title { font-size: clamp(2.25rem, 4.7vw, 3.8rem); margin-bottom: 1.25rem; }
+    .hero__lede { margin-bottom: 1.35rem; }
+    .hero__proof { margin-top: 1.5rem; }
+    .hero__plate-image { height: 260px; }
+  }
+  /* Tablet-width desktop layouts get the compact treatment without a hard
+     height: wrapped copy/buttons can grow naturally instead of being clipped
+     by the hero's overflow boundary. */
+  @media (min-width: 861px) and (max-width: 1059px) {
+    .hero { height: auto; min-height: 0; padding-top: 5rem; padding-bottom: 2rem; }
+    .hero__grid { gap: 1.5rem; }
+    .hero__title { font-size: clamp(2.35rem, 4.6vw, 3.8rem); margin-bottom: 1.25rem; }
+    .hero__lede { margin-bottom: 1.5rem; }
+    .hero__proof { margin-top: 1.75rem; }
+    .hero__plate-image { height: clamp(260px, calc(100svh - 19rem), 360px); }
+  }
   @media (max-width: 860px) {
     .hero { min-height: auto; padding-top: 7rem; padding-bottom: 5rem; }
-    .hero__grid { grid-template-columns: 1fr; gap: 3rem; }
+    .hero__grid { grid-template-columns: 1fr; gap: 3.25rem; }
     .hero__content { max-width: 44rem; }
-    .hero__plate { width: min(100%, 680px); margin: 0 auto; transform: rotate(0.6deg); }
+    .hero__plate-stack { width: min(100%, 680px); margin: 0 auto; }
+    .hero__plate-rear { display: none; }
+    .hero__plate { margin: 0 auto; transform: rotate(0.6deg); }
     .hero__scroll { display: none; }
   }
   .hero__plate-link:focus-visible { outline: 2px solid var(--beam); outline-offset: 6px; }
+  .hero-motion-ready .hero [data-reveal] { visibility: hidden; }
   @media (max-width: 520px) {
     .hero { padding-inline: 1rem; }
-    .hero__title { font-size: clamp(2.5rem, 13vw, 4rem); }
-    .hero__actions { display: grid; grid-template-columns: 1fr; }
-    .hero__actions .cta { justify-content: center; width: 100%; }
-    .hero__proof { gap: 0.8rem; }
-    .hero__proof span { font-size: 0.52rem; }
+    .hero__title { font-size: clamp(2.3rem, 11vw, 3.35rem); line-height: 0.94; margin-bottom: 1rem; }
+    .hero__eyebrow { margin-bottom: 0.8rem; font-size: 0.62rem; letter-spacing: 0.12em; }
+    .hero__lede { margin-bottom: 1.6rem; }
+    .hero__actions { display: grid; grid-template-columns: 1fr; gap: 0.7rem; }
+    .hero__actions .cta, .hero__actions .cta--primary, .hero__actions .cta--ghost { justify-content: center; width: 100%; min-width: 0; }
+    .hero__proof { gap: 0.8rem; margin-top: 1.65rem; }
+    .hero__proof span { font-size: 0.58rem; }
     .hero__plate { padding: 0.55rem; }
-    .hero__plate-image { max-height: min(52vh, 430px); }
+    .hero__plate-image { height: min(48vh, 390px); }
     .hero__plate-specs { grid-template-columns: repeat(2, 1fr); }
     .hero__plate-specs div:nth-child(2) { border-right: 0; }
     .hero__plate-specs div:nth-child(-n + 2) { border-bottom: 1px solid rgba(130,138,147,0.18); }
@@ -555,6 +664,7 @@ const proof = brcShowcase.proof.slice(0, 5);
     .cta, .hero__plate, .stock-item__photo, .stock-item__img, .stock-item__spot, .cat-tile, .cat-tile__img, .nav__wa, .nav__links a { transition: none; }
     .stock__yard, .catalog__grid { scroll-behavior: auto; }
     .stock-item:hover .stock-item__img, .cat-tile:hover .cat-tile__img, .cta:hover, .nav__wa:hover, .cat-tile:hover { transform: none; }
+    .hero__plate-link:hover .hero__plate, .hero__plate-link:focus-visible .hero__plate { transform: none !important; }
   }
 </style>
 </body>

@@ -1,0 +1,2135 @@
+<!doctype html>
+<html lang="id" data-astro-cid-ir7s3m5k>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PROTOTYPE · Steel Yard · BSM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62.5..125,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("hero-motion-ready");
+        window.setTimeout(
+          () => document.documentElement.classList.remove("hero-motion-ready"),
+          2800,
+        );
+      }
+    </script>
+    <style
+      data-vite-dev-id="/home/edward/Rice/BSM/site/second-shepherd/src/pages/prototype-steel-yard.astro?astro&amp;type=style&amp;index=0&amp;lang.css"
+    >
+      :root {
+        --yard-dark: #14161a;
+        --yard-darker: #0c0d10;
+        --yard-mid: #1d2025;
+        --yard-steel: #828a93;
+        --yard-light: #f5f5f4;
+        --yard-accent: #e8551e;
+        --yard-accent-deep: #c8430f;
+        --yard-accent-darker: #a8360b;
+        --beam: #c9b48a;
+        --fd: "Archivo", "Arial Narrow", sans-serif;
+        --fb: "Hanken Grotesk", system-ui, sans-serif;
+        --fm: "JetBrains Mono", ui-monospace, monospace;
+        --mx: 0.5;
+        --my: 0.5;
+        --ml: 0.5;
+      }
+
+      [data-astro-cid-ir7s3m5k] {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--yard-darker);
+        color: var(--yard-light);
+        font-family: var(--fb);
+        font-size: 1.0625rem;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizelegibility;
+        overflow-x: hidden;
+      }
+
+      img[data-astro-cid-ir7s3m5k] {
+        display: block;
+        max-width: 100%;
+      }
+
+      a[data-astro-cid-ir7s3m5k] {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      [data-astro-cid-ir7s3m5k]:focus-visible {
+        outline: 2px solid var(--beam);
+        outline-offset: 3px;
+      }
+
+      .rail[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--yard-accent);
+      }
+
+      .nav[data-astro-cid-ir7s3m5k] {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem clamp(1rem, 4vw, 3rem);
+        background: #0c0d10d6;
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid #828a932e;
+      }
+
+      .nav__brand[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fd);
+        font-weight: 800;
+        font-stretch: 125%;
+        font-size: 1.4rem;
+        letter-spacing: -0.02em;
+      }
+
+      .nav__links[data-astro-cid-ir7s3m5k] {
+        display: flex;
+        gap: 1.6rem;
+      }
+
+      .nav__links[data-astro-cid-ir7s3m5k] a[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--yard-steel);
+        position: relative;
+        transition: color 0.2s;
+      }
+
+      .nav__links[data-astro-cid-ir7s3m5k] a[data-astro-cid-ir7s3m5k]:after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -4px;
+        width: 100%;
+        height: 1px;
+        background: var(--beam);
+        transform: scaleX(0);
+        transform-origin: 0;
+        transition: transform 0.25s;
+      }
+
+      .nav__links[data-astro-cid-ir7s3m5k] a[data-astro-cid-ir7s3m5k]:hover {
+        color: var(--yard-light);
+      }
+
+      .nav__links[data-astro-cid-ir7s3m5k] a[data-astro-cid-ir7s3m5k]:hover:after {
+        transform: scaleX(1);
+      }
+
+      .nav__wa[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        background: var(--yard-accent-deep);
+        color: #fff;
+        padding: 0.55rem 1.1rem;
+        border-radius: 3px;
+        font-weight: 600;
+        transition:
+          background 0.2s,
+          transform 0.2s;
+      }
+
+      .nav__wa[data-astro-cid-ir7s3m5k]:hover {
+        background: var(--yard-accent-darker);
+        transform: translateY(-1px);
+      }
+
+      @media (width <= 640px) {
+        .nav__links[data-astro-cid-ir7s3m5k] {
+          display: none;
+        }
+      }
+
+      .cta[data-astro-cid-ir7s3m5k] {
+        display: inline-flex;
+        align-items: center;
+        font-family: var(--fm);
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-weight: 600;
+        padding: 14px 30px;
+        border-radius: 3px;
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+
+      .cta--primary[data-astro-cid-ir7s3m5k] {
+        background: var(--yard-accent-deep);
+        color: #fff;
+        box-shadow: 0 6px 16px -8px #0009;
+      }
+
+      .cta--primary[data-astro-cid-ir7s3m5k]:hover {
+        background: var(--yard-accent-darker);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px -8px #000000a6;
+      }
+
+      .cta--ghost[data-astro-cid-ir7s3m5k] {
+        background: none;
+        color: var(--yard-light);
+        border: 1px solid var(--yard-steel);
+      }
+
+      .cta--ghost[data-astro-cid-ir7s3m5k]:hover {
+        border-color: var(--yard-light);
+        background: #ffffff0a;
+      }
+
+      .cta--lg[data-astro-cid-ir7s3m5k] {
+        font-size: 0.9rem;
+        padding: 18px 38px;
+      }
+
+      .hero[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        min-height: min(900px, 100svh);
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        padding: 7rem clamp(1rem, 5vw, 4rem) 4rem;
+        background: var(--yard-darker);
+      }
+
+      .hero__ambient[data-astro-cid-ir7s3m5k] {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        background:
+          radial-gradient(70% 90% at 78%, #c9b48a24, #0000 52%),
+          linear-gradient(112deg, #0c0d10 0%, #111419 48%, #1a1c20 100%);
+      }
+
+      .hero__ambient[data-astro-cid-ir7s3m5k]:before {
+        content: "";
+        position: absolute;
+        inset: -20%;
+        z-index: 1;
+        opacity: 0.34;
+        background: repeating-linear-gradient(135deg, #c9b48a14 0 1px, #0000 1px 13px);
+        mask-image: linear-gradient(115deg, #000 0 22%, #0000 54%);
+        transform: rotate(-3deg);
+      }
+
+      .hero__ambient[data-astro-cid-ir7s3m5k]:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        opacity: 0.14;
+        background-image:
+          radial-gradient(circle at 1px 1px, #c9b48a80 0 1px, #0000 1.5px),
+          linear-gradient(90deg, #828a933d 1px, #0000 1px),
+          linear-gradient(#828a932e 1px, #0000 1px);
+        background-size: clamp(72px, 9vw, 120px) clamp(72px, 9vw, 120px);
+        mask-image: linear-gradient(90deg, #0000 18%, #000 52% 78%, #0000 100%);
+      }
+
+      .hero__ambient[data-astro-cid-ir7s3m5k] canvas[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        z-index: 0;
+        opacity: 0.54;
+        mix-blend-mode: screen;
+      }
+
+      @media (width <= 860px) {
+        .hero__ambient[data-astro-cid-ir7s3m5k]:before {
+          opacity: 0.2;
+        }
+
+        .hero__ambient[data-astro-cid-ir7s3m5k]:after {
+          opacity: 0.1;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .hero__ambient[data-astro-cid-ir7s3m5k] canvas[data-astro-cid-ir7s3m5k] {
+          display: none;
+        }
+      }
+
+      .hero__grid[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.08fr);
+        align-items: center;
+        gap: clamp(2.5rem, 7vw, 8rem);
+        width: min(1180px, 100%);
+        margin: 0 auto;
+      }
+
+      .hero__content[data-astro-cid-ir7s3m5k] {
+        max-width: 35rem;
+      }
+
+      .hero__eyebrow[data-astro-cid-ir7s3m5k] {
+        display: block;
+        margin-bottom: 1rem;
+        font-family: var(--fm);
+        font-size: 0.68rem;
+        letter-spacing: 0.16em;
+        line-height: 1.3;
+        color: var(--beam);
+      }
+
+      .hero__title[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fd);
+        font-weight: 800;
+        font-stretch: 118%;
+        font-size: clamp(2.35rem, 4.9vw, 4.45rem);
+        line-height: 0.94;
+        letter-spacing: -0.03em;
+        margin-bottom: 1.55rem;
+        text-wrap: balance;
+        text-shadow: 0 5px 24px #0000006b;
+      }
+
+      .hero__title-line[data-astro-cid-ir7s3m5k] {
+        display: block;
+        overflow: hidden;
+      }
+
+      .hero__title-line--accent[data-astro-cid-ir7s3m5k] {
+        color: var(--yard-accent);
+      }
+
+      .hero__lede[data-astro-cid-ir7s3m5k] {
+        font-size: clamp(1rem, 1.35vw, 1.1rem);
+        line-height: 1.62;
+        color: #f5f5f4e0;
+        max-width: 43ch;
+        margin-bottom: 2.15rem;
+      }
+
+      .hero__actions[data-astro-cid-ir7s3m5k] {
+        display: flex;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+      }
+
+      .hero__actions[data-astro-cid-ir7s3m5k] .cta[data-astro-cid-ir7s3m5k] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 3.15rem;
+        font-size: 0.76rem;
+        letter-spacing: 0.11em;
+      }
+
+      .hero__actions[data-astro-cid-ir7s3m5k] .cta--primary[data-astro-cid-ir7s3m5k] {
+        min-width: 12.5rem;
+        box-shadow:
+          0 8px 20px -10px #000000d1,
+          inset 0 1px #ffffff1f;
+      }
+
+      .hero__actions[data-astro-cid-ir7s3m5k] .cta--primary[data-astro-cid-ir7s3m5k]:hover {
+        box-shadow:
+          0 12px 26px -10px #000000e6,
+          inset 0 1px #ffffff24;
+      }
+
+      .hero__actions[data-astro-cid-ir7s3m5k] .cta--ghost[data-astro-cid-ir7s3m5k] {
+        min-width: 10.5rem;
+        background: #828a9317;
+        border-color: #828a937a;
+      }
+
+      .hero__actions[data-astro-cid-ir7s3m5k] .cta--ghost[data-astro-cid-ir7s3m5k]:hover {
+        background: #828a932b;
+        transform: translateY(-1px);
+      }
+
+      .hero__proof[data-astro-cid-ir7s3m5k] {
+        display: flex;
+        gap: clamp(1rem, 3vw, 2.2rem);
+        margin-top: 2.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #828a9347;
+      }
+
+      .hero__proof[data-astro-cid-ir7s3m5k] div[data-astro-cid-ir7s3m5k] {
+        display: grid;
+        gap: 0.2rem;
+      }
+
+      .hero__proof[data-astro-cid-ir7s3m5k] b[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fd);
+        font-size: 1.45rem;
+        line-height: 1;
+        color: var(--beam);
+      }
+
+      .hero__proof[data-astro-cid-ir7s3m5k] span[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.62rem;
+        line-height: 1.35;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--yard-steel);
+        max-width: 9rem;
+      }
+
+      .hero__plate-link[data-astro-cid-ir7s3m5k] {
+        display: block;
+        min-width: 0;
+      }
+
+      .hero__plate[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        margin: 0;
+        width: min(100%, 600px);
+        margin-left: auto;
+        padding: clamp(0.7rem, 1.5vw, 1.05rem);
+        background: linear-gradient(145deg, #25282cfa, #14161afa);
+        border: 1px solid #ffffff14;
+        border-top-color: #c9b48a85;
+        border-radius: 5px;
+        box-shadow:
+          inset 0 1px 1px #ffffff0e,
+          0 26px 64px -28px #000000eb;
+        transform: rotate(1.2deg);
+        transition:
+          transform 0.35s,
+          border-color 0.35s,
+          box-shadow 0.35s;
+      }
+
+      .hero__plate[data-astro-cid-ir7s3m5k]:before {
+        content: "";
+        position: absolute;
+        top: 0.35rem;
+        left: 12%;
+        right: 12%;
+        height: 1px;
+        background: linear-gradient(90deg, #0000, #c9b48a57, #0000);
+        pointer-events: none;
+      }
+
+      .hero__plate-link[data-astro-cid-ir7s3m5k]:hover .hero__plate[data-astro-cid-ir7s3m5k],
+      .hero__plate-link[data-astro-cid-ir7s3m5k]:focus-visible
+        .hero__plate[data-astro-cid-ir7s3m5k] {
+        transform: rotate(0) translateY(-4px);
+        border-top-color: var(--beam);
+        box-shadow:
+          inset 0 1px 1px #ffffff12,
+          0 32px 76px -30px #000000f5;
+      }
+
+      .hero__plate-image[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        overflow: hidden;
+        background: #25282c;
+        aspect-ratio: 0.62;
+        max-height: min(62vh, 640px);
+        border-radius: 2px;
+        box-shadow:
+          inset 0 0 0 1px #ffffff0f,
+          inset 0 -28px 36px -34px #000000e6;
+      }
+
+      .hero__plate-img[data-astro-cid-ir7s3m5k] {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center center;
+        filter: saturate(0.82) contrast(1.06);
+      }
+
+      .hero__plate-mark[data-astro-cid-ir7s3m5k] {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.35rem 0.55rem;
+        background: #0c0d10c7;
+        color: var(--beam);
+        font-family: var(--fm);
+        font-size: 0.62rem;
+        letter-spacing: 0.12em;
+      }
+
+      .hero__plate-caption[data-astro-cid-ir7s3m5k] {
+        display: grid;
+        gap: 0.28rem;
+        padding: 1rem 0.35rem 0.75rem;
+      }
+
+      .hero__plate-label[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.66rem;
+        letter-spacing: 0.11em;
+        color: var(--yard-accent);
+      }
+
+      .hero__plate-caption[data-astro-cid-ir7s3m5k] b[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fd);
+        font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+        line-height: 1;
+      }
+
+      .hero__plate-caption[data-astro-cid-ir7s3m5k] > span[data-astro-cid-ir7s3m5k]:last-child {
+        color: var(--yard-steel);
+        font-size: 0.85rem;
+      }
+
+      .hero__plate-specs[data-astro-cid-ir7s3m5k] {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border-top: 1px solid #828a9347;
+      }
+
+      .hero__plate-specs[data-astro-cid-ir7s3m5k] div[data-astro-cid-ir7s3m5k] {
+        min-width: 0;
+        padding: 0.75rem 0.35rem 0.15rem;
+        border-right: 1px solid #828a932e;
+      }
+
+      .hero__plate-specs[data-astro-cid-ir7s3m5k] div[data-astro-cid-ir7s3m5k]:last-child {
+        border-right: 0;
+      }
+
+      .hero__plate-specs[data-astro-cid-ir7s3m5k] dt[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.62rem;
+        line-height: 1.25;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--yard-steel);
+      }
+
+      .hero__plate-specs[data-astro-cid-ir7s3m5k] dd[data-astro-cid-ir7s3m5k] {
+        margin-top: 0.2rem;
+        font-size: clamp(0.76rem, 1vw, 0.86rem);
+        color: var(--yard-light);
+        overflow-wrap: anywhere;
+      }
+
+      .hero__scroll[data-astro-cid-ir7s3m5k] {
+        position: absolute;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2;
+        font-family: var(--fm);
+        font-size: 0.66rem;
+        letter-spacing: 0.12em;
+        color: var(--yard-steel);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+      }
+
+      @media (width >= 861px) {
+        .hero[data-astro-cid-ir7s3m5k] {
+          height: auto;
+          min-height: 0;
+          padding: clamp(4rem, 7svh, 5rem) clamp(1rem, 5vw, 4rem) clamp(1rem, 2svh, 1.5rem);
+        }
+
+        .hero__grid[data-astro-cid-ir7s3m5k] {
+          gap: clamp(1.75rem, 4vw, 4rem);
+        }
+
+        .hero__plate-image[data-astro-cid-ir7s3m5k] {
+          max-height: clamp(260px, 40svh, 390px);
+        }
+
+        .hero__scroll[data-astro-cid-ir7s3m5k] {
+          display: none;
+        }
+      }
+
+      @media (width >= 1060px) and (height <= 700px) {
+        .hero[data-astro-cid-ir7s3m5k] {
+          min-height: 0;
+          padding-top: 3.75rem;
+          padding-bottom: 0.75rem;
+        }
+
+        .hero__grid[data-astro-cid-ir7s3m5k] {
+          gap: 1.5rem;
+        }
+
+        .hero__title[data-astro-cid-ir7s3m5k] {
+          font-size: clamp(2.25rem, 4.7vw, 3.8rem);
+          margin-bottom: 1.25rem;
+        }
+
+        .hero__lede[data-astro-cid-ir7s3m5k] {
+          margin-bottom: 1.35rem;
+        }
+
+        .hero__proof[data-astro-cid-ir7s3m5k] {
+          margin-top: 1.5rem;
+        }
+
+        .hero__plate-image[data-astro-cid-ir7s3m5k] {
+          max-height: 260px;
+        }
+      }
+
+      @media (width >= 861px) and (width <= 1059px) {
+        .hero[data-astro-cid-ir7s3m5k] {
+          height: auto;
+          min-height: 0;
+          padding-top: 5rem;
+          padding-bottom: 2rem;
+        }
+
+        .hero__grid[data-astro-cid-ir7s3m5k] {
+          gap: 1.5rem;
+        }
+
+        .hero__title[data-astro-cid-ir7s3m5k] {
+          font-size: clamp(2.35rem, 4.6vw, 3.8rem);
+          margin-bottom: 1.25rem;
+        }
+
+        .hero__lede[data-astro-cid-ir7s3m5k] {
+          margin-bottom: 1.5rem;
+        }
+
+        .hero__proof[data-astro-cid-ir7s3m5k] {
+          margin-top: 1.75rem;
+        }
+
+        .hero__plate-image[data-astro-cid-ir7s3m5k] {
+          max-height: clamp(260px, 100svh - 19rem, 360px);
+        }
+      }
+
+      @media (width <= 860px) {
+        .hero[data-astro-cid-ir7s3m5k] {
+          min-height: auto;
+          padding-top: 7rem;
+          padding-bottom: 5rem;
+        }
+
+        .hero__grid[data-astro-cid-ir7s3m5k] {
+          grid-template-columns: 1fr;
+          gap: 3.25rem;
+        }
+
+        .hero__content[data-astro-cid-ir7s3m5k] {
+          max-width: 44rem;
+        }
+
+        .hero__plate[data-astro-cid-ir7s3m5k] {
+          width: min(100%, 680px);
+          margin: 0 auto;
+          transform: rotate(0.6deg);
+        }
+
+        .hero__scroll[data-astro-cid-ir7s3m5k] {
+          display: none;
+        }
+      }
+
+      .hero__plate-link[data-astro-cid-ir7s3m5k]:focus-visible {
+        outline: 2px solid var(--beam);
+        outline-offset: 6px;
+      }
+
+      .hero-motion-ready[data-astro-cid-ir7s3m5k]
+        .hero[data-astro-cid-ir7s3m5k]
+        [data-astro-cid-ir7s3m5k][data-reveal] {
+        visibility: hidden;
+      }
+
+      .hero-motion-ready[data-astro-cid-ir7s3m5k] .hero__title-line[data-astro-cid-ir7s3m5k] {
+        transform: translateY(105%);
+      }
+
+      @media (width <= 520px) {
+        .hero[data-astro-cid-ir7s3m5k] {
+          padding-inline: 1rem;
+        }
+
+        .hero__title[data-astro-cid-ir7s3m5k] {
+          font-size: clamp(2.3rem, 11vw, 3.35rem);
+          line-height: 0.94;
+        }
+
+        .hero__eyebrow[data-astro-cid-ir7s3m5k] {
+          margin-bottom: 0.8rem;
+          font-size: 0.62rem;
+          letter-spacing: 0.12em;
+        }
+
+        .hero__lede[data-astro-cid-ir7s3m5k] {
+          margin-bottom: 1.6rem;
+        }
+
+        .hero__actions[data-astro-cid-ir7s3m5k] {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.7rem;
+        }
+
+        .hero__actions[data-astro-cid-ir7s3m5k] .cta[data-astro-cid-ir7s3m5k],
+        .hero__actions[data-astro-cid-ir7s3m5k] .cta--primary[data-astro-cid-ir7s3m5k],
+        .hero__actions[data-astro-cid-ir7s3m5k] .cta--ghost[data-astro-cid-ir7s3m5k] {
+          justify-content: center;
+          width: 100%;
+          min-width: 0;
+        }
+
+        .hero__proof[data-astro-cid-ir7s3m5k] {
+          gap: 0.8rem;
+          margin-top: 1.65rem;
+        }
+
+        .hero__proof[data-astro-cid-ir7s3m5k] span[data-astro-cid-ir7s3m5k] {
+          font-size: 0.58rem;
+        }
+
+        .hero__plate[data-astro-cid-ir7s3m5k] {
+          padding: 0.55rem;
+        }
+
+        .hero__plate-image[data-astro-cid-ir7s3m5k] {
+          max-height: min(48vh, 390px);
+        }
+
+        .hero__plate-specs[data-astro-cid-ir7s3m5k] {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .hero__plate-specs[data-astro-cid-ir7s3m5k] div[data-astro-cid-ir7s3m5k]:nth-child(2) {
+          border-right: 0;
+        }
+
+        .hero__plate-specs[data-astro-cid-ir7s3m5k] div[data-astro-cid-ir7s3m5k]:nth-child(-n + 2) {
+          border-bottom: 1px solid #828a932e;
+        }
+
+        .hero__scroll[data-astro-cid-ir7s3m5k] {
+          display: none;
+        }
+      }
+
+      .yard-break[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        height: 75vh;
+        min-height: 480px;
+        overflow: hidden;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .yard-break__photo[data-astro-cid-ir7s3m5k] {
+        position: absolute;
+        inset: -8% 0;
+        will-change: transform;
+      }
+
+      .yard-break__img[data-astro-cid-ir7s3m5k] {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .yard-break__scrim[data-astro-cid-ir7s3m5k] {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(#0c0d1033 0%, #0000 40%, #0c0d10e6 100%);
+      }
+
+      .yard-break__cap[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        z-index: 2;
+        padding: 0 clamp(1rem, 5vw, 4rem) clamp(2rem, 5vh, 3rem);
+        max-width: 44rem;
+      }
+
+      .yard-break__no[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.68rem;
+        letter-spacing: 0.16em;
+        color: var(--yard-accent);
+        display: block;
+        margin-bottom: 0.7rem;
+      }
+
+      .yard-break__cap[data-astro-cid-ir7s3m5k] p[data-astro-cid-ir7s3m5k] {
+        font-size: 1.08rem;
+        color: #f5f5f4eb;
+        max-width: 42ch;
+      }
+
+      .yard-break__cap--reach[data-astro-cid-ir7s3m5k] {
+        max-width: 50rem;
+      }
+
+      .yard-break--proof[data-astro-cid-ir7s3m5k] {
+        height: auto;
+        min-height: 0;
+        display: block;
+        padding: clamp(3rem, 7vw, 5rem) 0;
+        background: #0c0d10d1;
+        backdrop-filter: blur(3px);
+      }
+
+      .yard-break--proof[data-astro-cid-ir7s3m5k] .yard-break__scrim[data-astro-cid-ir7s3m5k] {
+        display: none;
+      }
+
+      .reach-strip[data-astro-cid-ir7s3m5k] {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px;
+      }
+
+      @media (width <= 900px) {
+        .reach-strip[data-astro-cid-ir7s3m5k] {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      @media (width <= 560px) {
+        .reach-strip[data-astro-cid-ir7s3m5k] {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      .reach-tile[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+      }
+
+      .reach-tile__img[data-astro-cid-ir7s3m5k] {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .reach-tile__cap[data-astro-cid-ir7s3m5k] {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0.5rem 0.7rem;
+        background: linear-gradient(#0000, #0c0d10d9);
+        font-family: var(--fm);
+        font-size: 0.56rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--yard-steel);
+      }
+
+      .yard-break--proof[data-astro-cid-ir7s3m5k] .yard-break__cap[data-astro-cid-ir7s3m5k] {
+        padding: clamp(2rem, 5vw, 3rem) clamp(1rem, 5vw, 4rem) 0;
+      }
+
+      .stock[data-astro-cid-ir7s3m5k] {
+        padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem) clamp(2rem, 5vw, 3rem);
+        background: #0c0d10c7;
+        backdrop-filter: blur(3px);
+      }
+
+      .stock__head[data-astro-cid-ir7s3m5k] {
+        max-width: 60ch;
+        margin-bottom: clamp(2.5rem, 5vw, 3.5rem);
+      }
+
+      .stock__head[data-astro-cid-ir7s3m5k] .rail[data-astro-cid-ir7s3m5k] {
+        display: block;
+        margin-bottom: 0.7rem;
+      }
+
+      .stock__head[data-astro-cid-ir7s3m5k] h2[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fd);
+        font-weight: 700;
+        font-stretch: 112%;
+        font-size: clamp(1.7rem, 4vw, 2.8rem);
+        line-height: 1.04;
+        letter-spacing: -0.01em;
+        margin-bottom: 1rem;
+        text-wrap: balance;
+      }
+
+      .stock__sub[data-astro-cid-ir7s3m5k] {
+        color: var(--yard-steel);
+        max-width: 56ch;
+      }
+
+      .rail-controls[data-astro-cid-ir7s3m5k] {
+        display: none;
+        align-items: center;
+        gap: 0.65rem;
+        margin-top: 1.5rem;
+      }
+
+      .carousel-enhanced[data-astro-cid-ir7s3m5k] .rail-controls[data-astro-cid-ir7s3m5k] {
+        display: flex;
+      }
+
+      .rail-control[data-astro-cid-ir7s3m5k] {
+        display: inline-grid;
+        place-items: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 1px solid var(--yard-steel);
+        border-radius: 3px;
+        background: none;
+        color: var(--yard-light);
+        font: 600 1rem/1 var(--fm);
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s,
+          opacity 0.2s;
+      }
+
+      .rail-control[data-astro-cid-ir7s3m5k]:hover:not(:disabled),
+      .rail-control[data-astro-cid-ir7s3m5k]:focus-visible:not(:disabled) {
+        border-color: var(--beam);
+        background: #c9b48a1f;
+      }
+
+      .rail-control[data-astro-cid-ir7s3m5k]:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .rail-progress[data-astro-cid-ir7s3m5k] {
+        color: var(--beam);
+        min-width: 4.5rem;
+        text-align: center;
+      }
+
+      .stock__yard[data-astro-cid-ir7s3m5k],
+      .catalog__grid[data-astro-cid-ir7s3m5k] {
+        display: flex;
+        gap: clamp(1rem, 2vw, 1.5rem);
+        overflow-x: auto;
+        padding: 0.5rem 0.25rem 1.5rem;
+        scroll-snap-type: x mandatory;
+        scroll-padding-inline: 0.25rem;
+        overscroll-behavior-x: contain;
+        scrollbar-width: thin;
+        scrollbar-color: var(--yard-steel) transparent;
+      }
+
+      .stock__yard[data-astro-cid-ir7s3m5k]::-webkit-scrollbar,
+      .catalog__grid[data-astro-cid-ir7s3m5k]::-webkit-scrollbar {
+        height: 0.35rem;
+      }
+
+      .stock__yard[data-astro-cid-ir7s3m5k]::-webkit-scrollbar-thumb,
+      .catalog__grid[data-astro-cid-ir7s3m5k]::-webkit-scrollbar-thumb {
+        background: var(--yard-steel);
+        border-radius: 1rem;
+      }
+
+      .carousel__slide[data-astro-cid-ir7s3m5k] {
+        scroll-snap-align: start;
+      }
+
+      .stock-item[data-astro-cid-ir7s3m5k] {
+        flex: 0 0 min(34rem, 78vw);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stock-item__photo[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        overflow: hidden;
+        background: var(--yard-mid);
+        border-radius: 4px;
+        aspect-ratio: 1;
+        box-shadow: calc((0.5 - var(--mx)) * 16px) calc((0.5 - var(--my)) * 12px) 30px -8px
+          #000000b3;
+        transition:
+          box-shadow 0.4s,
+          transform 0.4s;
+      }
+
+      .stock-item__img[data-astro-cid-ir7s3m5k] {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s;
+      }
+
+      .stock-item__spot[data-astro-cid-ir7s3m5k] {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          220px circle at calc(var(--mx) * 100%) calc(var(--my) * 100%),
+          #c9b48a38,
+          transparent 55%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+        mix-blend-mode: screen;
+      }
+
+      .stock-item[data-astro-cid-ir7s3m5k]:hover .stock-item__spot[data-astro-cid-ir7s3m5k],
+      .stock-item[data-astro-cid-ir7s3m5k]:focus-within .stock-item__spot[data-astro-cid-ir7s3m5k] {
+        opacity: 1;
+      }
+
+      .stock-item[data-astro-cid-ir7s3m5k]:hover .stock-item__img[data-astro-cid-ir7s3m5k] {
+        transform: scale(1.04);
+      }
+
+      .stock-item[data-astro-cid-ir7s3m5k]:hover .stock-item__photo[data-astro-cid-ir7s3m5k],
+      .stock-item[data-astro-cid-ir7s3m5k]:focus-within
+        .stock-item__photo[data-astro-cid-ir7s3m5k] {
+        box-shadow: calc((0.5 - var(--mx)) * 24px) calc((0.5 - var(--my)) * 18px) 44px -10px
+          #000000c7;
+      }
+
+      .stock-item[data-astro-cid-ir7s3m5k]:focus-visible {
+        outline: 2px solid var(--beam);
+        outline-offset: 4px;
+      }
+
+      .stock-item__meta[data-astro-cid-ir7s3m5k] {
+        padding: 1rem 0.2rem 0;
+      }
+
+      .stock-item__no[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.62rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--yard-steel);
+      }
+
+      .stock-item__name[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fd);
+        font-weight: 700;
+        font-stretch: 108%;
+        font-size: 1.2rem;
+        letter-spacing: -0.01em;
+        margin: 0.3rem 0 0.7rem;
+      }
+
+      .stock-item__specs[data-astro-cid-ir7s3m5k] {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stock-item__spec[data-astro-cid-ir7s3m5k] {
+        display: flex;
+        gap: 0.6rem;
+        border-top: 1px solid #828a9338;
+        padding: 0.3rem 0;
+        font-size: 0.78rem;
+      }
+
+      .stock-item__spec[data-astro-cid-ir7s3m5k] dt[data-astro-cid-ir7s3m5k] {
+        flex: 0 0 7.5rem;
+        font-family: var(--fm);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--yard-steel);
+        padding-top: 0.1rem;
+      }
+
+      .stock-item__spec[data-astro-cid-ir7s3m5k] dd[data-astro-cid-ir7s3m5k] {
+        color: var(--yard-light);
+      }
+
+      .stock-item__wa[data-astro-cid-ir7s3m5k] {
+        display: inline-block;
+        margin-top: 0.8rem;
+        font-family: var(--fm);
+        font-size: 0.64rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--yard-accent);
+        font-weight: 600;
+        border-bottom: 1px solid #e8551e66;
+        padding-bottom: 1px;
+      }
+
+      .stock-item__wa[data-astro-cid-ir7s3m5k]:hover {
+        color: var(--yard-accent-darker);
+        border-bottom-color: var(--yard-accent-darker);
+      }
+
+      .stock__order[data-astro-cid-ir7s3m5k] {
+        margin-top: clamp(2.5rem, 5vw, 3.5rem);
+        text-align: center;
+      }
+
+      .catalog[data-astro-cid-ir7s3m5k] {
+        padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem);
+        background: #0c0d10d1;
+        backdrop-filter: blur(3px);
+      }
+
+      .catalog__head[data-astro-cid-ir7s3m5k] {
+        max-width: 60ch;
+        margin-bottom: clamp(2.5rem, 5vw, 3.5rem);
+      }
+
+      .catalog__head[data-astro-cid-ir7s3m5k] .rail[data-astro-cid-ir7s3m5k] {
+        display: block;
+        margin-bottom: 0.7rem;
+      }
+
+      .catalog__head[data-astro-cid-ir7s3m5k] h2[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fd);
+        font-weight: 700;
+        font-stretch: 112%;
+        font-size: clamp(1.7rem, 4vw, 2.8rem);
+        line-height: 1.04;
+        letter-spacing: -0.01em;
+        margin-bottom: 1rem;
+        text-wrap: balance;
+      }
+
+      .catalog__sub[data-astro-cid-ir7s3m5k] {
+        color: var(--yard-steel);
+        max-width: 56ch;
+      }
+
+      .cat-tile[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        flex: 0 0 min(26rem, 72vw);
+        border-radius: 4px;
+        overflow: hidden;
+        aspect-ratio: 4 / 3;
+        box-shadow: calc((0.5 - var(--mx)) * 14px) calc((0.5 - var(--my)) * 10px) 26px -10px
+          #000000b3;
+        transition:
+          box-shadow 0.4s,
+          transform 0.4s;
+      }
+
+      .cat-tile__img[data-astro-cid-ir7s3m5k] {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s;
+      }
+
+      .cat-tile[data-astro-cid-ir7s3m5k]:hover .cat-tile__img[data-astro-cid-ir7s3m5k] {
+        transform: scale(1.05);
+      }
+
+      .cat-tile[data-astro-cid-ir7s3m5k]:hover {
+        box-shadow: calc((0.5 - var(--mx)) * 20px) calc((0.5 - var(--my)) * 14px) 34px -10px
+          #000000c7;
+        transform: translateY(-3px);
+      }
+
+      .cat-tile__overlay[data-astro-cid-ir7s3m5k] {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(#0000 35%, #0c0d10eb 100%);
+      }
+
+      .cat-tile__body[data-astro-cid-ir7s3m5k] {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1.1rem 1.2rem;
+        z-index: 2;
+      }
+
+      .cat-tile__no[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.58rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--yard-accent);
+        display: block;
+        margin-bottom: 0.3rem;
+      }
+
+      .cat-tile__body[data-astro-cid-ir7s3m5k] b[data-astro-cid-ir7s3m5k] {
+        display: block;
+        font-family: var(--fd);
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.2rem;
+      }
+
+      .cat-tile__count[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.66rem;
+        letter-spacing: 0.06em;
+        color: var(--yard-steel);
+      }
+
+      .close[data-astro-cid-ir7s3m5k] {
+        padding: clamp(4rem, 10vw, 8rem) clamp(1rem, 5vw, 4rem);
+        background: #0c0d10e0;
+        backdrop-filter: blur(4px);
+      }
+
+      .close__inner[data-astro-cid-ir7s3m5k] {
+        max-width: 46rem;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .close__inner[data-astro-cid-ir7s3m5k] .rail[data-astro-cid-ir7s3m5k] {
+        display: block;
+        margin-bottom: 1rem;
+      }
+
+      .close__inner[data-astro-cid-ir7s3m5k] h2[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fd);
+        font-weight: 800;
+        font-stretch: 125%;
+        font-size: clamp(2rem, 5vw, 3.4rem);
+        line-height: 0.98;
+        letter-spacing: -0.02em;
+        margin-bottom: 1.4rem;
+        text-wrap: balance;
+      }
+
+      .close__sub[data-astro-cid-ir7s3m5k] {
+        color: var(--yard-steel);
+        max-width: 48ch;
+        margin: 0 auto 2rem;
+      }
+
+      .close__addr[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+        color: var(--yard-steel);
+        margin-top: 2rem;
+        line-height: 1.7;
+      }
+
+      .proto-footer[data-astro-cid-ir7s3m5k] {
+        position: relative;
+        z-index: 1;
+        padding: 1.4rem;
+        text-align: center;
+        background: var(--yard-darker);
+        border-top: 1px solid #828a9326;
+      }
+
+      .proto-footer[data-astro-cid-ir7s3m5k] span[data-astro-cid-ir7s3m5k] {
+        font-family: var(--fm);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--yard-steel);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        .cta[data-astro-cid-ir7s3m5k],
+        .hero__plate[data-astro-cid-ir7s3m5k],
+        .stock-item__photo[data-astro-cid-ir7s3m5k],
+        .stock-item__img[data-astro-cid-ir7s3m5k],
+        .stock-item__spot[data-astro-cid-ir7s3m5k],
+        .cat-tile[data-astro-cid-ir7s3m5k],
+        .cat-tile__img[data-astro-cid-ir7s3m5k],
+        .nav__wa[data-astro-cid-ir7s3m5k],
+        .nav__links[data-astro-cid-ir7s3m5k] a[data-astro-cid-ir7s3m5k] {
+          transition: none;
+        }
+
+        .hero__title[data-astro-cid-ir7s3m5k] {
+          text-shadow: none;
+        }
+
+        .stock__yard[data-astro-cid-ir7s3m5k],
+        .catalog__grid[data-astro-cid-ir7s3m5k] {
+          scroll-behavior: auto;
+        }
+
+        .stock-item[data-astro-cid-ir7s3m5k]:hover .stock-item__img[data-astro-cid-ir7s3m5k],
+        .cat-tile[data-astro-cid-ir7s3m5k]:hover .cat-tile__img[data-astro-cid-ir7s3m5k],
+        .cta[data-astro-cid-ir7s3m5k]:hover,
+        .nav__wa[data-astro-cid-ir7s3m5k]:hover,
+        .cat-tile[data-astro-cid-ir7s3m5k]:hover {
+          transform: none;
+        }
+      }
+    </style>
+    <script type="module" src="/@vite/client"></script>
+    <script type="module" src="/@id/astro/runtime/client/dev-toolbar/entrypoint.js"></script>
+    <script>
+      window.__astro_dev_toolbar__ = {
+        root: "/home/edward/Rice/BSM/site/second-shepherd/",
+        version: "7.1.3",
+        debugInfo:
+          "Astro                    v7.1.3\nNode                     v24.18.1\nSystem                   Linux (x64)\nPackage Manager          bun\nOutput                   static\nAdapter                  none\nIntegrations             @astrojs/react\n                         keystatic",
+      };
+    </script>
+    <script
+      type="module"
+      src="/src/pages/prototype-steel-yard.astro?astro&type=style&index=0&lang.css"
+    ></script>
+  </head>
+  <body data-astro-cid-ir7s3m5k>
+    <!-- NAV · quiet enough to let the product lead -->
+    <nav class="nav" aria-label="Navigasi utama" data-astro-cid-ir7s3m5k>
+      <a class="nav__brand" href="/" data-astro-cid-ir7s3m5k>BSM</a>
+      <div class="nav__links" data-astro-cid-ir7s3m5k>
+        <a href="/" data-astro-cid-ir7s3m5k>Beranda</a
+        ><a href="/katalog" data-astro-cid-ir7s3m5k>Katalog</a
+        ><a href="/pagar-brc" data-astro-cid-ir7s3m5k>Pagar BRC</a>
+      </div>
+      <a
+        class="nav__wa"
+        href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20tertarik%20dengan%20material%20bangunan%20dari%20CV%20Bangun%20Sarana%20Makmur.%20Mohon%20info%20harga%20pabrik%2C%20ketersediaan%20stok%2C%20dan%20pengiriman%20ke%20proyek%20saya.%20Terima%20kasih."
+        target="_blank"
+        rel="noopener"
+        data-astro-cid-ir7s3m5k
+        >WhatsApp</a
+      >
+    </nav>
+    <!-- ===================== HERO · one product, one action ===================== -->
+    <section class="hero" aria-labelledby="hero-title" data-astro-cid-ir7s3m5k>
+      <div class="hero__ambient" data-hero-shader aria-hidden="true" data-astro-cid-ir7s3m5k></div>
+      <div class="hero__grid" data-astro-cid-ir7s3m5k>
+        <div class="hero__content" data-reveal data-astro-cid-ir7s3m5k>
+          <span class="hero__eyebrow" data-astro-cid-ir7s3m5k
+            >PAGAR BRC &amp; MATERIAL KONSTRUKSI</span
+          >
+          <h1 class="hero__title" id="hero-title" data-astro-cid-ir7s3m5k>
+            <span class="hero__title-line" data-line data-astro-cid-ir7s3m5k
+              >Spesifikasi jelas.</span
+            ><span
+              class="hero__title-line hero__title-line--accent"
+              data-line
+              data-astro-cid-ir7s3m5k
+              >Pengadaan terarah.</span
+            >
+          </h1>
+          <p class="hero__lede" data-astro-cid-ir7s3m5k>
+            BSM memasok pagar BRC, atap, bondek, dan material konstruksi lain dari Surabaya. Periksa
+            spesifikasi, sampaikan volume dan lokasi proyek, lalu terima penawaran harga pabrik
+            dengan pengiriman ke seluruh Indonesia.
+          </p>
+          <div class="hero__actions" data-astro-cid-ir7s3m5k>
+            <a
+              class="cta cta--primary"
+              href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20tertarik%20dengan%20material%20bangunan%20dari%20CV%20Bangun%20Sarana%20Makmur.%20Mohon%20info%20harga%20pabrik%2C%20ketersediaan%20stok%2C%20dan%20pengiriman%20ke%20proyek%20saya.%20Terima%20kasih."
+              target="_blank"
+              rel="noopener"
+              data-astro-cid-ir7s3m5k
+              >Minta Penawaran</a
+            ><a class="cta cta--ghost" href="/katalog" data-astro-cid-ir7s3m5k>Telusuri Katalog</a>
+          </div>
+          <div class="hero__proof" aria-label="Informasi pengadaan BSM" data-astro-cid-ir7s3m5k>
+            <div data-astro-cid-ir7s3m5k>
+              <b data-astro-cid-ir7s3m5k>34</b
+              ><span data-astro-cid-ir7s3m5k>provinsi pengiriman</span>
+            </div>
+            <div data-astro-cid-ir7s3m5k>
+              <b data-astro-cid-ir7s3m5k>6</b><span data-astro-cid-ir7s3m5k>kelompok material</span>
+            </div>
+            <div data-astro-cid-ir7s3m5k>
+              <b data-astro-cid-ir7s3m5k>SBY</b
+              ><span data-astro-cid-ir7s3m5k>basis distribusi</span>
+            </div>
+          </div>
+        </div>
+        <a
+          class="hero__plate-link"
+          href="/pagar-brc"
+          aria-label="Lihat detail Pagar BRC Panel"
+          data-astro-cid-ir7s3m5k
+          ><figure class="hero__plate" data-reveal data-astro-cid-ir7s3m5k>
+            <div class="hero__plate-image" data-astro-cid-ir7s3m5k>
+              <img
+                src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-panel-perspektif.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=900&amp;h=1600&amp;f=webp"
+                data-image-component="true"
+                alt="Pagar BRC Panel, tampak perspektif"
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+                data-astro-cid-ir7s3m5k="true"
+                width="900"
+                height="1600"
+                class="hero__plate-img"
+              /><span class="hero__plate-mark" data-astro-cid-ir7s3m5k>BRC / 01</span>
+            </div>
+            <figcaption class="hero__plate-caption" data-astro-cid-ir7s3m5k>
+              <span class="hero__plate-label" data-astro-cid-ir7s3m5k
+                >PAGAR BRC PANEL · PRODUK UNGGULAN</span
+              ><b data-astro-cid-ir7s3m5k>Pagar BRC Panel</b
+              ><span data-astro-cid-ir7s3m5k
+                >Foto produk nyata · didistribusikan dari Surabaya</span
+              >
+            </figcaption>
+            <dl class="hero__plate-specs" data-astro-cid-ir7s3m5k>
+              <div data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Dimensi</dt>
+                <dd data-astro-cid-ir7s3m5k>240×150 cm</dd>
+              </div>
+              <div data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Diameter Kawat</dt>
+                <dd data-astro-cid-ir7s3m5k>∅6 mm</dd>
+              </div>
+              <div data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Mesh</dt>
+                <dd data-astro-cid-ir7s3m5k>150×150 mm</dd>
+              </div>
+              <div data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Finishing</dt>
+                <dd data-astro-cid-ir7s3m5k>Galvanis elektro</dd>
+              </div>
+            </dl>
+          </figure></a
+        >
+      </div>
+      <div class="hero__scroll" data-reveal data-astro-cid-ir7s3m5k>
+        <span data-astro-cid-ir7s3m5k>gulir · lihat material lain</span> ↓
+      </div>
+    </section>
+    <!-- ===================== WALK THE YARD · full-bleed break 1 ===================== -->
+    <section class="yard-break" aria-label="Tumpukan stok di gudang" data-astro-cid-ir7s3m5k>
+      <div class="yard-break__photo" data-parallax-layer="-0.08" data-astro-cid-ir7s3m5k>
+        <img
+          src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-tumpukan-stok-gudang-2.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=1600&amp;h=2000&amp;f=webp"
+          data-image-component="true"
+          alt="Tumpukan pagar BRC disiapkan di gudang BSM"
+          loading="lazy"
+          data-astro-cid-ir7s3m5k="true"
+          decoding="async"
+          width="1600"
+          height="2000"
+          class="yard-break__img"
+        />
+      </div>
+      <div class="yard-break__scrim" data-astro-cid-ir7s3m5k></div>
+      <div class="yard-break__cap" data-reveal data-astro-cid-ir7s3m5k>
+        <span class="yard-break__no" data-astro-cid-ir7s3m5k>01 / 03</span>
+        <p data-astro-cid-ir7s3m5k>
+          Periksa melalui foto dan spesifikasi: pagar BRC dengan dimensi, diameter kawat, mesh,
+          finishing, dan asal yang tercatat. Bukti produk, bukan ilustrasi katalog.
+        </p>
+      </div>
+    </section>
+    <!-- ===================== THE STOCK · BRC specimens you stand among ===================== -->
+    <section class="stock" id="stok" aria-labelledby="stock-title" data-astro-cid-ir7s3m5k>
+      <header class="stock__head" data-reveal data-astro-cid-ir7s3m5k>
+        <span class="rail" data-astro-cid-ir7s3m5k>SPESIFIKASI PRODUK · PAGAR BRC</span>
+        <h2 id="stock-title" data-astro-cid-ir7s3m5k>Pilih produk BRC sesuai kebutuhan proyek</h2>
+        <p class="stock__sub" data-astro-cid-ir7s3m5k>
+          Enam lini BRC dengan foto produk dan spesifikasi yang tersedia. Bandingkan dimensi,
+          diameter kawat, mesh, dan finishing; lalu minta penawaran per unit.
+        </p>
+        <div class="rail-controls" aria-label="Navigasi stok BRC" data-astro-cid-ir7s3m5k>
+          <button
+            class="rail-control"
+            type="button"
+            data-carousel-dir="prev"
+            data-carousel-target="stock"
+            aria-label="Produk BRC sebelumnya"
+            data-astro-cid-ir7s3m5k
+          >
+            ←</button
+          ><span
+            class="rail-progress label"
+            data-carousel-progress="stock"
+            aria-live="polite"
+            data-astro-cid-ir7s3m5k
+            >01 / 06</span
+          ><button
+            class="rail-control"
+            type="button"
+            data-carousel-dir="next"
+            data-carousel-target="stock"
+            aria-label="Produk BRC berikutnya"
+            data-astro-cid-ir7s3m5k
+          >
+            →
+          </button>
+        </div>
+      </header>
+      <div
+        class="stock__yard"
+        data-carousel-track="stock"
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="Produk BRC dari stok gudang"
+        tabindex="0"
+        data-astro-cid-ir7s3m5k
+      >
+        <article
+          class="stock-item carousel__slide"
+          role="group"
+          aria-label="Produk 1 dari 6"
+          data-mount
+          data-astro-cid-ir7s3m5k
+        >
+          <div class="stock-item__photo" data-astro-cid-ir7s3m5k>
+            <img
+              src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-panel-perspektif.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=720&amp;h=720&amp;f=webp"
+              data-image-component="true"
+              alt="Pagar BRC Panel"
+              loading="lazy"
+              data-astro-cid-ir7s3m5k="true"
+              decoding="async"
+              width="720"
+              height="720"
+              class="stock-item__img"
+            />
+            <div class="stock-item__spot" aria-hidden="true" data-astro-cid-ir7s3m5k></div>
+          </div>
+          <div class="stock-item__meta" data-astro-cid-ir7s3m5k>
+            <span class="stock-item__no" data-astro-cid-ir7s3m5k>UNIT 01 · BRC</span>
+            <h3 class="stock-item__name" data-astro-cid-ir7s3m5k>Pagar BRC Panel</h3>
+            <dl class="stock-item__specs" data-astro-cid-ir7s3m5k>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Dimensi</dt>
+                <dd data-astro-cid-ir7s3m5k>240×150 cm</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Diameter Kawat</dt>
+                <dd data-astro-cid-ir7s3m5k>∅6 mm</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Mesh</dt>
+                <dd data-astro-cid-ir7s3m5k>150×150 mm</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Finishing</dt>
+                <dd data-astro-cid-ir7s3m5k>Galvanis elektro</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Asal</dt>
+                <dd data-astro-cid-ir7s3m5k>Surabaya</dd>
+              </div>
+            </dl>
+            <a
+              class="stock-item__wa"
+              href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20butuh%20penawaran%20untuk%20%22Pagar%20BRC%20Panel%22%20(240%C3%97150%20cm%2C%20%E2%88%856%20mm%2C%20galvanis).%20Mohon%20info%20harga%20pabrik%2C%20stok%2C%20dan%20pengiriman.%20Terima%20kasih."
+              target="_blank"
+              rel="noopener"
+              data-astro-cid-ir7s3m5k
+              >Minta penawaran unit ini →</a
+            >
+          </div>
+        </article>
+        <article
+          class="stock-item carousel__slide"
+          role="group"
+          aria-label="Produk 2 dari 6"
+          data-mount
+          data-astro-cid-ir7s3m5k
+        >
+          <div class="stock-item__photo" data-astro-cid-ir7s3m5k>
+            <img
+              src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Ftiang-brc-dengan-panel-perspektif-1.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=720&amp;h=720&amp;f=webp"
+              data-image-component="true"
+              alt="Tiang BRC"
+              loading="lazy"
+              data-astro-cid-ir7s3m5k="true"
+              decoding="async"
+              width="720"
+              height="720"
+              class="stock-item__img"
+            />
+            <div class="stock-item__spot" aria-hidden="true" data-astro-cid-ir7s3m5k></div>
+          </div>
+          <div class="stock-item__meta" data-astro-cid-ir7s3m5k>
+            <span class="stock-item__no" data-astro-cid-ir7s3m5k>UNIT 02 · BRC</span>
+            <h3 class="stock-item__name" data-astro-cid-ir7s3m5k>Tiang BRC</h3>
+            <dl class="stock-item__specs" data-astro-cid-ir7s3m5k>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Dimensi</dt>
+                <dd data-astro-cid-ir7s3m5k>Baseplate 150×150 mm</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Finishing</dt>
+                <dd data-astro-cid-ir7s3m5k>Galvanis elektro</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Asal</dt>
+                <dd data-astro-cid-ir7s3m5k>Surabaya</dd>
+              </div>
+            </dl>
+            <a
+              class="stock-item__wa"
+              href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20butuh%20penawaran%20untuk%20%22Tiang%20BRC%22%20(baseplate%2C%20galvanis).%20Mohon%20info%20harga%20pabrik%2C%20stok%2C%20dan%20pengiriman.%20Terima%20kasih."
+              target="_blank"
+              rel="noopener"
+              data-astro-cid-ir7s3m5k
+              >Minta penawaran unit ini →</a
+            >
+          </div>
+        </article>
+        <article
+          class="stock-item carousel__slide"
+          role="group"
+          aria-label="Produk 3 dari 6"
+          data-mount
+          data-astro-cid-ir7s3m5k
+        >
+          <div class="stock-item__photo" data-astro-cid-ir7s3m5k>
+            <img
+              src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Ftiang-y-brc-tampak-depan.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=720&amp;h=720&amp;f=webp"
+              data-image-component="true"
+              alt="Tiang Y BRC"
+              loading="lazy"
+              data-astro-cid-ir7s3m5k="true"
+              decoding="async"
+              width="720"
+              height="720"
+              class="stock-item__img"
+            />
+            <div class="stock-item__spot" aria-hidden="true" data-astro-cid-ir7s3m5k></div>
+          </div>
+          <div class="stock-item__meta" data-astro-cid-ir7s3m5k>
+            <span class="stock-item__no" data-astro-cid-ir7s3m5k>UNIT 03 · BRC</span>
+            <h3 class="stock-item__name" data-astro-cid-ir7s3m5k>Tiang Y BRC</h3>
+            <dl class="stock-item__specs" data-astro-cid-ir7s3m5k>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Finishing</dt>
+                <dd data-astro-cid-ir7s3m5k>Galvanis</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Asal</dt>
+                <dd data-astro-cid-ir7s3m5k>Surabaya</dd>
+              </div>
+            </dl>
+            <a
+              class="stock-item__wa"
+              href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20butuh%20penawaran%20untuk%20%22Tiang%20Y%20BRC%22%20(galvanis).%20Mohon%20info%20harga%20pabrik%2C%20stok%2C%20dan%20pengiriman.%20Terima%20kasih."
+              target="_blank"
+              rel="noopener"
+              data-astro-cid-ir7s3m5k
+              >Minta penawaran unit ini →</a
+            >
+          </div>
+        </article>
+        <article
+          class="stock-item carousel__slide"
+          role="group"
+          aria-label="Produk 4 dari 6"
+          data-mount
+          data-astro-cid-ir7s3m5k
+        >
+          <div class="stock-item__photo" data-astro-cid-ir7s3m5k>
+            <img
+              src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpintu-pagar-brc-tampak-depan.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=720&amp;h=720&amp;f=webp"
+              data-image-component="true"
+              alt="Pintu Pagar BRC"
+              loading="lazy"
+              data-astro-cid-ir7s3m5k="true"
+              decoding="async"
+              width="720"
+              height="720"
+              class="stock-item__img"
+            />
+            <div class="stock-item__spot" aria-hidden="true" data-astro-cid-ir7s3m5k></div>
+          </div>
+          <div class="stock-item__meta" data-astro-cid-ir7s3m5k>
+            <span class="stock-item__no" data-astro-cid-ir7s3m5k>UNIT 04 · BRC</span>
+            <h3 class="stock-item__name" data-astro-cid-ir7s3m5k>Pintu Pagar BRC</h3>
+            <dl class="stock-item__specs" data-astro-cid-ir7s3m5k>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Dimensi</dt>
+                <dd data-astro-cid-ir7s3m5k>Geser · Grendel</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Finishing</dt>
+                <dd data-astro-cid-ir7s3m5k>Galvanis</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Asal</dt>
+                <dd data-astro-cid-ir7s3m5k>Surabaya</dd>
+              </div>
+            </dl>
+            <a
+              class="stock-item__wa"
+              href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20butuh%20penawaran%20untuk%20%22Pintu%20Pagar%20BRC%22%20(geser%2C%20grendel%2C%20galvanis).%20Mohon%20info%20harga%20pabrik%2C%20stok%2C%20dan%20pengiriman.%20Terima%20kasih."
+              target="_blank"
+              rel="noopener"
+              data-astro-cid-ir7s3m5k
+              >Minta penawaran unit ini →</a
+            >
+          </div>
+        </article>
+        <article
+          class="stock-item carousel__slide"
+          role="group"
+          aria-label="Produk 5 dari 6"
+          data-mount
+          data-astro-cid-ir7s3m5k
+        >
+          <div class="stock-item__photo" data-astro-cid-ir7s3m5k>
+            <img
+              src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Faksesoris-brc-baut-dan-klem-1.jpg%3ForigWidth%3D4284%26origHeight%3D5712%26origFormat%3Djpg&amp;w=720&amp;h=720&amp;f=webp"
+              data-image-component="true"
+              alt="Aksesoris Baut &amp; Klem"
+              loading="lazy"
+              data-astro-cid-ir7s3m5k="true"
+              decoding="async"
+              width="720"
+              height="720"
+              class="stock-item__img"
+            />
+            <div class="stock-item__spot" aria-hidden="true" data-astro-cid-ir7s3m5k></div>
+          </div>
+          <div class="stock-item__meta" data-astro-cid-ir7s3m5k>
+            <span class="stock-item__no" data-astro-cid-ir7s3m5k>UNIT 05 · BRC</span>
+            <h3 class="stock-item__name" data-astro-cid-ir7s3m5k>Aksesoris Baut &amp; Klem</h3>
+            <dl class="stock-item__specs" data-astro-cid-ir7s3m5k>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Diameter Kawat</dt>
+                <dd data-astro-cid-ir7s3m5k>∅8 mm</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Finishing</dt>
+                <dd data-astro-cid-ir7s3m5k>Stainless</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Asal</dt>
+                <dd data-astro-cid-ir7s3m5k>Surabaya</dd>
+              </div>
+            </dl>
+            <a
+              class="stock-item__wa"
+              href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20butuh%20penawaran%20untuk%20%22Aksesoris%20Baut%20%26%20Klem%22%20(%E2%88%858%2C%20stainless).%20Mohon%20info%20harga%20pabrik%2C%20stok%2C%20dan%20pengiriman.%20Terima%20kasih."
+              target="_blank"
+              rel="noopener"
+              data-astro-cid-ir7s3m5k
+              >Minta penawaran unit ini →</a
+            >
+          </div>
+        </article>
+        <article
+          class="stock-item carousel__slide"
+          role="group"
+          aria-label="Produk 6 dari 6"
+          data-mount
+          data-astro-cid-ir7s3m5k
+        >
+          <div class="stock-item__photo" data-astro-cid-ir7s3m5k>
+            <img
+              src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-set-tiang-rebah-1.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=720&amp;h=720&amp;f=webp"
+              data-image-component="true"
+              alt="Set Tiang Rebah"
+              loading="lazy"
+              data-astro-cid-ir7s3m5k="true"
+              decoding="async"
+              width="720"
+              height="720"
+              class="stock-item__img"
+            />
+            <div class="stock-item__spot" aria-hidden="true" data-astro-cid-ir7s3m5k></div>
+          </div>
+          <div class="stock-item__meta" data-astro-cid-ir7s3m5k>
+            <span class="stock-item__no" data-astro-cid-ir7s3m5k>UNIT 06 · BRC</span>
+            <h3 class="stock-item__name" data-astro-cid-ir7s3m5k>Set Tiang Rebah</h3>
+            <dl class="stock-item__specs" data-astro-cid-ir7s3m5k>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Finishing</dt>
+                <dd data-astro-cid-ir7s3m5k>Galvanis</dd>
+              </div>
+              <div class="stock-item__spec" data-astro-cid-ir7s3m5k>
+                <dt data-astro-cid-ir7s3m5k>Asal</dt>
+                <dd data-astro-cid-ir7s3m5k>Surabaya</dd>
+              </div>
+            </dl>
+            <a
+              class="stock-item__wa"
+              href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20butuh%20penawaran%20untuk%20%22Set%20Tiang%20Rebah%22%20(galvanis).%20Mohon%20info%20harga%20pabrik%2C%20stok%2C%20dan%20pengiriman.%20Terima%20kasih."
+              target="_blank"
+              rel="noopener"
+              data-astro-cid-ir7s3m5k
+              >Minta penawaran unit ini →</a
+            >
+          </div>
+        </article>
+      </div>
+      <div class="stock__order" data-reveal data-astro-cid-ir7s3m5k>
+        <a
+          class="cta cta--primary cta--lg"
+          href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20butuh%20penawaran%20lengkap%20pagar%20BRC%20(panel%2C%20tiang%2C%20pintu%2C%20aksesoris).%20Mohon%20info%20harga%20pabrik%2C%20stok%2C%20pengiriman.%20Terima%20kasih."
+          target="_blank"
+          rel="noopener"
+          data-astro-cid-ir7s3m5k
+          >Minta penawaran BRC lengkap →</a
+        >
+      </div>
+    </section>
+    <!-- ===================== WALK THE YARD · full-bleed break 2 ===================== -->
+    <section class="yard-break" aria-label="Pagar BRC terpasang di proyek" data-astro-cid-ir7s3m5k>
+      <div class="yard-break__photo" data-parallax-layer="-0.08" data-astro-cid-ir7s3m5k>
+        <img
+          src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-terpasang-outdoor-1.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=1600&amp;h=2000&amp;f=webp"
+          data-image-component="true"
+          alt="Pagar BRC terpasang di proyek"
+          loading="lazy"
+          data-astro-cid-ir7s3m5k="true"
+          decoding="async"
+          width="1600"
+          height="2000"
+          class="yard-break__img"
+        />
+      </div>
+      <div class="yard-break__scrim" data-astro-cid-ir7s3m5k></div>
+      <div class="yard-break__cap" data-reveal data-astro-cid-ir7s3m5k>
+        <span class="yard-break__no" data-astro-cid-ir7s3m5k>02 / 03</span>
+        <p data-astro-cid-ir7s3m5k>
+          Dari basis distribusi di Surabaya ke lapangan: dokumentasi pagar BRC yang telah digunakan
+          dan terpasang di proyek.
+        </p>
+      </div>
+    </section>
+    <!-- ===================== THE CATALOG · six families in the yard ===================== -->
+    <section class="catalog" id="katalog" aria-labelledby="cat-title" data-astro-cid-ir7s3m5k>
+      <header class="catalog__head" data-reveal data-astro-cid-ir7s3m5k>
+        <span class="rail" data-astro-cid-ir7s3m5k>KATALOG · 6 KELOMPOK MATERIAL</span>
+        <h2 id="cat-title" data-astro-cid-ir7s3m5k>Satu sumber untuk material proyek</h2>
+        <p class="catalog__sub" data-astro-cid-ir7s3m5k>
+          BSM menyediakan enam kelompok material konstruksi dari basis Surabaya. Mulai dari pagar
+          BRC, lalu telusuri atap, dinding, pintu, struktur, dan utilitas untuk kebutuhan pengadaan
+          Anda.
+        </p>
+        <div class="rail-controls" aria-label="Navigasi kelompok material" data-astro-cid-ir7s3m5k>
+          <button
+            class="rail-control"
+            type="button"
+            data-carousel-dir="prev"
+            data-carousel-target="categories"
+            aria-label="Kelompok material sebelumnya"
+            data-astro-cid-ir7s3m5k
+          >
+            ←</button
+          ><span
+            class="rail-progress label"
+            data-carousel-progress="categories"
+            aria-live="polite"
+            data-astro-cid-ir7s3m5k
+            >01 / 06</span
+          ><button
+            class="rail-control"
+            type="button"
+            data-carousel-dir="next"
+            data-carousel-target="categories"
+            aria-label="Kelompok material berikutnya"
+            data-astro-cid-ir7s3m5k
+          >
+            →
+          </button>
+        </div>
+      </header>
+      <div
+        class="catalog__grid"
+        data-carousel-track="categories"
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="Enam kelompok material BSM"
+        tabindex="0"
+        data-astro-cid-ir7s3m5k
+      >
+        <a
+          class="cat-tile carousel__slide"
+          aria-label="Atap &amp; Penutup Atap · kelompok 1 dari 6"
+          data-mount
+          href="/kategori/atap"
+          data-astro-cid-ir7s3m5k
+          ><img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fref%2Fatap-upvc.jpeg%3ForigWidth%3D720%26origHeight%3D1280%26origFormat%3Djpg&amp;w=600&amp;h=450&amp;f=webp"
+            data-image-component="true"
+            alt="Atap &amp; Penutup Atap"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="600"
+            height="450"
+            class="cat-tile__img"
+          />
+          <div class="cat-tile__overlay" data-astro-cid-ir7s3m5k></div>
+          <div class="cat-tile__body" data-astro-cid-ir7s3m5k>
+            <span class="cat-tile__no" data-astro-cid-ir7s3m5k>RAK 01</span
+            ><b data-astro-cid-ir7s3m5k>Atap &amp; Penutup Atap</b
+            ><span class="cat-tile__count" data-astro-cid-ir7s3m5k>17 lini · Atap UPVC →</span>
+          </div></a
+        ><a
+          class="cat-tile carousel__slide"
+          aria-label="Dinding, Plafon &amp; Fasad · kelompok 2 dari 6"
+          data-mount
+          href="/kategori/dinding"
+          data-astro-cid-ir7s3m5k
+          ><img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fref%2Faluminium-composite-panel.jpg%3ForigWidth%3D640%26origHeight%3D480%26origFormat%3Djpg&amp;w=600&amp;h=450&amp;f=webp"
+            data-image-component="true"
+            alt="Dinding, Plafon &amp; Fasad"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="600"
+            height="450"
+            class="cat-tile__img"
+          />
+          <div class="cat-tile__overlay" data-astro-cid-ir7s3m5k></div>
+          <div class="cat-tile__body" data-astro-cid-ir7s3m5k>
+            <span class="cat-tile__no" data-astro-cid-ir7s3m5k>RAK 02</span
+            ><b data-astro-cid-ir7s3m5k>Dinding, Plafon &amp; Fasad</b
+            ><span class="cat-tile__count" data-astro-cid-ir7s3m5k>6 lini · Wall Panel →</span>
+          </div></a
+        ><a
+          class="cat-tile carousel__slide"
+          aria-label="Pintu · kelompok 3 dari 6"
+          data-mount
+          href="/kategori/pintu"
+          data-astro-cid-ir7s3m5k
+          ><img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fref%2Fdoor-wpc.jpg%3ForigWidth%3D1080%26origHeight%3D1080%26origFormat%3Djpg&amp;w=600&amp;h=450&amp;f=webp"
+            data-image-component="true"
+            alt="Pintu"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="600"
+            height="450"
+            class="cat-tile__img"
+          />
+          <div class="cat-tile__overlay" data-astro-cid-ir7s3m5k></div>
+          <div class="cat-tile__body" data-astro-cid-ir7s3m5k>
+            <span class="cat-tile__no" data-astro-cid-ir7s3m5k>RAK 03</span
+            ><b data-astro-cid-ir7s3m5k>Pintu</b
+            ><span class="cat-tile__count" data-astro-cid-ir7s3m5k>4 lini · Pintu WPC →</span>
+          </div></a
+        ><a
+          class="cat-tile carousel__slide"
+          aria-label="Struktur &amp; Lantai · kelompok 4 dari 6"
+          data-mount
+          href="/kategori/struktur"
+          data-astro-cid-ir7s3m5k
+          ><img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fref%2Fbondek.png%3ForigWidth%3D200%26origHeight%3D135%26origFormat%3Dpng&amp;w=600&amp;h=450&amp;f=webp"
+            data-image-component="true"
+            alt="Struktur &amp; Lantai"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="600"
+            height="450"
+            class="cat-tile__img"
+          />
+          <div class="cat-tile__overlay" data-astro-cid-ir7s3m5k></div>
+          <div class="cat-tile__body" data-astro-cid-ir7s3m5k>
+            <span class="cat-tile__no" data-astro-cid-ir7s3m5k>RAK 04</span
+            ><b data-astro-cid-ir7s3m5k>Struktur &amp; Lantai</b
+            ><span class="cat-tile__count" data-astro-cid-ir7s3m5k>4 lini · Bondek →</span>
+          </div></a
+        ><a
+          class="cat-tile carousel__slide"
+          aria-label="Pagar, Pengaman &amp; Kawat · kelompok 5 dari 6"
+          data-mount
+          href="/kategori/pagar"
+          data-astro-cid-ir7s3m5k
+          ><img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-terpasang-outdoor-1.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=600&amp;h=450&amp;f=webp"
+            data-image-component="true"
+            alt="Pagar, Pengaman &amp; Kawat"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="600"
+            height="450"
+            class="cat-tile__img"
+          />
+          <div class="cat-tile__overlay" data-astro-cid-ir7s3m5k></div>
+          <div class="cat-tile__body" data-astro-cid-ir7s3m5k>
+            <span class="cat-tile__no" data-astro-cid-ir7s3m5k>RAK 05</span
+            ><b data-astro-cid-ir7s3m5k>Pagar, Pengaman &amp; Kawat</b
+            ><span class="cat-tile__count" data-astro-cid-ir7s3m5k>12 lini · Pagar BRC →</span>
+          </div></a
+        ><a
+          class="cat-tile carousel__slide"
+          aria-label="Utilitas &amp; Aksesoris · kelompok 6 dari 6"
+          data-mount
+          href="/kategori/utilitas"
+          data-astro-cid-ir7s3m5k
+          ><img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fref%2Ftiang-pju.jpg%3ForigWidth%3D600%26origHeight%3D600%26origFormat%3Djpg&amp;w=600&amp;h=450&amp;f=webp"
+            data-image-component="true"
+            alt="Utilitas &amp; Aksesoris"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="600"
+            height="450"
+            class="cat-tile__img"
+          />
+          <div class="cat-tile__overlay" data-astro-cid-ir7s3m5k></div>
+          <div class="cat-tile__body" data-astro-cid-ir7s3m5k>
+            <span class="cat-tile__no" data-astro-cid-ir7s3m5k>RAK 06</span
+            ><b data-astro-cid-ir7s3m5k>Utilitas &amp; Aksesoris</b
+            ><span class="cat-tile__count" data-astro-cid-ir7s3m5k>3 lini · Tiang PJU →</span>
+          </div></a
+        >
+      </div>
+    </section>
+    <!-- ===================== WALK THE YARD · full-bleed break 3 (reach proof) ===================== -->
+    <section
+      class="yard-break yard-break--proof"
+      aria-label="Bukti jangkauan"
+      data-astro-cid-ir7s3m5k
+    >
+      <div class="reach-strip" data-reveal data-astro-cid-ir7s3m5k>
+        <figure class="reach-tile reach-tile--1" data-mount data-astro-cid-ir7s3m5k>
+          <img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-terpasang-outdoor-1.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=640&amp;h=480&amp;f=webp"
+            data-image-component="true"
+            alt="TERPASANG · OUTDOOR"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="640"
+            height="480"
+            class="reach-tile__img"
+          />
+          <figcaption class="reach-tile__cap" data-astro-cid-ir7s3m5k>
+            TERPASANG · OUTDOOR
+          </figcaption>
+        </figure>
+        <figure class="reach-tile reach-tile--2" data-mount data-astro-cid-ir7s3m5k>
+          <img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-terpasang-grendel-outdoor.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=640&amp;h=480&amp;f=webp"
+            data-image-component="true"
+            alt="TERPASANG · GRENDEL"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="640"
+            height="480"
+            class="reach-tile__img"
+          />
+          <figcaption class="reach-tile__cap" data-astro-cid-ir7s3m5k>
+            TERPASANG · GRENDEL
+          </figcaption>
+        </figure>
+        <figure class="reach-tile reach-tile--3" data-mount data-astro-cid-ir7s3m5k>
+          <img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-terpasang-ujung-atas-outdoor.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=640&amp;h=480&amp;f=webp"
+            data-image-component="true"
+            alt="TERPASANG · UJUNG ATAS"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="640"
+            height="480"
+            class="reach-tile__img"
+          />
+          <figcaption class="reach-tile__cap" data-astro-cid-ir7s3m5k>
+            TERPASANG · UJUNG ATAS
+          </figcaption>
+        </figure>
+        <figure class="reach-tile reach-tile--4" data-mount data-astro-cid-ir7s3m5k>
+          <img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-tumpukan-stok-gudang-1.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=640&amp;h=480&amp;f=webp"
+            data-image-component="true"
+            alt="STOK · GUDANG"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="640"
+            height="480"
+            class="reach-tile__img"
+          />
+          <figcaption class="reach-tile__cap" data-astro-cid-ir7s3m5k>STOK · GUDANG</figcaption>
+        </figure>
+        <figure class="reach-tile reach-tile--5" data-mount data-astro-cid-ir7s3m5k>
+          <img
+            src="/_image?href=%2F%40fs%2Fhome%2Fedward%2FRice%2FBSM%2Fsite%2Fsecond-shepherd%2Fsrc%2Fimages%2Fbsm%2Fpagar-brc-tumpukan-stok-gudang-2.jpg%3ForigWidth%3D3213%26origHeight%3D5712%26origFormat%3Djpg&amp;w=640&amp;h=480&amp;f=webp"
+            data-image-component="true"
+            alt="STOK · GUDANG"
+            loading="lazy"
+            data-astro-cid-ir7s3m5k="true"
+            decoding="async"
+            width="640"
+            height="480"
+            class="reach-tile__img"
+          />
+          <figcaption class="reach-tile__cap" data-astro-cid-ir7s3m5k>STOK · GUDANG</figcaption>
+        </figure>
+      </div>
+      <div class="yard-break__cap yard-break__cap--reach" data-reveal data-astro-cid-ir7s3m5k>
+        <span class="yard-break__no" data-astro-cid-ir7s3m5k>03 / 03</span>
+        <p data-astro-cid-ir7s3m5k>
+          Pengiriman dari Surabaya ke 34 provinsi, dengan dokumentasi lapangan sebagai bukti
+          penggunaan pagar BRC di proyek nyata.
+        </p>
+      </div>
+    </section>
+    <!-- ===================== THE CLOSE · stamped on steel ===================== -->
+    <section class="close" id="kontak" aria-labelledby="close-title" data-astro-cid-ir7s3m5k>
+      <div class="close__inner" data-reveal data-astro-cid-ir7s3m5k>
+        <span class="rail" data-astro-cid-ir7s3m5k>MEJA PESAN · WHOLESALE</span>
+        <h2 id="close-title" data-astro-cid-ir7s3m5k>Sampaikan kebutuhan proyek Anda.</h2>
+        <p class="close__sub" data-astro-cid-ir7s3m5k>
+          Kirim kategori material, spesifikasi, jumlah, dan lokasi proyek melalui WhatsApp. Tim BSM
+          akan menyiapkan informasi harga pabrik, ketersediaan, dan pengiriman. Konsultasi gratis;
+          pengiriman Surabaya gratis.
+        </p>
+        <a
+          class="cta cta--primary cta--lg"
+          href="https://wa.me/6281249343303?text=Halo%20BSM%2C%20saya%20tertarik%20dengan%20material%20bangunan%20dari%20CV%20Bangun%20Sarana%20Makmur.%20Mohon%20info%20harga%20pabrik%2C%20ketersediaan%20stok%2C%20dan%20pengiriman%20ke%20proyek%20saya.%20Terima%20kasih."
+          target="_blank"
+          rel="noopener"
+          data-astro-cid-ir7s3m5k
+          >WhatsApp: 0812 4934 3303</a
+        >
+        <p class="close__addr" data-astro-cid-ir7s3m5k>
+          Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472 · bsmbangun@yahoo.co.id
+        </p>
+      </div>
+    </section>
+    <footer class="proto-footer" data-astro-cid-ir7s3m5k>
+      <span data-astro-cid-ir7s3m5k
+        >PROTOTYPE POV 1 · The Steel Yard · THROWAWAY · wayfinder #14</span
+      >
+    </footer>
+    <script
+      type="module"
+      src="/src/pages/prototype-steel-yard.astro?astro&type=script&index=0&lang.ts"
+    ></script>
+  </body>
+</html>
