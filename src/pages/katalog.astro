@@ -1,0 +1,452 @@
+---
+// /katalog — the unified catalog browser.
+// Every product line across all six categories, searchable + filterable by
+// category, in one view. Mixed density (CONTEXT.md): lines projected from a
+// Showcase render as rich specimen cards; the rest render as compact line rows
+// (name + category tag + WhatsApp RFQ). The row itself is the CTA (Q4b).
+//
+// All lines render server-side; the client only filters/searches what's already
+// in the DOM — no runtime fetching, no un-optimized fallbacks. Filter results
+// crossfade (Q6 motion budget), never snap.
+import Base from "../layouts/Base.astro";
+import { Image } from "astro:assets";
+import { imageAsset } from "../utils/images.ts";
+import { u, waLink } from "../utils/url.ts";
+import { categories, catalogLines } from "../data/catalog.ts";
+
+const total = catalogLines.length;
+---
+
+<Base
+  title="Katalog Material Bangunan — Bangun Sarana Makmur"
+  description="Seluruh lini material konstruksi BSM dalam satu katalog: atap, dinding, pintu, struktur, pagar BRC, utilitas. Cari dan filter, lalu minta penawaran harga pabrik via WhatsApp."
+>
+  <!-- ===================== HERO ===================== -->
+  <section class="hero wrap" aria-labelledby="kat-title">
+    <div class="hero__copy" style="max-width:none">
+      <div class="eyebrow-row">
+        <span class="tick" aria-hidden="true"></span>
+        <span class="label label--ink">Katalog Material · {total} lini</span>
+      </div>
+      <h1 class="display" id="kat-title">Satu katalog.<br />Seluruh proyek.</h1>
+      <p class="lede">
+        Cari dan filter {total} lini material dari enam kelompok konstruksi. Produk unggulan
+        ditampilkan lengkap dengan spesifikasi; sisanya siap Anda minta penawaran langsung via WhatsApp.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== BROWSER ===================== -->
+  <section class="section wrap" style="padding-top:0" aria-labelledby="browser-title">
+    <h2 class="headline" id="browser-title" style="position:absolute;left:-9999px">Telusuri katalog</h2>
+
+    {/* Filter + search controls */}
+    <div class="catalog__controls">
+      <div class="catalog__search">
+        <label class="label" for="catalog-search">Cari lini produk</label>
+        <input
+          id="catalog-search"
+          class="catalog__input"
+          type="search"
+          placeholder="mis. bondek, acp, kawat, galvanis…"
+          autocomplete="off"
+          aria-describedby="catalog-count"
+        />
+      </div>
+      <div class="catalog__filters" role="group" aria-label="Filter berdasarkan kategori">
+        <button type="button" class="catalog__chip is-active" data-filter="all" aria-pressed="true">
+          Semua
+        </button>
+        {
+          categories.map((c) => (
+            <button type="button" class="catalog__chip" data-filter={c.slug} aria-pressed="false">
+              {c.name}
+            </button>
+          ))
+        }
+      </div>
+      <span class="catalog__count label" id="catalog-count" aria-live="polite"></span>
+    </div>
+
+    {/* Results grid: mixed density. Rich lines = specimen cards; others = rows. */}
+    <div class="catalog__grid" id="catalog-grid">
+      {
+        catalogLines.map((line) => (
+          <article
+            class={`catalog__item ${line.rich ? "catalog__item--rich" : "catalog__item--row"}`}
+            data-line={line.name.toLowerCase()}
+            data-category={line.categorySlug}
+            data-id={line.id}
+          >
+            {line.rich ? (
+              <a
+                class="catalog__card"
+                href={u(line.detailHref!)}
+                aria-label={`Lihat spesifikasi ${line.name}`}
+              >
+                <span class="specimen catalog__specimen">
+                  <Image
+                    src={imageAsset(line.image!)}
+                    alt={line.name}
+                    width={500}
+                    format="webp"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span class="specimen__titleblock">
+                    <b>{line.name.toUpperCase()}</b>
+                    <br />
+                    {line.categoryName.toUpperCase()}
+                  </span>
+                </span>
+                <span class="catalog__card-body">
+                  <span class="catalog__name">{line.name}</span>
+                  <span class="catalog__spec">{line.spec}</span>
+                  <span class="catalog__card-cta label">Lihat spesifikasi →</span>
+                </span>
+              </a>
+            ) : (
+              <a
+                class="catalog__row"
+                href={waLink(line.waContext)}
+                target="_blank"
+                rel="noopener"
+                aria-label={`Minta penawaran ${line.name}`}
+              >
+                <span class="catalog__row-tick tick" aria-hidden="true" />
+                <span class="catalog__row-main">
+                  <span class="catalog__name">{line.name}</span>
+                  <span class="catalog__row-cat label">{line.categoryName}</span>
+                </span>
+                <span class="catalog__row-cta label">Minta penawaran →</span>
+              </a>
+            )}
+          </article>
+        ))
+      }
+    </div>
+
+    {/* Empty state */}
+    <p class="catalog__empty" id="catalog-empty" hidden>
+      Tidak ada lini yang cocok.
+      <button type="button" class="catalog__reset" id="catalog-reset">Reset filter</button>
+    </p>
+
+    <p style="margin-top:2.5rem">
+      <a class="btn btn--primary" href={waLink()} target="_blank" rel="noopener">
+        Minta penawaran lengkap →
+      </a>
+    </p>
+  </section>
+</Base>
+
+<style>
+  /* ---------- Controls ---------- */
+  .catalog__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem 1.5rem;
+    margin-bottom: 1.8rem;
+    padding-bottom: 1.4rem;
+    border-bottom: 1px solid var(--steel);
+  }
+  .catalog__search {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1 1 280px;
+    min-width: 0;
+  }
+  .catalog__input {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    padding: 12px 14px;
+    border: 1px solid var(--ink);
+    border-radius: var(--r-md);
+    background: var(--paper);
+    color: var(--ink);
+    transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
+  }
+  .catalog__input:focus {
+    outline: none;
+    border-color: var(--blueprint);
+    box-shadow: 0 0 0 2px rgba(27, 58, 107, 0.18);
+  }
+  .catalog__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    flex: 1 1 auto;
+  }
+  .catalog__chip {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border: 1px solid var(--steel);
+    border-radius: var(--r-sm);
+    background: var(--paper);
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: border-color 0.18s var(--ease), color 0.18s var(--ease), background 0.18s var(--ease);
+  }
+  .catalog__chip:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .catalog__chip.is-active {
+    border-color: var(--blueprint);
+    border-bottom: 2px solid var(--blueprint);
+    color: var(--ink);
+    background: var(--paper-deep);
+  }
+  .catalog__count {
+    color: var(--ink-muted);
+    white-space: nowrap;
+    margin-left: auto;
+  }
+
+  /* ---------- Results grid (mixed density) ---------- */
+  .catalog__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+    align-items: start;
+  }
+  .catalog__item {
+    /* Filter transition: fade rather than snap (Q6). */
+    transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+  }
+  .catalog__item.is-hidden {
+    display: none;
+  }
+  .catalog__item.is-leaving {
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+  }
+
+  /* Rich card */
+  .catalog__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    text-decoration: none;
+    color: inherit;
+  }
+  .catalog__specimen {
+    aspect-ratio: 4 / 3;
+    transition: box-shadow 0.3s var(--ease);
+  }
+  .catalog__card:hover .catalog__specimen {
+    box-shadow: var(--lift);
+  }
+  .catalog__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .catalog__name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-stretch: 108%;
+    font-size: 1.1rem;
+  }
+  .catalog__spec {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+  }
+  .catalog__card-cta {
+    color: var(--blueprint);
+    margin-top: 0.2rem;
+  }
+
+  /* Line row (thin category) */
+  .catalog__item--row {
+    /* Rows span a single column but read as a compact list item. */
+    grid-column: span 1;
+  }
+  .catalog__row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--steel);
+    border-radius: var(--r-md);
+    background: var(--paper);
+    text-decoration: none;
+    color: inherit;
+    min-height: 64px;
+    transition: border-color 0.18s var(--ease), background 0.18s var(--ease);
+  }
+  .catalog__row:hover {
+    border-color: var(--ink);
+    background: var(--paper-deep);
+  }
+  .catalog__row-tick {
+    flex: 0 0 auto;
+  }
+  .catalog__row-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .catalog__row .catalog__name {
+    font-size: 1rem;
+  }
+  .catalog__row-cat {
+    color: var(--ink-muted);
+  }
+  .catalog__row-cta {
+    flex: 0 0 auto;
+    color: var(--blueprint);
+  }
+
+  /* Empty state */
+  .catalog__empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--ink-muted);
+    border: 1px dashed var(--steel);
+    border-radius: var(--r-md);
+  }
+  .catalog__reset {
+    margin-left: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--steel);
+    border-radius: var(--r-sm);
+    padding: 6px 12px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .catalog__reset:hover {
+    border-color: var(--ink);
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 860px) {
+    .catalog__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 560px) {
+    .catalog__grid {
+      grid-template-columns: 1fr;
+    }
+    .catalog__count {
+      margin-left: 0;
+    }
+  }
+</style>
+
+<script>
+  const grid = document.getElementById("catalog-grid");
+  const input = document.getElementById("catalog-search") as HTMLInputElement | null;
+  const count = document.getElementById("catalog-count");
+  const empty = document.getElementById("catalog-empty");
+  const reset = document.getElementById("catalog-reset");
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>(".catalog__chip"));
+
+  if (grid && input) {
+    const items = Array.from(grid.querySelectorAll<HTMLElement>(".catalog__item"));
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Accent-insensitive match, same approach as the category-page search.
+    const norm = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    let activeCategory = "all";
+
+    const matches = (el: HTMLElement, q: string) => {
+      const hay = norm(el.dataset.line || el.textContent || "");
+      const catOk = activeCategory === "all" || el.dataset.category === activeCategory;
+      const qOk = !q || hay.includes(q);
+      return catOk && qOk;
+    };
+
+    const apply = () => {
+      const q = norm(input.value.trim());
+      let shown = 0;
+
+      // Two-phase so the fade reads as a transition, not a snap:
+      // 1) mark removed items as leaving (fade out), 2) after the fade, hide
+      // them and reveal matches. Reduced-motion skips the fade.
+      const leaving: HTMLElement[] = [];
+      const revealing: HTMLElement[] = [];
+
+      items.forEach((el) => {
+        const shouldShow = matches(el, q);
+        const isHidden = el.classList.contains("is-hidden");
+        if (shouldShow && isHidden) revealing.push(el);
+        if (!shouldShow && !isHidden) leaving.push(el);
+        if (shouldShow) shown++;
+      });
+
+      if (reduceMotion) {
+        items.forEach((el) => {
+          el.classList.toggle("is-hidden", !matches(el, q));
+          el.classList.remove("is-leaving");
+        });
+      } else {
+        leaving.forEach((el) => el.classList.add("is-leaving"));
+        revealing.forEach((el) => {
+          el.classList.remove("is-hidden");
+          // Reveal with a fade-in: start invisible, then settle.
+          el.style.opacity = "0";
+          el.style.transform = "translateY(6px)";
+        });
+        window.setTimeout(() => {
+          leaving.forEach((el) => {
+            el.classList.add("is-hidden");
+            el.classList.remove("is-leaving");
+          });
+          revealing.forEach((el) => {
+            el.style.opacity = "";
+            el.style.transform = "";
+          });
+        }, 220);
+      }
+
+      if (count) count.textContent = `${shown} dari ${items.length} lini`;
+      if (empty) empty.hidden = shown > 0;
+    };
+
+    input.addEventListener("input", apply);
+
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        activeCategory = chip.dataset.filter || "all";
+        chips.forEach((c) => {
+          const on = c === chip;
+          c.classList.toggle("is-active", on);
+          c.setAttribute("aria-pressed", String(on));
+        });
+        apply();
+      });
+    });
+
+    reset?.addEventListener("click", () => {
+      input.value = "";
+      activeCategory = "all";
+      chips.forEach((c) => {
+        const on = c.dataset.filter === "all";
+        c.classList.toggle("is-active", on);
+        c.setAttribute("aria-pressed", String(on));
+      });
+      apply();
+      input.focus();
+    });
+
+    apply();
+  }
+</script>

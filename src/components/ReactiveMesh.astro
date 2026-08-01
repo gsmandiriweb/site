@@ -1,0 +1,40 @@
+---
+// ReactiveMesh — the OGL hero shader (ADR-0007).
+// A canvas layered behind the hero content, rendering the reactive BRC mesh:
+// ripples where the mouse moves, lines catch a galvanized sheen. Pure
+// enhancement — lazy-loaded, reduced-motion → nothing, no-WebGL → nothing.
+// The hero is fully usable without it.
+---
+
+<div class="reactive-mesh" data-reactive-mesh aria-hidden="true"></div>
+
+<style>
+  .reactive-mesh {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .reactive-mesh canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+
+<script>
+  // Lazy-load after first paint so the shader never blocks LCP.
+  const container = document.querySelector<HTMLElement>("[data-reactive-mesh]");
+  if (container) {
+    const start = async () => {
+      const { initReactiveMesh } = await import("../scripts/reactiveMesh.ts");
+      initReactiveMesh(container);
+    };
+    const ric = (window as any).requestIdleCallback;
+    if (typeof ric === "function") {
+      ric(start, { timeout: 1500 });
+    } else {
+      window.addEventListener("load", start, { once: true });
+    }
+  }
+</script>

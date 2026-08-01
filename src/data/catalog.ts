@@ -278,3 +278,85 @@ export const brcProducts: Product[] = brcShowcase.items.map((i) => ({
   image: i.angles[0],
   spec: i.specs.map((s) => s.v).join(" · "),
 }));
+
+// ---- Catalog browser: the unified, filterable view of every line ----
+// A flat list of every product line across all six categories, each tagged
+// with its category. A line is `rich` when it belongs to a Showcase (has real
+// photography + specs); otherwise it is a compact line row (name + WhatsApp
+// CTA, no image/specs). This is the mixed-density model: BRC lines render as
+// specimen cards today; other lines render as rows and auto-upgrade to cards
+// the moment their category earns a Showcase (via the projection above).
+//
+// Single source of truth: derived from `categories` + the showcase projections,
+// never hand-authored, so the browser can never drift from the category pages.
+
+// Map of category slug -> the Showcase that projects its rich lines (if any).
+// Today only `pagar` has one. Adding a showcase for another category is a data
+// change here, not a browser redesign.
+const showcasesByCategory: Record<string, Showcase> = {
+  pagar: brcShowcase,
+};
+
+export interface CatalogLine {
+  // Stable id for filtering/animation: `${categorySlug}--${lineIndex}`.
+  id: string;
+  name: string;
+  categorySlug: string;
+  categoryName: string;
+  // True when this line is projected from a Showcase (rich card); false = row.
+  rich: boolean;
+  // Present only when `rich`. The projected card image + spec string.
+  image?: string;
+  spec?: string;
+  // Present only when `rich`. Deep-link to the showcase detail page.
+  detailHref?: string;
+  // Pre-filled WhatsApp RFQ for this line (rich lines carry sharper context).
+  waContext: string;
+}
+
+function lineWaContext(name: string, categoryName: string): string {
+  return `Halo BSM, saya butuh penawaran untuk "${name}" (${categoryName}). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.`;
+}
+
+export const catalogLines: CatalogLine[] = categories.flatMap((c) => {
+  const showcase = showcasesByCategory[c.slug];
+  // Index rich lines by name so a category line matches its showcase item.
+  const richByName = new Map((showcase?.items ?? []).map((i) => [i.name, i]));
+  const detailHref = showcase ? `/pagar-brc` : undefined; // per-showcase when more land
+  return c.lines.map((line, i) => {
+    const item = richByName.get(line);
+    const rich = !!item;
+    return {
+      id: `${c.slug}--${i}`,
+      name: line,
+      categorySlug: c.slug,
+      categoryName: c.name,
+      rich,
+      image: rich ? item!.angles[0] : undefined,
+      spec: rich ? item!.specs.map((s) => s.v).join(" · ") : undefined,
+      detailHref: rich ? detailHref : undefined,
+      waContext: rich ? item!.waContext : lineWaContext(line, c.name),
+    } satisfies CatalogLine;
+  });
+});
+
+// ---- Quote configurator: category -> lines lookup ----
+// The /penawaran configurator (ADR-0003) collects buyer intent and composes a
+// WhatsApp RFQ. It needs, per category, the list of selectable lines plus any
+// known specs to auto-inject as context (only rich lines have specs). It
+// computes nothing — no price, tonnage, stock, or lead time.
+export interface ConfiguratorOption {
+  name: string;
+  // Spec context to inject into the RFQ when this line is selected. Only rich
+  // lines carry this; thin lines inject nothing (honest about the data gap).
+  specContext?: string;
+}
+export const configuratorLines: Record<string, ConfiguratorOption[]> = Object.fromEntries(
+  categories.map((c) => [
+    c.slug,
+    c.lines.map((line) => {
+      const rich = catalogLines.find((l) => l.categorySlug === c.slug && l.name === line && l.rich);
+      return { name: line, specContext: rich?.spec } satisfies ConfiguratorOption;
+    }),
+  ]),
+);

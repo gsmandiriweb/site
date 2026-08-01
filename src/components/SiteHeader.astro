@@ -1,7 +1,6 @@
 ---
 import logoSrc from "../images/logo.png";
-import { u, waLink } from "../utils/url.ts";
-const wa = waLink();
+import { u } from "../utils/url.ts";
 const path = Astro.url.pathname;
 // Mark the current top-level section; hash links (Kontak) are never "active".
 const isActive = (href: string) =>
@@ -24,7 +23,7 @@ const isActive = (href: string) =>
         <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
         <a href={u("/#kontak")}>Kontak</a>
       </div>
-      <a class="btn btn--primary nav__cta" href={wa} target="_blank" rel="noopener">
+      <a class="btn btn--primary nav__cta" href={u("/penawaran")}>
         Minta Penawaran
       </a>
       <button
@@ -45,7 +44,7 @@ const isActive = (href: string) =>
     <a href={u("/kategori")} aria-current={isActive(u("/kategori")) ? "page" : undefined}>Produk</a>
     <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
     <a href={u("/#kontak")}>Kontak</a>
-    <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+    <a class="btn btn--primary" href={u("/penawaran")}>Minta Penawaran</a>
   </div>
 </header>
 

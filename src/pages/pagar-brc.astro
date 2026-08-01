@@ -1,8 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
+import ReactiveMesh from "../components/ReactiveMesh.astro";
 import BrcShowcase from "../components/BrcShowcase.astro";
 import { brcShowcase } from "../data/catalog.ts";
-import { waLink, u } from "../utils/url.ts";
+import { waLink } from "../utils/url.ts";
 import { Image } from "astro:assets";
 import { imageAsset } from "../utils/images.ts";
 
@@ -19,6 +20,7 @@ const desc =
 <Base title={title} description={desc}>
   <!-- ===================== HERO ===================== -->
   <section class="hero wrap" aria-labelledby="brc-hero-title">
+    <ReactiveMesh />
     <div class="hero__grid">
       <div class="hero__copy">
         <div class="eyebrow-row">

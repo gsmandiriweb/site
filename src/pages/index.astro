@@ -13,6 +13,7 @@
     staging: single trunk → branching category routes. Seed key printed by concept-seed.mjs.
 */
 import Base from "../layouts/Base.astro";
+import ReactiveMesh from "../components/ReactiveMesh.astro";
 import CategoryIcon from "../components/CategoryIcon.astro";
 import { categories, brcProducts } from "../data/catalog.ts";
 import { getCollection } from "astro:content";
@@ -36,6 +37,7 @@ const fmt = (d: Date) =>
 <Base>
   <!-- ===================== HERO ===================== -->
   <section class="hero wrap" aria-labelledby="hero-title">
+    <ReactiveMesh />
     <div class="hero__grid">
       <div class="hero__copy">
         <div class="eyebrow-row">
@@ -49,7 +51,7 @@ const fmt = (d: Date) =>
         </p>
         <div class="hero__actions">
           <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
-          <a class="btn btn--ghost" href="#katalog">Lihat Katalog</a>
+          <a class="btn btn--ghost" href={u("/katalog")}>Lihat Katalog</a>
         </div>
 
         <!-- Delivery network proof (abstract, honest: dots + routes, not a geographic claim) -->

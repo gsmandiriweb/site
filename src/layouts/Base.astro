@@ -103,7 +103,7 @@ const desc =
 
         // ---------- CALM SCROLL REVEALS (everything else stays quiet) ----------
         gsap.utils
-          .toArray(".section-head, .cat-hero, .article-head, .article-figure, .cta-close")
+          .toArray(".section-head, .cat-hero, .article-head, .article-figure, .cta-close, .catalog__controls, .catalog__grid, .rfq")
           .forEach((el) => {
             gsap.from(el, {
               autoAlpha: 0,
@@ -114,7 +114,7 @@ const desc =
             });
           });
 
-        const grids = gsap.utils.toArray(".cat, .prod, .post, .trust__cell, .bom__row, .showcase__proof-tile");
+        const grids = gsap.utils.toArray(".cat, .prod, .post, .trust__cell, .bom__row, .showcase__proof-tile, .rfq__field, .rfq__preview");
         gsap.set(grids, { autoAlpha: 0, y: 24 });
         ScrollTrigger.batch(grids, {
           start: "top 88%",

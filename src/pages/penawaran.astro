@@ -1,0 +1,407 @@
+---
+// /penawaran — the quote configurator (ADR-0003).
+// Collects buyer intent and composes a pre-filled WhatsApp RFQ. It COMPUTES
+// NOTHING: no price, tonnage, stock, or lead time. When the selected product
+// has a Showcase, its known specs are auto-injected into the message as
+// context (honest — drawn from the same data as the spec table, never typed).
+//
+// Fields (Q5a): Category, Product (dependent), Quantity + unit, Project
+// location, Buyer role, Notes. Name is optional; WhatsApp carries identity.
+// No structured Dimensions/Finishing fields — product-specific, would force
+// empty fields; the buyer adds anything else in Notes.
+import Base from "../layouts/Base.astro";
+import { WA_NUMBER } from "../utils/url.ts";
+import { categories, configuratorLines } from "../data/catalog.ts";
+
+// Ship the category->lines map to the client as JSON (no runtime fetching).
+const linesJson = JSON.stringify(configuratorLines);
+
+const roles = [
+  "Kontraktor",
+  "Procurement / Pengadaan",
+  "Arsitek / Konsultan",
+  "Tukang / Aplikator",
+  "Pribadi / Renovasi",
+];
+const units = ["lembar", "batang", "m²", "m", "unit", "set"];
+---
+
+<Base
+  title="Minta Penawaran — Bangun Sarana Makmur"
+  description="Susun permintaan penawaran material bangunan: pilih kategori, produk, jumlah, dan lokasi proyek. Pesan WhatsApp siap kirim ke tim sales BSM untuk harga pabrik dan pengiriman."
+>
+  <!-- ===================== HERO ===================== -->
+  <section class="hero wrap" aria-labelledby="penawaran-title">
+    <div class="hero__copy" style="max-width:none">
+      <div class="eyebrow-row">
+        <span class="tick" aria-hidden="true"></span>
+        <span class="label label--ink">Permintaan Penawaran · RFQ</span>
+      </div>
+      <h1 class="display" id="penawaran-title">Susun<br />penawaran Anda.</h1>
+      <p class="lede">
+        Isi rincian kebutuhan material di bawah. Kami kirimkan harga pabrik, ketersediaan stok,
+        dan estimasi pengiriman ke proyek Anda — biasanya dalam jam kerja yang sama.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== CONFIGURATOR ===================== -->
+  <section class="section wrap" style="padding-top:0" aria-labelledby="config-title">
+    <div class="section-head">
+      <span class="label">Formulir Penawaran</span>
+      <h2 class="headline" id="config-title">Rincian kebutuhan material</h2>
+    </div>
+
+    <form class="rfq" id="rfq-form" data-lines={linesJson} data-wa={WA_NUMBER} novalidate>
+      <div class="rfq__grid">
+        {/* Category */}
+        <div class="rfq__field">
+          <label class="label" for="rfq-category">Kategori material</label>
+          <div class="rfq__select">
+            <select id="rfq-category" name="category" required>
+              <option value="">— Pilih kategori —</option>
+              {categories.map((c) => (
+                <option value={c.slug}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Product (dependent on category) */}
+        <div class="rfq__field">
+          <label class="label" for="rfq-product">Produk / lini</label>
+          <div class="rfq__select">
+            <select id="rfq-product" name="product" required disabled>
+              <option value="">— Pilih kategori dulu —</option>
+            </select>
+          </div>
+          <span class="rfq__hint" id="rfq-spec-hint" aria-live="polite"></span>
+        </div>
+
+        {/* Quantity + unit */}
+        <div class="rfq__field rfq__field--qty">
+          <label class="label" for="rfq-qty">Jumlah</label>
+          <div class="rfq__qty">
+            <input id="rfq-qty" name="qty" type="number" min="1" step="1" inputmode="numeric" placeholder="mis. 100" required />
+            <div class="rfq__select">
+              <select id="rfq-unit" name="unit" aria-label="Satuan">
+                {units.map((u2) => (
+                  <option value={u2}>{u2}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Project location */}
+        <div class="rfq__field">
+          <label class="label" for="rfq-location">Lokasi proyek / kota</label>
+          <input id="rfq-location" name="location" type="text" placeholder="mis. Surabaya, Jakarta, Balikpapan…" required />
+        </div>
+
+        {/* Buyer role */}
+        <div class="rfq__field">
+          <label class="label" for="rfq-role">Profesi Anda</label>
+          <div class="rfq__select">
+            <select id="rfq-role" name="role">
+              <option value="">— Pilih jika berlaku —</option>
+              {roles.map((r) => (
+                <option value={r}>{r}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div class="rfq__field rfq__field--full">
+          <label class="label" for="rfq-notes">Catatan tambahan</label>
+          <textarea id="rfq-notes" name="notes" rows="3" placeholder="Dimensi khusus, finishing, jadwal proyek, pertanyaan lain…"></textarea>
+        </div>
+      </div>
+
+      {/* Live preview of the composed message */}
+      <div class="rfq__preview" aria-live="polite">
+        <span class="label">Pratinjau pesan WhatsApp</span>
+        <pre class="rfq__message" id="rfq-message"></pre>
+      </div>
+
+      <div class="rfq__actions">
+        <button type="submit" class="btn btn--primary rfq__submit" id="rfq-submit" disabled>
+          Kirim via WhatsApp
+        </button>
+        <span class="rfq__disclaimer label">
+          Tidak ada harga otomatis — tim sales BSM membalas dengan penawaran resmi.
+        </span>
+      </div>
+    </form>
+  </section>
+</Base>
+
+<style>
+  .rfq {
+    border: 1px solid var(--steel);
+    border-radius: var(--r-lg);
+    background: var(--paper);
+    padding: clamp(1.2rem, 3vw, 2rem);
+  }
+  .rfq__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem 1.5rem;
+  }
+  .rfq__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .rfq__field--full {
+    grid-column: 1 / -1;
+  }
+  .rfq__field--qty {
+    grid-column: span 1;
+  }
+  .rfq__field .label {
+    color: var(--ink-muted);
+  }
+
+  /* Inputs (matches the catalog search input treatment) */
+  .rfq input,
+  .rfq textarea,
+  .rfq select {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    padding: 12px 14px;
+    border: 1px solid var(--ink);
+    border-radius: var(--r-md);
+    background: var(--paper);
+    color: var(--ink);
+    width: 100%;
+    transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
+  }
+  .rfq textarea {
+    resize: vertical;
+    font-family: var(--font-body);
+  }
+  .rfq input:focus,
+  .rfq textarea:focus,
+  .rfq select:focus {
+    outline: none;
+    border-color: var(--blueprint);
+    box-shadow: 0 0 0 2px rgba(27, 58, 107, 0.18);
+  }
+  .rfq input:disabled,
+  .rfq select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Select chevron */
+  .rfq__select {
+    position: relative;
+  }
+  .rfq__select::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--ink-muted);
+    border-bottom: 2px solid var(--ink-muted);
+    transform: translateY(-65%) rotate(45deg);
+    pointer-events: none;
+  }
+  .rfq__select select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  /* Quantity row */
+  .rfq__qty {
+    display: flex;
+    gap: 0.6rem;
+  }
+  .rfq__qty input {
+    flex: 1 1 auto;
+  }
+  .rfq__qty .rfq__select {
+    flex: 0 0 7rem;
+  }
+
+  .rfq__hint {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    color: var(--blueprint);
+    min-height: 1em;
+  }
+
+  /* Preview */
+  .rfq__preview {
+    margin-top: 1.6rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--steel);
+  }
+  .rfq__preview .label {
+    color: var(--ink-muted);
+    display: block;
+    margin-bottom: 0.6rem;
+  }
+  .rfq__message {
+    margin: 0;
+    padding: 1rem 1.2rem;
+    background: var(--paper-deep);
+    border: 1px solid var(--steel);
+    border-radius: var(--r-md);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 4rem;
+  }
+  .rfq__message:empty::before {
+    content: "Lengkapi formulir — pratinjau pesan akan muncul di sini.";
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+
+  /* Actions */
+  .rfq__actions {
+    margin-top: 1.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+  }
+  .rfq__submit:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .rfq__disclaimer {
+    color: var(--ink-muted);
+    max-width: 32ch;
+  }
+
+  @media (max-width: 640px) {
+    .rfq__grid {
+      grid-template-columns: 1fr;
+    }
+    .rfq__qty {
+      flex-direction: column;
+    }
+    .rfq__qty .rfq__select {
+      flex: 1 1 auto;
+    }
+  }
+</style>
+
+<script>
+  const form = document.getElementById("rfq-form") as HTMLFormElement | null;
+  if (form) {
+    const lines: Record<string, { name: string; specContext?: string }[]> = JSON.parse(
+      form.dataset.lines || "{}",
+    );
+    const waNumber = form.dataset.wa || "6281249343303";
+
+    const categoryEl = document.getElementById("rfq-category") as HTMLSelectElement;
+    const productEl = document.getElementById("rfq-product") as HTMLSelectElement;
+    const qtyEl = document.getElementById("rfq-qty") as HTMLInputElement;
+    const unitEl = document.getElementById("rfq-unit") as HTMLSelectElement;
+    const locationEl = document.getElementById("rfq-location") as HTMLInputElement;
+    const roleEl = document.getElementById("rfq-role") as HTMLSelectElement;
+    const notesEl = document.getElementById("rfq-notes") as HTMLTextAreaElement;
+    const hintEl = document.getElementById("rfq-spec-hint");
+    const messageEl = document.getElementById("rfq-message");
+    const submitEl = document.getElementById("rfq-submit") as HTMLButtonElement;
+
+    const categoryName = (slug: string) =>
+      categoryEl.options[categoryEl.selectedIndex]?.text ?? slug;
+
+    // Populate the dependent product dropdown when a category is chosen.
+    categoryEl.addEventListener("change", () => {
+      const slug = categoryEl.value;
+      const opts = lines[slug] ?? [];
+      productEl.innerHTML = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = opts.length ? "— Pilih produk —" : "— Tidak ada lini —";
+      productEl.appendChild(placeholder);
+      opts.forEach((o) => {
+        const opt = document.createElement("option");
+        opt.value = o.name;
+        opt.textContent = o.name;
+        productEl.appendChild(opt);
+      });
+      productEl.disabled = opts.length === 0;
+      productEl.value = "";
+      update();
+    });
+
+    // Compose the WhatsApp RFQ from the buyer's inputs. Computes nothing —
+    // only assembles text. Known specs (from the Showcase) are injected as
+    // context when the selected product carries them.
+    function compose(): string {
+      const cat = categoryEl.value;
+      const product = productEl.value;
+      const qty = qtyEl.value.trim();
+      const unit = unitEl.value;
+      const location = locationEl.value.trim();
+      const role = roleEl.value;
+      const notes = notesEl.value.trim();
+
+      if (!cat || !product || !qty || !location) return "";
+
+      const specContext = lines[cat]?.find((o) => o.name === product)?.specContext;
+      const lines_: string[] = [];
+      lines_.push("Halo BSM, saya ingin meminta penawaran material:");
+      lines_.push("");
+      lines_.push(`• Kategori: ${categoryName(cat)}`);
+      lines_.push(`• Produk: ${product}`);
+      if (specContext) lines_.push(`• Spesifikasi: ${specContext}`);
+      lines_.push(`• Jumlah: ${qty} ${unit}`);
+      lines_.push(`• Lokasi proyek: ${location}`);
+      if (role) lines_.push(`• Profesi: ${role}`);
+      if (notes) {
+        lines_.push("");
+        lines_.push(`Catatan: ${notes}`);
+      }
+      lines_.push("");
+      lines_.push("Mohon info harga pabrik, ketersediaan stok, dan pengiriman. Terima kasih.");
+      return lines_.join("\n");
+    }
+
+    function update() {
+      const msg = compose();
+      if (messageEl) messageEl.textContent = msg;
+      // Submit is enabled only when the core fields are present.
+      const ready = !!(categoryEl.value && productEl.value && qtyEl.value.trim() && locationEl.value.trim());
+      submitEl.disabled = !ready;
+
+      // Show the auto-injected spec context as a hint (transparency: the buyer
+      // sees what context we added on their behalf).
+      const slug = categoryEl.value;
+      const product = productEl.value;
+      const specContext = lines[slug]?.find((o) => o.name === product)?.specContext;
+      if (hintEl) hintEl.textContent = specContext ? `Spesifikasi terlampir: ${specContext}` : "";
+    }
+
+    [productEl, qtyEl, unitEl, locationEl, roleEl, notesEl].forEach((el) =>
+      el.addEventListener("input", update),
+    );
+    productEl.addEventListener("change", update);
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = compose();
+      if (!msg) return;
+      const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
+      window.open(url, "_blank", "noopener");
+    });
+
+    update();
+  }
+</script>

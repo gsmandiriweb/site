@@ -1,9 +1,12 @@
 ---
-// BrcShowcase — the two-zone BRC viewer.
-// Zone A (specimen stage): product selector + angle carousel + on-photo
-//   callout overlay + spec table + per-product WhatsApp CTA. All render from
-//   one `selectedProduct` state; GSAP redraws dimension lines on product
-//   change only (slide changes are a calm crossfade).
+// BrcShowcase — the two-zone BRC viewer (Phase 1: premium polish).
+// Zone A (specimen stage): product selector + angle carousel (thumbnail strip
+//   for multi-angle) + on-photo callout overlay + spec table + per-product
+//   WhatsApp CTA. All render from one `selectedProduct` state.
+//   - Selection = a coordinated CROSSFADE (spec table out/in, carousel
+//     crossfade, callouts re-draw with a refined stagger), not a snap. Embla
+//     is re-initialised under the hood, but the visible handoff is calm.
+//   - Slide changes within a product stay a calm Embla scroll.
 // Zone B (Di Lapangan): static proof-photo grid — pinned photographs, not a
 //   second slider.
 //
@@ -25,6 +28,7 @@ const itemJson = showcase.items.map((i) => ({
   slug: i.slug,
   name: i.name,
   angleCount: i.angles.length,
+  angles: i.angles,
   callouts: i.callouts ?? [],
   specs: i.specs,
   waContext: i.waContext,
@@ -81,13 +85,28 @@ const itemJson = showcase.items.map((i) => ({
           </figcaption>
         </figure>
 
+        {/* Angle bar: thumbnail strip for multi-angle, hidden for single-angle */}
         <div class="showcase__anglebar" data-anglebar hidden={first.angles.length <= 1}>
           <button type="button" class="showcase__angle" data-dir="prev" aria-label="Sudut sebelumnya">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <span class="showcase__anglecount label" data-anglecount>1 / {first.angles.length}</span>
+          <div class="showcase__thumbs" data-thumbs>
+            {
+              first.angles.map((a, i) => (
+                <button
+                  type="button"
+                  class="showcase__thumb"
+                  data-idx={i}
+                  aria-label={`Sudut ${i + 1}`}
+                  aria-current={i === 0 ? "true" : "false"}
+                >
+                  <Image src={imageAsset(a)} alt="" width={160} format="webp" loading="lazy" decoding="async" />
+                </button>
+              ))
+            }
+          </div>
           <button type="button" class="showcase__angle" data-dir="next" aria-label="Sudut berikutnya">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
           </button>
         </div>
       </div>
@@ -200,6 +219,25 @@ const itemJson = showcase.items.map((i) => ({
     aspect-ratio: 4 / 3;
     overflow: hidden;
     margin: 0;
+    /* Photography treatment: a faint drafting-sheet ground behind the photo,
+       so the plate reads as a drawing sheet, not a bare image. */
+    background:
+      linear-gradient(var(--paper-deep), var(--paper-deep)),
+      repeating-linear-gradient(
+        0deg,
+        rgba(143, 163, 184, 0.12) 0 1px,
+        transparent 1px 24px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(143, 163, 184, 0.12) 0 1px,
+        transparent 1px 24px
+      );
+    transition: box-shadow 0.3s var(--ease);
+  }
+  .showcase__specimen:hover {
+    /* Flat Sheet Rule: shadow answers state (hover lift), never rests. */
+    box-shadow: var(--lift);
   }
   .showcase__viewport {
     overflow: hidden;
@@ -224,11 +262,11 @@ const itemJson = showcase.items.map((i) => ({
     display: block;
   }
 
+  /* ---------- Angle bar (thumbnail strip) ---------- */
   .showcase__anglebar {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 1rem;
+    gap: 0.6rem;
     margin-top: 0.8rem;
   }
   .showcase__anglebar[hidden] {
@@ -238,8 +276,9 @@ const itemJson = showcase.items.map((i) => ({
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
     border: 1px solid var(--steel);
     border-radius: var(--r-sm);
     background: var(--paper);
@@ -250,9 +289,39 @@ const itemJson = showcase.items.map((i) => ({
   .showcase__angle:hover {
     border-color: var(--ink);
   }
-  .showcase__anglecount {
-    min-width: 4rem;
-    text-align: center;
+  .showcase__thumbs {
+    display: flex;
+    gap: 0.4rem;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .showcase__thumb {
+    flex: 1 1 0;
+    min-width: 0;
+    aspect-ratio: 4 / 3;
+    padding: 0;
+    border: 1px solid var(--steel);
+    border-radius: var(--r-sm);
+    background: var(--paper);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.18s var(--ease), opacity 0.18s var(--ease);
+    opacity: 0.6;
+  }
+  .showcase__thumb:hover {
+    opacity: 1;
+    border-color: var(--ink);
+  }
+  .showcase__thumb[aria-current="true"] {
+    opacity: 1;
+    border-color: var(--blueprint);
+    border-width: 2px;
+  }
+  .showcase__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   /* ---------- Detail column ---------- */
@@ -288,6 +357,10 @@ const itemJson = showcase.items.map((i) => ({
   .showcase__proof-tile {
     aspect-ratio: 4 / 3;
     margin: 0;
+    transition: box-shadow 0.3s var(--ease);
+  }
+  .showcase__proof-tile:hover {
+    box-shadow: var(--lift);
   }
 
   /* ---------- Responsive ---------- */
@@ -329,6 +402,7 @@ const itemJson = showcase.items.map((i) => ({
     slug: string;
     name: string;
     angleCount: number;
+    angles: string[];
     callouts: Callout[];
     specs: { k: string; v: string }[];
     waContext: string;
@@ -347,7 +421,7 @@ const itemJson = showcase.items.map((i) => ({
     const specContainer = root.querySelector<HTMLElement>("[data-spectable]");
     const cta = root.querySelector<HTMLAnchorElement>("[data-cta]");
     const anglebar = root.querySelector<HTMLElement>("[data-anglebar]");
-    const anglecount = root.querySelector<HTMLElement>("[data-anglecount]");
+    const thumbsWrap = root.querySelector<HTMLElement>("[data-thumbs]");
     const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>(".showcase__tab"));
     const pool = root.querySelector<HTMLElement>("[data-pool]");
 
@@ -367,19 +441,17 @@ const itemJson = showcase.items.map((i) => ({
       Array.from(pool.querySelectorAll<HTMLElement>(".showcase__slide")).forEach((node) => {
         const slug = node.dataset.for!;
         if (!poolBySlug.has(slug)) poolBySlug.set(slug, []);
-        // already in pool; just ensure indexed (avoid dupes)
         if (!poolBySlug.get(slug)!.includes(node)) poolBySlug.get(slug)!.push(node);
       });
     }
 
     let embla: ReturnType<typeof EmblaCarousel> | null = null;
     let currentSlug = items[0].slug;
+    let switching = false;
 
     function loadSlides(item: Item) {
       if (!track) return;
-      // Return current track slides to the pool.
       Array.from(track.querySelectorAll<HTMLElement>(".showcase__slide")).forEach((n) => pool?.appendChild(n));
-      // Move this item's slides in.
       const nodes = poolBySlug.get(item.slug) ?? [];
       nodes.forEach((n) => track.appendChild(n));
     }
@@ -395,14 +467,47 @@ const itemJson = showcase.items.map((i) => ({
       if (!viewport) return;
       loadSlides(item);
       embla = EmblaCarousel(viewport, { loop: false, speed: reduceMotion ? 0 : 8 });
-      embla.on("select", () => {
-        if (anglecount) {
-          const i = embla!.selectedScrollSnap() + 1;
-          anglecount.textContent = `${i} / ${item.angleCount}`;
-        }
-      });
+      embla.on("select", syncThumbs);
       if (anglebar) anglebar.hidden = item.angleCount <= 1;
-      if (anglecount) anglecount.textContent = `1 / ${item.angleCount}`;
+      syncThumbs();
+    }
+
+    // Rebuild the thumbnail strip for the current item.
+    function buildThumbs(item: Item) {
+      if (!thumbsWrap) return;
+      thumbsWrap.innerHTML = "";
+      item.angles.forEach((_angle, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "showcase__thumb";
+        btn.dataset.idx = String(i);
+        btn.setAttribute("aria-label", `Sudut ${i + 1}`);
+        btn.setAttribute("aria-current", i === 0 ? "true" : "false");
+        const img = document.createElement("img");
+        // Reuse the already-optimized image URL from the pool slide (same file).
+        const slideImg = poolBySlug.get(item.slug)?.[i]?.querySelector("img");
+        if (slideImg) {
+          img.src = slideImg.src;
+          img.srcset = slideImg.srcset;
+          img.sizes = slideImg.sizes;
+          img.width = 160;
+          img.height = 120;
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.alt = "";
+        }
+        btn.appendChild(img);
+        btn.addEventListener("click", () => embla?.scrollTo(i));
+        thumbsWrap.appendChild(btn);
+      });
+    }
+
+    function syncThumbs() {
+      if (!embla || !thumbsWrap) return;
+      const i = embla.selectedScrollSnap();
+      thumbsWrap.querySelectorAll<HTMLElement>(".showcase__thumb").forEach((t, idx) => {
+        t.setAttribute("aria-current", idx === i ? "true" : "false");
+      });
     }
 
     function renderCallouts(item: Item) {
@@ -517,39 +622,73 @@ const itemJson = showcase.items.map((i) => ({
         dl.appendChild(row);
       });
       specContainer.appendChild(dl);
-      if (!reduceMotion) {
-        gsap.from(dl.querySelectorAll(".spectable__row"), { autoAlpha: 0, x: -10, duration: 0.4, stagger: 0.05, ease: "power2.out" });
-      }
     }
 
+    // Coordinated crossfade transition on product change.
+    // Outgoing spec table + name fade/slide out; carousel crossfades; incoming
+    // spec table fades in; callouts re-draw with a refined stagger.
     function selectProduct(item: Item, focus = false) {
+      if (switching || item.slug === currentSlug) {
+        if (focus) tabs.find((t) => t.dataset.slug === item.slug)?.focus();
+        return;
+      }
+      switching = true;
       currentSlug = item.slug;
+
       tabs.forEach((t) => {
         const sel = t.dataset.slug === item.slug;
         t.setAttribute("aria-selected", String(sel));
         t.tabIndex = sel ? 0 : -1;
       });
-      if (nameEl) nameEl.textContent = item.name;
       if (cta) cta.href = waLink(item.waContext);
       if (titleblock) titleblock.innerHTML = `<b>${item.name.toUpperCase()}</b><br>ORIGIN SBY`;
-      renderCallouts(item);
-      destroyEmbla();
-      initEmbla(item);
-      renderSpecTable(item);
-      animateCallouts();
       if (panel) panel.setAttribute("aria-labelledby", `brc-tab-${item.slug}`);
-      if (focus) tabs.find((t) => t.dataset.slug === item.slug)?.focus();
+
+      const detailEls = [nameEl, specContainer].filter(Boolean) as HTMLElement[];
+
+      const done = () => {
+        // Swap content while invisible.
+        if (nameEl) nameEl.textContent = item.name;
+        renderSpecTable(item);
+        renderCallouts(item);
+        destroyEmbla();
+        initEmbla(item);
+        buildThumbs(item);
+        animateCallouts();
+
+        if (reduceMotion) {
+          gsap.set(detailEls, { autoAlpha: 1, y: 0 });
+          switching = false;
+        } else {
+          gsap.fromTo(
+            detailEls,
+            { autoAlpha: 0, y: 8 },
+            { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.05, onComplete: () => { switching = false; } }
+          );
+        }
+        if (focus) tabs.find((t) => t.dataset.slug === item.slug)?.focus();
+      };
+
+      if (reduceMotion) {
+        done();
+      } else {
+        // Carousel crossfade: fade the viewport out, swap, fade in.
+        gsap.to([viewport, detailEls], {
+          autoAlpha: 0,
+          y: (i: number) => (i === 0 ? 0 : -8), // viewport stays put, detail slides up
+          duration: 0.22,
+          ease: "power2.in",
+          onComplete: done,
+        });
+      }
     }
 
-    // Initial render: load first item's slides from the pool, then init Embla.
+    // Initial render.
     loadSlides(items[0]);
     embla = EmblaCarousel(viewport!, { loop: false, speed: reduceMotion ? 0 : 8 });
-    embla.on("select", () => {
-      if (anglecount) {
-        const i = embla!.selectedScrollSnap() + 1;
-        anglecount.textContent = `${i} / ${items[0].angleCount}`;
-      }
-    });
+    embla.on("select", syncThumbs);
+    buildThumbs(items[0]);
+    syncThumbs();
     animateCallouts();
 
     // Tab interactions
@@ -579,7 +718,7 @@ const itemJson = showcase.items.map((i) => ({
       }
     });
 
-    // Angle controls
+    // Angle controls (prev/next arrows)
     anglebar?.addEventListener("click", (e) => {
       const btn = (e.target as HTMLElement).closest("button[data-dir]") as HTMLButtonElement | null;
       if (!btn || !embla) return;
