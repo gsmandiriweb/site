@@ -1,9 +1,8 @@
 ---
-// ReactiveMesh — the OGL hero shader (ADR-0007).
-// A canvas layered behind the hero content, rendering the reactive BRC mesh:
-// ripples where the mouse moves, lines catch a galvanized sheen. Pure
-// enhancement — lazy-loaded, reduced-motion → nothing, no-WebGL → nothing.
-// The hero is fully usable without it.
+// ReactiveMesh — compatibility wrapper for the production Steel Yard atmosphere.
+// The old Blueprint mesh shader is intentionally gone from production surfaces.
+// This component keeps its existing name for the BRC detail route while using
+// the quieter warehouse-light atmosphere and preserving the static fallback.
 ---
 
 <div class="reactive-mesh" data-reactive-mesh aria-hidden="true"></div>
@@ -27,8 +26,12 @@
   const container = document.querySelector<HTMLElement>("[data-reactive-mesh]");
   if (container) {
     const start = async () => {
-      const { initReactiveMesh } = await import("../scripts/reactiveMesh.ts");
-      initReactiveMesh(container);
+      try {
+        const { initSteelYardAtmosphere } = await import("../scripts/steelYardAtmosphere.ts");
+        initSteelYardAtmosphere(container);
+      } catch {
+        // CSS remains the complete visual fallback when the enhancement fails.
+      }
     };
     const ric = (window as any).requestIdleCallback;
     if (typeof ric === "function") {

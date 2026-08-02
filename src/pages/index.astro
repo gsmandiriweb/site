@@ -1,21 +1,12 @@
 ---
 /*
-  DIRECTION CONTRACT — Blueprint Field (new-work, concept-seed assigned index 6/7, key bsm-bangun-saranamakmur)
-  THESIS: The site is a structural drafting sheet; BRC fencing is the proof BSM can supply the whole catalog.
-    Refuses the generic distributor template and the luxury-showroom look.
-  OWN-WORLD: Drafting-paper ground; blueprint-indigo owns whole regions (hero map, section fields, header rule);
-    ink text; galvalume steel grid/dividers; safety-orange reserved for CTAs. The page grid is the BRC welded-mesh spacing.
-  STORY: A first-time visitor understands BSM is a one-stop factory-price distributor, sees BRC built to spec,
-    and asks for a quote on WhatsApp within seconds.
-  FIRST VIEWPORT: A dimensioned BRC panel drawing over a faint delivery network; headline "Material bangunan.
-    Harga pabrik. Siap kirim."; blueprint-stamped WhatsApp CTA.
-  FORM: Blueprint Field, assigned index 6 of 7 by concept-seed (key bsm-bangun-saranamakmur);
-    staging: single trunk → branching category routes. Seed key printed by concept-seed.mjs.
+  PRODUCTION DIRECTION — Steel Yard
+  The approved visual world for BSM: real construction material first,
+  industrial weight and scale, direct specifications, and one clear quote path.
+  BRC is the entry story; the catalog remains the destination.
 */
 import Base from "../layouts/Base.astro";
-import ReactiveMesh from "../components/ReactiveMesh.astro";
-import CategoryIcon from "../components/CategoryIcon.astro";
-import { categories, brcProducts } from "../data/catalog.ts";
+import { categories, brcProducts, brcShowcase } from "../data/catalog.ts";
 import { getCollection } from "astro:content";
 import { Image } from "astro:assets";
 import { imageAsset } from "../utils/images.ts";
@@ -26,6 +17,12 @@ const waBrc = waLink(
   "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang BRC, tiang Y, pintu pagar, aksesoris). " +
     "Mohon info harga pabrik, stok, dan pengiriman. Terima kasih."
 );
+const heroProduct = brcProducts[0];
+const heroSecondary = brcProducts[1];
+const yardBreak1 = imageAsset("pagar-brc-tumpukan-stok-gudang-2.jpg");
+const yardBreak2 = imageAsset("pagar-brc-terpasang-outdoor-1.jpg");
+const yardStock = brcShowcase.items;
+const proof = brcShowcase.proof.slice(0, 5);
 
 const posts = (await getCollection("blog"))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
@@ -35,196 +32,365 @@ const fmt = (d: Date) =>
 ---
 
 <Base>
-  <!-- ===================== HERO ===================== -->
-  <section class="hero wrap" aria-labelledby="hero-title">
-    <ReactiveMesh />
-    <div class="hero__grid">
+  <!-- ===================== HERO · the material leads ===================== -->
+  <section class="hero hero--yard" aria-labelledby="hero-title">
+    <div class="hero__atmosphere" data-hero-atmosphere aria-hidden="true"></div>
+    <div class="hero__grid wrap">
       <div class="hero__copy">
         <div class="eyebrow-row">
           <span class="tick" aria-hidden="true"></span>
-          <span class="label label--ink">Distributor &amp; Supplier · Surabaya</span>
+          <span class="label label--ink">Pagar BRC &amp; Material Konstruksi · Surabaya</span>
         </div>
-        <h1 class="display" id="hero-title">Material bangunan.<br />Harga pabrik.<br />Siap kirim.</h1>
+        <h1 class="display" id="hero-title">Material proyek.<br />Harga pabrik.<br /><span class="hero__accent">Kirim ke proyek.</span></h1>
         <p class="lede">
-          CV Bangun Sarana Makmur melayani pagar BRC, atap, bondek, dan seluruh kebutuhan
-          proyek konstruksi — langsung dari pabrik, kirim ke 34 provinsi.
+          BSM memasok pagar BRC, atap, bondek, dan material konstruksi dari Surabaya. Periksa
+          spesifikasi, sampaikan kebutuhan, volume, dan lokasi proyek — tim kami menyiapkan
+          penawaran harga pabrik dengan pengiriman ke seluruh Indonesia.
         </p>
         <div class="hero__actions">
-          <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
-          <a class="btn btn--ghost" href={u("/katalog")}>Lihat Katalog</a>
+          <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran Proyek</a>
+          <a class="btn btn--ghost" href={u("/katalog")}>Telusuri Katalog</a>
         </div>
-
-        <!-- Delivery network proof (abstract, honest: dots + routes, not a geographic claim) -->
-        <div style="margin-top:2.2rem">
-          <span class="label">Jaringan Pengiriman · 34 Provinsi</span>
-          <svg viewBox="0 0 320 96" role="img" aria-label="Jaringan pengiriman dari Surabaya ke seluruh Indonesia" style="width:100%;height:auto;margin-top:.6rem;opacity:.85">
-            <line x1="160" y1="60" x2="40" y2="24" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
-            <line x1="160" y1="60" x2="92" y2="20" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
-            <line x1="160" y1="60" x2="250" y2="20" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
-            <line x1="160" y1="60" x2="288" y2="40" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
-            <line x1="160" y1="60" x2="60" y2="84" class="route" stroke-dasharray="4 4" stroke="#1b3a6b" stroke-width="1.2" />
-            <g fill="#1b3a6b" font-family="JetBrains Mono, monospace" font-size="8" letter-spacing="0.5">
-              <circle cx="40" cy="24" r="2.5" /><text x="34" y="16">JKT</text>
-              <circle cx="92" cy="20" r="2.5" /><text x="86" y="12">BDJ</text>
-              <circle cx="250" cy="20" r="2.5" /><text x="244" y="12">MKS</text>
-              <circle cx="288" cy="40" r="2.5" /><text x="282" y="34">JAY</text>
-              <circle cx="60" cy="84" r="2.5" /><text x="54" y="96">PLM</text>
-            </g>
-            <circle cx="160" cy="60" r="5" fill="#e8551e" />
-            <text x="160" y="78" text-anchor="middle" fill="#15212e" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" letter-spacing="0.5">SBY</text>
-          </svg>
+        <div class="hero__proof" aria-label="Informasi pengadaan BSM">
+          <div><b>34</b><span>provinsi pengiriman</span></div>
+          <div><b>6</b><span>kelompok material</span></div>
+          <div><b>SBY</b><span>basis distribusi</span></div>
         </div>
       </div>
 
-      <!-- Dimensioned BRC specimen (signature component) — links to the BRC showcase -->
-      <a class="hero__sheet-link" href={u("/pagar-brc")} aria-label="Lihat spesifikasi lengkap pagar BRC">
-      <figure class="hero__sheet" aria-label="Gambar kerja pagar BRC: panel 240×150 cm, besi ∅6 mm galvanis">
-        <Image src={imageAsset("pagar-brc-panel-perspektif.jpg")} alt="Pagar BRC panel dilas, tampak perspektif" width={900} format="webp" loading="eager" fetchpriority="high" decoding="async" />
-        <svg class="dim" viewBox="0 0 400 400" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-              <path d="M0,0 L6,3 L0,6 Z" fill="#1b3a6b" />
-            </marker>
-          </defs>
-          <!-- top dimension: 240 cm -->
-          <line class="draw" x1="40" y1="28" x2="360" y2="28" marker-start="url(#arrow)" marker-end="url(#arrow)" />
-          <line x1="40" y1="22" x2="40" y2="34" stroke="#1b3a6b" stroke-width="1.2" />
-          <line x1="360" y1="22" x2="360" y2="34" stroke="#1b3a6b" stroke-width="1.2" />
-          <text class="pop" x="200" y="20" text-anchor="middle">240 cm</text>
-          <!-- left dimension: 150 cm -->
-          <line class="draw-2" x1="28" y1="60" x2="28" y2="360" marker-start="url(#arrow)" marker-end="url(#arrow)" />
-          <line x1="22" y1="60" x2="34" y2="60" stroke="#1b3a6b" stroke-width="1.2" />
-          <line x1="22" y1="360" x2="34" y2="360" stroke="#1b3a6b" stroke-width="1.2" />
-          <text class="pop" x="20" y="212" text-anchor="middle" transform="rotate(-90 20 212)">150 cm</text>
-          <!-- callout: wire diameter -->
-          <polyline class="callout draw" points="150,250 150,300 250,300" fill="none" />
-          <text class="pop" x="156" y="304" fill="#c8430f">∅6 mm · Galvanis</text>
-          <!-- callout: mesh -->
-          <polyline class="callout draw-2" points="300,190 330,150 360,150" fill="none" />
-          <text class="pop" x="300" y="144" text-anchor="end" fill="#c8430f">Mesh 150×150</text>
-        </svg>
-        <figcaption class="specimen__titleblock">
-          <b>BRC FENCE PANEL</b><br />SCALE 1:20 · ORIGIN SBY<br />GALVANIS ELEKTRO
-        </figcaption>
-      </figure>
-      </a>
-      <a class="hero__sheet-cta label" href={u("/pagar-brc")}>Lihat spesifikasi lengkap →</a>
+      <div class="hero__plate-stack">
+        <figure class="hero__plate-rear" aria-hidden="true">
+          <div class="hero__plate-rear-image">
+            <Image src={imageAsset(heroSecondary.image)} alt="" width={900} height={1200} loading="lazy" decoding="async" />
+            <span class="hero__plate-mark">BRC / 02</span>
+          </div>
+        </figure>
+        <a class="hero__sheet-link" href={u("/pagar-brc")} aria-label="Lihat spesifikasi lengkap pagar BRC">
+          <figure class="hero__sheet" aria-label={`Spesifikasi ${heroProduct.name}: ${heroProduct.spec}`}>
+            <div class="hero__sheet-image">
+              <Image src={imageAsset(heroProduct.image)} alt={`Pagar BRC ${heroProduct.name}, tampak perspektif`} width={900} height={1200} loading="eager" fetchpriority="high" decoding="async" />
+              <span class="hero__plate-mark">BRC / 01</span>
+            </div>
+            <figcaption class="hero__sheet-caption">
+              <span class="hero__sheet-label">PAGAR BRC PANEL · PRODUK UNGGULAN</span>
+              <b>{heroProduct.name}</b>
+              <span>Foto produk nyata · didistribusikan dari Surabaya</span>
+            </figcaption>
+            <dl class="hero__sheet-specs">
+              <div><dt>SPESIFIKASI</dt><dd>{heroProduct.spec}</dd></div>
+              <div><dt>ASAL</dt><dd>SBY</dd></div>
+            </dl>
+          </figure>
+        </a>
+      </div>
     </div>
+    <div class="hero__scroll" aria-hidden="true"><span>gulir · lihat material lain</span> ↓</div>
   </section>
 
   <!-- ===================== TRUST STRIP ===================== -->
-  <section class="trust" aria-label="Keunggulan BSM">
-    <div class="trust__cell">
-      <div class="n">34</div>
-      <span class="label">Provinsi terjangkau</span>
+  <section class="trust" aria-label="Jangkauan dan layanan BSM">
+    <div class="trust__cell"><div class="n">34</div><span class="label">Provinsi pengiriman</span></div>
+    <div class="trust__cell"><div class="n">6</div><span class="label">Kelompok material</span></div>
+    <div class="trust__cell"><div class="n">READY</div><span class="label">Siap ditanyakan ke sales</span></div>
+    <div class="trust__cell"><div class="n">SBY</div><span class="label">Basis distribusi</span></div>
+  </section>
+
+  <!-- ===================== WALK THE YARD · warehouse proof ===================== -->
+  <section class="yard-break" aria-label="Tumpukan stok di gudang">
+    <div class="yard-break__photo" data-parallax-layer="-0.08">
+      <Image src={yardBreak1} alt="Tumpukan pagar BRC disiapkan di gudang BSM" width={1600} height={2000} loading="lazy" decoding="async" />
     </div>
-    <div class="trust__cell">
-      <div class="n">6</div>
-      <span class="label">Kelompok produk</span>
-    </div>
-    <div class="trust__cell">
-      <div class="n">READY</div>
-      <span class="label">Stok pabrik</span>
-    </div>
-    <div class="trust__cell">
-      <div class="n">FREE</div>
-      <span class="label">Kirim Surabaya · Konsultasi</span>
+    <div class="yard-break__scrim"></div>
+    <div class="yard-break__cap" data-reveal>
+      <span class="yard-break__no">01 / 03</span>
+      <p>Periksa melalui foto dan spesifikasi: pagar BRC dengan dimensi, diameter kawat, mesh, finishing, dan asal yang tercatat. Bukti produk, bukan ilustrasi katalog.</p>
     </div>
   </section>
 
-  <!-- ===================== CATEGORY GRID ===================== -->
-  <section class="section wrap" id="katalog" aria-labelledby="kat-title">
-    <div class="section-head">
-      <span class="label">Katalog Material</span>
-      <h2 class="headline" id="kat-title">Satu sumber untuk seluruh kebutuhan proyek</h2>
+  <!-- ===================== THE STOCK · full BRC specimen rail ===================== -->
+  <section class="stock" id="stok" aria-labelledby="stock-title">
+    <header class="stock__head">
+      <span class="rail">SPESIFIKASI PRODUK · PAGAR BRC</span>
+      <h2 id="stock-title">Pilih produk BRC sesuai kebutuhan proyek</h2>
+      <p class="stock__sub">Enam lini BRC dengan foto produk dan spesifikasi yang tersedia. Bandingkan dimensi, diameter kawat, mesh, dan finishing; lalu minta penawaran per unit.</p>
+      <div class="rail-controls" aria-label="Navigasi stok BRC">
+        <button class="rail-control" type="button" data-carousel-dir="prev" data-carousel-target="stock" aria-controls="track-stock" aria-label="Produk BRC sebelumnya">←</button>
+        <span class="rail-progress label" data-carousel-progress="stock" aria-live="polite">01 / 06</span>
+        <button class="rail-control" type="button" data-carousel-dir="next" data-carousel-target="stock" aria-controls="track-stock" aria-label="Produk BRC berikutnya">→</button>
+      </div>
+    </header>
+    <div id="track-stock" class="stock__yard" data-carousel-track="stock" role="region" aria-roledescription="carousel" aria-label="Produk BRC dari stok gudang" tabindex="0">
+      {yardStock.map((s, i) => (
+        <article class="stock-item carousel__slide" data-mount role="group" aria-label={`Produk ${i + 1} dari ${yardStock.length}`}>
+          <div class="stock-item__photo">
+            <Image src={imageAsset(s.angles[0])} alt={s.name} width={720} height={720} loading="lazy" decoding="async" />
+            <div class="stock-item__spot" aria-hidden="true"></div>
+          </div>
+          <div class="stock-item__meta">
+            <span class="stock-item__no">UNIT {String(i + 1).padStart(2, "0")} · BRC</span>
+            <h3 class="stock-item__name">{s.name}</h3>
+            <dl class="stock-item__specs">
+              {s.specs.map((sp) => (
+                <div class="stock-item__spec"><dt>{sp.k}</dt><dd>{sp.v}</dd></div>
+              ))}
+            </dl>
+            <a class="stock-item__wa" href={waLink(s.waContext)} target="_blank" rel="noopener">Minta penawaran unit ini →</a>
+          </div>
+        </article>
+      ))}
     </div>
-    <div class="cat-grid">
-      {
-        categories.map((c) => (
-          <a class="cat" href={u(`/kategori/${c.slug}`)} aria-label={c.name}>
-            <span class="cat__icon"><CategoryIcon name={c.icon} /></span>
-            <span class="cat__name">{c.name}</span>
-            <span class="cat__meta">{c.count} lini produk</span>
-            <span class="cat__arrow" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </span>
-          </a>
-        ))
-      }
+    <div class="stock__order"><a class="btn btn--primary btn--lg" href={waBrc} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a></div>
+  </section>
+
+  <!-- ===================== WALK THE YARD · installed proof ===================== -->
+  <section class="yard-break" aria-label="Pagar BRC terpasang di proyek">
+    <div class="yard-break__photo" data-parallax-layer="-0.08">
+      <Image src={yardBreak2} alt="Pagar BRC terpasang di proyek" width={1600} height={2000} loading="lazy" decoding="async" />
+    </div>
+    <div class="yard-break__scrim"></div>
+    <div class="yard-break__cap" data-reveal>
+      <span class="yard-break__no">02 / 03</span>
+      <p>Dari basis distribusi di Surabaya ke lapangan: dokumentasi pagar BRC yang telah digunakan dan terpasang di proyek.</p>
     </div>
   </section>
 
-  <!-- ===================== FEATURED BRC ===================== -->
-  <section class="section section--deep wrap" id="brc" aria-labelledby="brc-title">
-    <div class="section-head">
-      <span class="label">Produk Unggulan · BRC</span>
-      <h2 class="headline" id="brc-title">Pagar BRC: diproduksi, dilas, siap kirim</h2>
+  <!-- ===================== THE CATALOG · six material families ===================== -->
+  <section class="catalog" id="katalog" aria-labelledby="cat-title">
+    <header class="catalog__head" data-reveal>
+      <span class="rail">KATALOG · 6 KELOMPOK MATERIAL</span>
+      <h2 id="cat-title">Satu sumber untuk material proyek</h2>
+      <p class="catalog__sub">BSM menyediakan enam kelompok material konstruksi dari basis Surabaya. Mulai dari pagar BRC, lalu telusuri atap, dinding, pintu, struktur, dan utilitas untuk kebutuhan pengadaan Anda.</p>
+      <div class="rail-controls" aria-label="Navigasi kelompok material">
+        <button class="rail-control" type="button" data-carousel-dir="prev" data-carousel-target="categories" aria-controls="track-categories" aria-label="Kelompok material sebelumnya">←</button>
+        <span class="rail-progress label" data-carousel-progress="categories" aria-live="polite">01 / 06</span>
+        <button class="rail-control" type="button" data-carousel-dir="next" data-carousel-target="categories" aria-controls="track-categories" aria-label="Kelompok material berikutnya">→</button>
+      </div>
+    </header>
+    <div id="track-categories" class="material-rail" data-carousel-track="categories" role="region" aria-roledescription="carousel" aria-label="Enam kelompok material BSM" tabindex="0">
+      {categories.map((c, i) => (
+        <a class="material-tile carousel__slide" data-mount aria-label={`${c.name} · kelompok ${i + 1} dari ${categories.length}`} href={u(`/kategori/${c.slug}`)}>
+          <Image src={imageAsset(c.image)} alt={c.name} width={600} height={450} loading="lazy" decoding="async" />
+          <span class="material-tile__overlay"></span>
+          <span class="material-tile__body"><span class="material-tile__no">RAK {String(i + 1).padStart(2, "0")}</span><b>{c.name}</b><span>{c.count} lini · {c.lines[0]} →</span></span>
+        </a>
+      ))}
     </div>
-    <div class="prod-row">
-      {
-        brcProducts.map((p) => (
-          <a
-            class="prod"
-            href={waLink(
-              `Halo BSM, saya butuh penawaran untuk \"${p.name}\" (${p.spec}). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.`
-            )}
-            target="_blank"
-            rel="noopener"
-            aria-label={p.name}>
-            <span class="specimen">
-              <Image src={imageAsset(p.image)} alt={p.name} width={400} format="webp" loading="lazy" decoding="async" />
-              <span class="specimen__titleblock">
-                <b>{p.name.toUpperCase()}</b><br />GALVANIS
-              </span>
-            </span>
-            <span class="prod__name">{p.name}</span>
-            <span class="prod__spec">{p.spec}</span>
-          </a>
-        ))
-      }
+  </section>
+
+  <!-- ===================== WALK THE YARD · reach proof ===================== -->
+  <section class="yard-break yard-break--proof" aria-label="Bukti jangkauan">
+    <div class="reach-strip">
+      {proof.map((p) => (
+        <figure class="reach-tile" data-reveal>
+          <Image src={imageAsset(p.image)} alt={p.caption} width={640} height={480} loading="lazy" decoding="async" />
+          <figcaption>{p.caption}</figcaption>
+        </figure>
+      ))}
     </div>
-    <p style="margin-top:2rem">
-      <a class="btn btn--ghost" href={waBrc} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
-    </p>
+    <div class="yard-break__cap yard-break__cap--reach" data-reveal>
+      <span class="yard-break__no">03 / 03</span>
+      <p>Pengiriman dari Surabaya ke 34 provinsi, dengan dokumentasi lapangan sebagai bukti penggunaan pagar BRC di proyek nyata.</p>
+    </div>
+  </section>
+
+  <!-- ===================== FIELD NOTES ===================== -->
+  <section class="section section--proof" aria-labelledby="proof-title">
+    <div class="wrap field-note">
+      <span class="label">Cara kerja BSM</span>
+      <h2 class="headline" id="proof-title">Dari foto produk ke pengiriman proyek.</h2>
+      <div class="field-note__steps">
+        <div><span>01</span><b>Periksa</b><p>Mulai dari foto dan spesifikasi yang tersedia.</p></div>
+        <div><span>02</span><b>Sampaikan</b><p>Kirim kategori, jumlah, dan lokasi proyek.</p></div>
+        <div><span>03</span><b>Berangkat</b><p>Tim sales menyiapkan harga dan pengiriman.</p></div>
+      </div>
+    </div>
   </section>
 
   <!-- ===================== BLOG TEASER ===================== -->
-  <section class="section wrap" id="blog" aria-labelledby="blog-title">
-    <div class="section-head">
-      <span class="label">Blog &amp; Panduan Material</span>
-      <h2 class="headline" id="blog-title">Bantu Anda memilih material yang tepat</h2>
-    </div>
-    <div class="post-row">
-      {
-        posts.map((post) => (
+  <section class="section" id="blog" aria-labelledby="blog-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="label">Blog &amp; Panduan Material</span>
+        <h2 class="headline" id="blog-title">Keputusan material dimulai dari informasi yang jelas.</h2>
+      </div>
+      <div class="post-row">
+        {posts.map((post) => (
           <a class="post" href={u(`/blog/${post.id}`)} aria-label={post.data.title}>
             <span class="post__kicker">{post.data.kicker ?? "Artikel"} · {fmt(post.data.date)}</span>
             <span class="post__title">{post.data.title}</span>
             <span class="post__excerpt">{post.data.excerpt}</span>
           </a>
-        ))
-      }
+        ))}
+      </div>
+      <p class="section-action"><a class="btn btn--ghost" href={u("/blog")}>Baca semua panduan →</a></p>
     </div>
-    <p style="margin-top:2rem">
-      <a class="btn btn--ghost" href={u("/blog")}>Baca semua artikel →</a>
-    </p>
   </section>
 
   <!-- ===================== CTA CLOSE ===================== -->
   <section class="section section--field" id="kontak" aria-labelledby="cta-title">
     <div class="wrap cta-close">
-      <span class="label">Kontak &amp; Penawaran</span>
-      <h2 class="display" id="cta-title">Siap bangun? Minta penawaran sekarang.</h2>
-      <p class="lede">
-        Hubungi tim sales BSM via WhatsApp untuk harga pabrik, stok, dan pengiriman ke proyek Anda.
-      </p>
+      <span class="label">Meja Pesan · Wholesale</span>
+      <h2 class="display" id="cta-title">Sampaikan kebutuhan proyek Anda.</h2>
+      <p class="lede">Kirim kategori material, spesifikasi, jumlah, dan lokasi proyek melalui WhatsApp. Konsultasi gratis; pengiriman Surabaya gratis.</p>
       <div class="hero__actions" style="justify-content:center">
         <a class="btn btn--onfield" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
-        <a class="btn btn--ghostfield" href="mailto:bsmbangun@yahoo.co.id">bsmbangun@yahoo.co.id</a>
+        <a class="btn btn--ghostfield" href={u("/penawaran")}>Susun RFQ lebih lengkap</a>
       </div>
-      <p class="muted" style="margin-top:1.6rem;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em">
-        Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472
-      </p>
+      <p class="muted cta-close__addr">Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472 · bsmbangun@yahoo.co.id</p>
     </div>
   </section>
+<script>
+  const atmosphere = document.querySelector<HTMLElement>("[data-hero-atmosphere]");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let cancelEnhancementStart = () => {};
+  let disposeAtmosphere: (() => void) | null = null;
+  let leavingPage = false;
+
+  if (atmosphere && !reduceMotion) {
+    const startAtmosphere = async () => {
+      if (leavingPage) return;
+      try {
+        const { initSteelYardAtmosphere } = await import("../scripts/steelYardAtmosphere.ts");
+        if (!leavingPage) disposeAtmosphere = initSteelYardAtmosphere(atmosphere);
+      } catch {
+        // The CSS gradient remains the complete fallback.
+      }
+    };
+    const ric = (window as any).requestIdleCallback as
+      | ((callback: () => void, options?: { timeout: number }) => number)
+      | undefined;
+    const cancelRic = (window as any).cancelIdleCallback as ((id: number) => void) | undefined;
+    if (typeof ric === "function") {
+      const idleId = ric(startAtmosphere, { timeout: 1500 });
+      cancelEnhancementStart = () => cancelRic?.(idleId);
+    } else {
+      window.addEventListener("load", startAtmosphere, { once: true });
+      cancelEnhancementStart = () => window.removeEventListener("load", startAtmosphere);
+    }
+  }
+
+  // Native scroll snap is the baseline. These controls add only a small layer
+  // of orientation and keyboard-friendly navigation to the two prototype rails.
+  const root = document.documentElement;
+  root.style.setProperty("--mx", "0.5");
+  root.style.setProperty("--my", "0.5");
+  let pointerRaf = 0;
+  let targetX = 0.5;
+  let targetY = 0.5;
+  let currentX = 0.5;
+  let currentY = 0.5;
+  const updatePointer = (event: PointerEvent) => {
+    targetX = event.clientX / Math.max(window.innerWidth, 1);
+    targetY = 1 - event.clientY / Math.max(window.innerHeight, 1);
+    if (!pointerRaf) pointerRaf = requestAnimationFrame(tickPointer);
+  };
+  const tickPointer = () => {
+    currentX += (targetX - currentX) * 0.12;
+    currentY += (targetY - currentY) * 0.12;
+    root.style.setProperty("--mx", currentX.toFixed(3));
+    root.style.setProperty("--my", currentY.toFixed(3));
+    if (Math.abs(targetX - currentX) > 0.001 || Math.abs(targetY - currentY) > 0.001) {
+      pointerRaf = requestAnimationFrame(tickPointer);
+    } else {
+      pointerRaf = 0;
+    }
+  };
+  if (!reduceMotion) window.addEventListener("pointermove", updatePointer, { passive: true });
+
+  const tracks = Array.from(document.querySelectorAll<HTMLElement>("[data-carousel-track]"));
+  let initializedCarousels = 0;
+  tracks.forEach((track) => {
+    const name = track.dataset.carouselTrack;
+    const slides = Array.from(track.querySelectorAll<HTMLElement>(".carousel__slide"));
+    if (!name || !slides.length) return;
+    const prev = document.querySelector<HTMLButtonElement>(`[data-carousel-dir="prev"][data-carousel-target="${name}"]`);
+    const next = document.querySelector<HTMLButtonElement>(`[data-carousel-dir="next"][data-carousel-target="${name}"]`);
+    const progress = document.querySelector<HTMLElement>(`[data-carousel-progress="${name}"]`);
+    let active = 0;
+    const setActive = (index: number) => {
+      active = Math.max(0, Math.min(index, slides.length - 1));
+      slides.forEach((slide, i) => slide.setAttribute("aria-current", i === active ? "true" : "false"));
+      if (progress) progress.textContent = `${String(active + 1).padStart(2, "0")} / ${String(slides.length).padStart(2, "0")}`;
+      if (prev) prev.disabled = active === 0;
+      if (next) next.disabled = active === slides.length - 1;
+    };
+    const goTo = (index: number) => {
+      const target = Math.max(0, Math.min(index, slides.length - 1));
+      track.scrollTo({ left: slides[target].offsetLeft, behavior: reduceMotion ? "auto" : "smooth" });
+      setActive(target);
+    };
+    const syncActive = () => {
+      const nearest = slides.reduce(
+        (best, slide, index) => {
+          const distance = Math.abs(slide.offsetLeft - track.scrollLeft);
+          return distance < best.distance ? { index, distance } : best;
+        },
+        { index: 0, distance: Number.POSITIVE_INFINITY },
+      );
+      setActive(nearest.index);
+    };
+    prev?.addEventListener("click", () => goTo(active - 1));
+    next?.addEventListener("click", () => goTo(active + 1));
+    track.addEventListener("scroll", syncActive, { passive: true });
+    track.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        goTo(active - 1);
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        goTo(active + 1);
+      }
+    });
+    setActive(0);
+    initializedCarousels += 1;
+  });
+  if (initializedCarousels === tracks.length && tracks.length > 0) {
+    root.classList.add("carousel-enhanced");
+  }
+
+  // Full-bleed photographs gain the prototype's restrained depth treatment.
+  // It is deliberately optional; the static crop remains complete without it.
+  if (!reduceMotion) {
+    import("gsap")
+      .then(async ({ default: gsap }) => {
+        const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+        gsap.registerPlugin(ScrollTrigger);
+        document.querySelectorAll<HTMLElement>("[data-parallax-layer]").forEach((element) => {
+          const amount = parseFloat(element.dataset.parallaxLayer ?? "0") * 100;
+          gsap.to(element, {
+            y: () => amount,
+            ease: "none",
+            scrollTrigger: {
+              trigger: element,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: true,
+            },
+          });
+        });
+        const reveals = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal], [data-mount]"));
+        reveals.forEach((element) => {
+          gsap.fromTo(element, { autoAlpha: 0, y: 22 }, {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: { trigger: element, start: "top 88%", once: true },
+          });
+        });
+        ScrollTrigger.refresh();
+      })
+      .catch(() => {
+        // CSS remains the complete motion-free fallback.
+      });
+  }
+
+  window.addEventListener("pagehide", () => {
+    leavingPage = true;
+    if (pointerRaf) cancelAnimationFrame(pointerRaf);
+    cancelEnhancementStart();
+    disposeAtmosphere?.();
+  }, { once: true });
+</script>
 </Base>
