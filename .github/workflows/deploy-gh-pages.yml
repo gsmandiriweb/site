@@ -1,0 +1,59 @@
+name: Deploy static site to GitHub Pages
+
+# Fallback deployment — public site only (no CMS).
+#
+# The CMS runtime surfaces (/admin, /api/*) need the Cloudflare Worker runtime,
+# the SESSION KV, and secrets, so they are removed before this build. Use this
+# workflow as the static fallback until the Cloudflare deploy is fixed; the
+# canonical deploy remains `.github/workflows/deploy.yml`.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the pushed commit
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Exclude CMS runtime routes (Cloudflare-only surfaces)
+        run: rm -rf src/pages/api src/pages/admin
+
+      - name: Build static site for GitHub Pages
+        run: bunx astro build --config astro.config.gh-pages.mjs
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
