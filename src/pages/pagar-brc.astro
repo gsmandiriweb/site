@@ -3,14 +3,11 @@ import Base from "../layouts/Base.astro";
 import ReactiveMesh from "../components/ReactiveMesh.astro";
 import BrcShowcase from "../components/BrcShowcase.astro";
 import { brcShowcase } from "../data/catalog.ts";
-import { waLink } from "../utils/url.ts";
+import { quoteLink } from "../utils/url.ts";
 import { Image } from "astro:assets";
 import { imageAsset } from "../utils/images.ts";
 
-const waBrc = waLink(
-  "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang BRC, tiang Y, pintu pagar, aksesoris). " +
-    "Mohon info harga pabrik, stok, dan pengiriman. Terima kasih."
-);
+const quoteBrc = quoteLink({ category: "pagar", product: "Pagar BRC" });
 const title = `${brcShowcase.title} — Spesifikasi & Penawaran · Bangun Sarana Makmur`;
 const desc =
   "Pagar BRC: panel 240×150 cm, ∅6 mm, mesh 150×150, galvanis elektro. Tiang BRC, tiang Y, pintu pagar, aksesoris. " +
@@ -33,7 +30,7 @@ const desc =
           Periksa spesifikasinya dari setiap sisi, lalu minta penawaran harga pabrik.
         </p>
         <div class="hero__actions">
-          <a class="btn btn--primary" href={waBrc} target="_blank" rel="noopener">Minta Penawaran BRC</a>
+          <a class="btn btn--primary" href={quoteBrc}>Susun Permintaan BRC</a>
           <a class="btn btn--ghost" href="#spesifikasi">Lihat Spesifikasi</a>
         </div>
       </div>
@@ -69,7 +66,7 @@ const desc =
         Hubungi tim sales BSM via WhatsApp untuk harga pabrik, stok, dan pengiriman pagar BRC ke proyek Anda.
       </p>
       <div class="hero__actions" style="justify-content:center">
-        <a class="btn btn--onfield" href={waBrc} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
+        <a class="btn btn--onfield" href={quoteBrc}>Susun Permintaan BRC</a>
         <a class="btn btn--ghostfield" href="mailto:bsmbangun@yahoo.co.id">bsmbangun@yahoo.co.id</a>
       </div>
       <p class="muted" style="margin-top:1.6rem;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em">

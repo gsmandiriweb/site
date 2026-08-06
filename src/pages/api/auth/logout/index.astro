@@ -1,0 +1,22 @@
+---
+import { destroyAdminSession, expiredSessionCookie } from "../../../../utils/admin-session.ts";
+
+export const prerender = false;
+
+if (Astro.request.method !== "POST") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "POST", "Cache-Control": "no-store" },
+  });
+}
+
+await destroyAdminSession(Astro.request);
+const secure = Astro.url.protocol === "https:";
+const headers = new Headers({
+  Location: "/admin/login",
+  "Cache-Control": "no-store",
+});
+headers.append("Set-Cookie", expiredSessionCookie(secure));
+
+return new Response(null, { status: 303, headers });
+---

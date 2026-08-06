@@ -12,6 +12,9 @@
 import Base from "../layouts/Base.astro";
 import { WA_NUMBER } from "../utils/url.ts";
 import { categories, configuratorLines } from "../data/catalog.ts";
+import Input from "../components/starwind/Input.astro";
+import NativeSelect from "../components/starwind/NativeSelect.astro";
+import Textarea from "../components/starwind/Textarea.astro";
 
 // Ship the category->lines map to the client as JSON (no runtime fetching).
 const linesJson = JSON.stringify(configuratorLines);
@@ -53,28 +56,39 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     </div>
 
     <form class="rfq" id="rfq-form" data-lines={linesJson} data-wa={WA_NUMBER} novalidate>
+      <fieldset class="rfq__intent" aria-labelledby="rfq-intent-title">
+        <legend class="label" id="rfq-intent-title">Konteks kebutuhan <span class="rfq__optional">· opsional</span></legend>
+        <div class="rfq__intent-options">
+          <label class="rfq__intent-option">
+            <input type="radio" name="intent" value="project" />
+            <span>Untuk proyek / pengadaan</span>
+          </label>
+          <label class="rfq__intent-option">
+            <input type="radio" name="intent" value="home" />
+            <span>Untuk rumah / renovasi</span>
+          </label>
+        </div>
+        <p class="rfq__intent-note" id="rfq-intent-note">Pilihan ini hanya membantu tim memahami kebutuhan Anda; alurnya tetap sama.</p>
+      </fieldset>
+
       <div class="rfq__grid">
         {/* Category */}
         <div class="rfq__field">
           <label class="label" for="rfq-category">Kategori material</label>
-          <div class="rfq__select">
-            <select id="rfq-category" name="category" required>
-              <option value="">— Pilih kategori —</option>
-              {categories.map((c) => (
-                <option value={c.slug}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+          <NativeSelect id="rfq-category" name="category" required size="md">
+            <option value="">— Pilih kategori —</option>
+            {categories.map((c) => (
+              <option value={c.slug}>{c.name}</option>
+            ))}
+          </NativeSelect>
         </div>
 
         {/* Product (dependent on category) */}
         <div class="rfq__field">
           <label class="label" for="rfq-product">Produk / lini</label>
-          <div class="rfq__select">
-            <select id="rfq-product" name="product" required disabled>
-              <option value="">— Pilih kategori dulu —</option>
-            </select>
-          </div>
+          <NativeSelect id="rfq-product" name="product" required disabled size="md">
+            <option value="">— Pilih kategori dulu —</option>
+          </NativeSelect>
           <span class="rfq__hint" id="rfq-spec-hint" aria-live="polite"></span>
         </div>
 
@@ -82,40 +96,51 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
         <div class="rfq__field rfq__field--qty">
           <label class="label" for="rfq-qty">Jumlah</label>
           <div class="rfq__qty">
-            <input id="rfq-qty" name="qty" type="number" min="1" step="1" inputmode="numeric" placeholder="mis. 100" required />
-            <div class="rfq__select">
-              <select id="rfq-unit" name="unit" aria-label="Satuan">
-                {units.map((u2) => (
-                  <option value={u2}>{u2}</option>
-                ))}
-              </select>
-            </div>
+            <Input id="rfq-qty" name="qty" type="number" min="1" step="1" inputmode="numeric" placeholder="mis. 100" required size="md" />
+            <NativeSelect id="rfq-unit" name="unit" aria-label="Satuan" size="md">
+              {units.map((u2) => (
+                <option value={u2}>{u2}</option>
+              ))}
+            </NativeSelect>
           </div>
         </div>
 
         {/* Project location */}
         <div class="rfq__field">
           <label class="label" for="rfq-location">Lokasi proyek / kota</label>
-          <input id="rfq-location" name="location" type="text" placeholder="mis. Surabaya, Jakarta, Balikpapan…" required />
+          <Input id="rfq-location" name="location" type="text" placeholder="mis. Surabaya, Jakarta, Balikpapan…" required size="md" />
+        </div>
+
+        {/* BRC quantity helper: deliberately narrow and assumption-bound. */}
+        <div class="rfq__field rfq__field--full rfq__helper" id="brc-helper" hidden>
+          <div class="rfq__helper-head">
+            <span class="label">Bantu hitung panel BRC · perkiraan awal</span>
+            <span class="rfq__helper-tag">BRC · 2,4 m / panel</span>
+          </div>
+          <label class="label" for="rfq-run">Panjang bentang pagar</label>
+          <div class="rfq__qty rfq__helper-input">
+            <Input id="rfq-run" name="run" type="number" min="0.1" step="0.1" inputmode="decimal" placeholder="mis. 24" size="md" />
+            <span class="rfq__unit-static">meter</span>
+          </div>
+          <output class="rfq__estimate" id="rfq-estimate" aria-live="polite"></output>
+          <p class="rfq__helper-note">Perkiraan minimum panel = pembulatan ke atas panjang ÷ 2,4 m. Belum termasuk tiang, pintu, sudut, kemiringan, waste, pemasangan, harga, stok, atau pengiriman.</p>
         </div>
 
         {/* Buyer role */}
         <div class="rfq__field">
           <label class="label" for="rfq-role">Profesi Anda</label>
-          <div class="rfq__select">
-            <select id="rfq-role" name="role">
-              <option value="">— Pilih jika berlaku —</option>
-              {roles.map((r) => (
-                <option value={r}>{r}</option>
-              ))}
-            </select>
-          </div>
+          <NativeSelect id="rfq-role" name="role" size="md">
+            <option value="">— Pilih jika berlaku —</option>
+            {roles.map((r) => (
+              <option value={r}>{r}</option>
+            ))}
+          </NativeSelect>
         </div>
 
         {/* Notes */}
         <div class="rfq__field rfq__field--full">
           <label class="label" for="rfq-notes">Catatan tambahan</label>
-          <textarea id="rfq-notes" name="notes" rows="3" placeholder="Dimensi khusus, finishing, jadwal proyek, pertanyaan lain…"></textarea>
+          <Textarea id="rfq-notes" name="notes" rows="3" placeholder="Dimensi khusus, finishing, jadwal proyek, pertanyaan lain…" size="md" />
         </div>
       </div>
 
@@ -126,13 +151,14 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
       </div>
 
       <div class="rfq__actions">
-        <button type="submit" class="btn btn--primary rfq__submit" id="rfq-submit" disabled>
-          Kirim via WhatsApp
+        <button type="submit" class="btn btn--primary rfq__submit" id="rfq-submit" disabled aria-describedby="rfq-status">
+          Buka WhatsApp dengan permintaan ini
         </button>
         <span class="rfq__disclaimer label">
-          Tidak ada harga otomatis — tim sales BSM membalas dengan penawaran resmi.
+          WhatsApp hanya dibuka setelah rincian wajib lengkap dan pratinjau siap.
         </span>
       </div>
+      <p class="rfq__status" id="rfq-status" role="status" aria-live="polite" hidden></p>
     </form>
   </section>
 </Base>
@@ -144,6 +170,26 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     background: var(--paper);
     padding: clamp(1.2rem, 3vw, 2rem);
   }
+  .rfq__intent {
+    margin: 0 0 1.6rem;
+    padding: 0 0 1.35rem;
+    border: 0;
+    border-bottom: 1px solid var(--steel);
+  }
+  .rfq__optional { color: var(--ink-muted); font-family: var(--font-body); letter-spacing: 0; text-transform: none; }
+  .rfq__intent-options { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 0.65rem; }
+  .rfq__intent-option { display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.65rem 0.8rem; border: 1px solid var(--steel); border-radius: var(--r-md); cursor: pointer; color: var(--ink); transition: border-color 0.18s var(--ease), background 0.18s var(--ease); }
+  .rfq__intent-option:has(input:checked) { border-color: var(--blueprint); background: rgba(201, 180, 138, 0.12); }
+  .rfq__intent-option input { width: auto; accent-color: var(--blueprint); }
+  .rfq__intent-option span { font-size: 0.92rem; }
+  .rfq__intent-note, .rfq__helper-note { margin-top: 0.55rem; color: var(--ink-muted); font-size: 0.82rem; line-height: 1.5; }
+  .rfq__helper { padding: 1rem; border: 1px solid var(--blueprint); border-radius: var(--r-md); background: rgba(201, 180, 138, 0.08); }
+  .rfq__helper-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.7rem; }
+  .rfq__helper-tag { font-family: var(--font-mono); font-size: 0.65rem; color: var(--blueprint); letter-spacing: 0.06em; text-transform: uppercase; }
+  .rfq__helper-input { max-width: 20rem; margin-top: 0.35rem; }
+  .rfq__unit-static { display: inline-flex; align-items: center; padding: 0 0.85rem; border: 1px solid var(--ink); border-left: 0; border-radius: 0 var(--r-md) var(--r-md) 0; background: var(--paper-deep); color: var(--ink-muted); }
+  .rfq__helper-input input { border-radius: var(--r-md) 0 0 var(--r-md); }
+  .rfq__estimate { display: block; margin-top: 0.8rem; font-family: var(--font-mono); font-size: 0.85rem; color: var(--blueprint); min-height: 1.3em; }
   .rfq__grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -164,60 +210,6 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     color: var(--ink-muted);
   }
 
-  /* Inputs (matches the catalog search input treatment) */
-  .rfq input,
-  .rfq textarea,
-  .rfq select {
-    font-family: var(--font-body);
-    font-size: 1rem;
-    padding: 12px 14px;
-    border: 1px solid var(--ink);
-    border-radius: var(--r-md);
-    background: var(--paper);
-    color: var(--ink);
-    width: 100%;
-    transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
-  }
-  .rfq textarea {
-    resize: vertical;
-    font-family: var(--font-body);
-  }
-  .rfq input:focus,
-  .rfq textarea:focus,
-  .rfq select:focus {
-    outline: none;
-    border-color: var(--blueprint);
-    box-shadow: 0 0 0 2px rgba(201, 180, 138, 0.2);
-  }
-  .rfq input:disabled,
-  .rfq select:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  /* Select chevron */
-  .rfq__select {
-    position: relative;
-  }
-  .rfq__select::after {
-    content: "";
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    width: 8px;
-    height: 8px;
-    border-right: 2px solid var(--ink-muted);
-    border-bottom: 2px solid var(--ink-muted);
-    transform: translateY(-65%) rotate(45deg);
-    pointer-events: none;
-  }
-  .rfq__select select {
-    appearance: none;
-    -webkit-appearance: none;
-    padding-right: 36px;
-    cursor: pointer;
-  }
-
   /* Quantity row */
   .rfq__qty {
     display: flex;
@@ -226,7 +218,7 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
   .rfq__qty input {
     flex: 1 1 auto;
   }
-  .rfq__qty .rfq__select {
+  .rfq__qty > [data-slot="native-select-wrapper"] {
     flex: 0 0 7rem;
   }
 
@@ -285,6 +277,28 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     color: var(--ink-muted);
     max-width: 32ch;
   }
+  .rfq__status {
+    margin: 1rem 0 0;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--steel);
+    border-radius: var(--r-md);
+    color: var(--ink-muted);
+    font-size: 0.88rem;
+  }
+  .rfq__status[data-tone="error"] {
+    border-color: #ef6a61;
+    color: #ffb8b1;
+  }
+  .rfq__status[data-tone="success"] {
+    border-color: var(--blueprint);
+    color: var(--yard-light);
+  }
+  .rfq__status a {
+    color: var(--blueprint);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
 
   @media (max-width: 640px) {
     .rfq__grid {
@@ -293,7 +307,7 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     .rfq__qty {
       flex-direction: column;
     }
-    .rfq__qty .rfq__select {
+    .rfq__qty > [data-slot="native-select-wrapper"] {
       flex: 1 1 auto;
     }
   }
@@ -314,9 +328,16 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     const locationEl = document.getElementById("rfq-location") as HTMLInputElement;
     const roleEl = document.getElementById("rfq-role") as HTMLSelectElement;
     const notesEl = document.getElementById("rfq-notes") as HTMLTextAreaElement;
+    const intentEls = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="intent"]'));
+    const intentNoteEl = document.getElementById("rfq-intent-note");
+    const helperEl = document.getElementById("brc-helper");
+    const runEl = document.getElementById("rfq-run") as HTMLInputElement;
+    const estimateEl = document.getElementById("rfq-estimate");
     const hintEl = document.getElementById("rfq-spec-hint");
     const messageEl = document.getElementById("rfq-message");
     const submitEl = document.getElementById("rfq-submit") as HTMLButtonElement;
+    const statusEl = document.getElementById("rfq-status");
+    let isSubmitting = false;
 
     const categoryName = (slug: string) =>
       categoryEl.options[categoryEl.selectedIndex]?.text ?? slug;
@@ -344,6 +365,26 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     // Compose the WhatsApp RFQ from the buyer's inputs. Computes nothing —
     // only assembles text. Known specs (from the Showcase) are injected as
     // context when the selected product carries them.
+    function selectedIntent(): string {
+      return intentEls.find((el) => el.checked)?.value || "";
+    }
+
+    function updateBrcHelper() {
+      const isBrcPanel = categoryEl.value === "pagar" && productEl.value === "Pagar BRC";
+      if (helperEl) helperEl.hidden = !isBrcPanel;
+      if (!isBrcPanel) {
+        if (estimateEl) estimateEl.textContent = "";
+        return;
+      }
+      const run = Number.parseFloat(runEl?.value || "");
+      if (!Number.isFinite(run) || run <= 0) {
+        if (estimateEl) estimateEl.textContent = "Masukkan panjang bentang untuk melihat perkiraan panel.";
+        return;
+      }
+      const panels = Math.ceil(run / 2.4);
+      if (estimateEl) estimateEl.textContent = `Perkiraan minimum: ${panels} panel · asumsi lebar panel 2,4 m`;
+    }
+
     function compose(): string {
       const cat = categoryEl.value;
       const product = productEl.value;
@@ -352,6 +393,8 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
       const location = locationEl.value.trim();
       const role = roleEl.value;
       const notes = notesEl.value.trim();
+      const intent = selectedIntent();
+      const run = Number.parseFloat(runEl?.value || "");
 
       if (!cat || !product || !qty || !location) return "";
 
@@ -361,8 +404,13 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
       lines_.push("");
       lines_.push(`• Kategori: ${categoryName(cat)}`);
       lines_.push(`• Produk: ${product}`);
+      if (intent) lines_.push(`• Konteks: ${intent === "project" ? "Untuk proyek / pengadaan" : "Untuk rumah / renovasi"}`);
       if (specContext) lines_.push(`• Spesifikasi: ${specContext}`);
       lines_.push(`• Jumlah: ${qty} ${unit}`);
+      if (cat === "pagar" && product === "Pagar BRC" && Number.isFinite(run) && run > 0) {
+        lines_.push(`• Perkiraan panel awal: ${Math.ceil(run / 2.4)} panel dari bentang ${run} m (asumsi lebar panel 2,4 m)`);
+        lines_.push("• Catatan estimasi: belum termasuk tiang, pintu, sudut, kemiringan, waste, pemasangan, harga, stok, atau pengiriman.");
+      }
       lines_.push(`• Lokasi proyek: ${location}`);
       if (role) lines_.push(`• Profesi: ${role}`);
       if (notes) {
@@ -374,12 +422,47 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
       return lines_.join("\n");
     }
 
+    function validationMessage(): string {
+      if (!categoryEl.value) return "Pilih kategori material terlebih dahulu.";
+      if (productEl.disabled || !productEl.value) return "Pilih produk atau lini material terlebih dahulu.";
+      if (!Array.from(productEl.options).some((option) => option.value === productEl.value)) {
+        return "Produk yang dipilih tidak tersedia. Pilih ulang dari daftar produk.";
+      }
+      const quantity = Number.parseFloat(qtyEl.value);
+      if (!Number.isFinite(quantity) || quantity < 1 || !Number.isInteger(quantity)) {
+        return "Masukkan jumlah minimal 1 dalam angka bulat.";
+      }
+      if (!locationEl.value.trim()) return "Masukkan lokasi proyek atau kota pengiriman.";
+      return "";
+    }
+
+    function clearStatus() {
+      if (!statusEl) return;
+      statusEl.hidden = true;
+      statusEl.textContent = "";
+      statusEl.removeAttribute("data-tone");
+    }
+
+    function showStatus(message: string, tone: "error" | "success" | "info", fallbackUrl?: string) {
+      if (!statusEl) return;
+      statusEl.replaceChildren(document.createTextNode(message));
+      if (fallbackUrl) {
+        statusEl.append(" ");
+        const fallback = document.createElement("a");
+        fallback.href = fallbackUrl;
+        fallback.target = "_blank";
+        fallback.rel = "noopener noreferrer";
+        fallback.textContent = "Buka WhatsApp secara manual";
+        statusEl.appendChild(fallback);
+      }
+      statusEl.dataset.tone = tone;
+      statusEl.hidden = false;
+    }
+
     function update() {
       const msg = compose();
       if (messageEl) messageEl.textContent = msg;
-      // Submit is enabled only when the core fields are present.
-      const ready = !!(categoryEl.value && productEl.value && qtyEl.value.trim() && locationEl.value.trim());
-      submitEl.disabled = !ready;
+      submitEl.disabled = Boolean(validationMessage()) || isSubmitting;
 
       // Show the auto-injected spec context as a hint (transparency: the buyer
       // sees what context we added on their behalf).
@@ -387,19 +470,78 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
       const product = productEl.value;
       const specContext = lines[slug]?.find((o) => o.name === product)?.specContext;
       if (hintEl) hintEl.textContent = specContext ? `Spesifikasi terlampir: ${specContext}` : "";
+      const intent = selectedIntent();
+      if (intentNoteEl) intentNoteEl.textContent = intent ? `Konteks dipilih: ${intent === "project" ? "untuk proyek / pengadaan" : "untuk rumah / renovasi"}.` : "Pilihan ini hanya membantu tim memahami kebutuhan Anda; alurnya tetap sama.";
+      updateBrcHelper();
     }
 
-    [productEl, qtyEl, unitEl, locationEl, roleEl, notesEl].forEach((el) =>
-      el.addEventListener("input", update),
+    [categoryEl, productEl, qtyEl, unitEl, locationEl, roleEl, notesEl, runEl, ...intentEls].forEach((el) =>
+      el.addEventListener("input", () => {
+        clearStatus();
+        update();
+      }),
     );
-    productEl.addEventListener("change", update);
+    categoryEl.addEventListener("change", () => {
+      clearStatus();
+      categoryEl.dispatchEvent(new Event("input"));
+      updateBrcHelper();
+    });
+    productEl.addEventListener("change", () => {
+      clearStatus();
+      update();
+    });
+
+    const query = new URLSearchParams(window.location.search);
+    const intentFromUrlEl = intentEls.find((el) => el.value === query.get("intent"));
+    if (intentFromUrlEl) intentFromUrlEl.checked = true;
+
+    const categoryFromUrl = query.get("category");
+    if (categoryFromUrl && Array.from(categoryEl.options).some((option) => option.value === categoryFromUrl)) {
+      categoryEl.value = categoryFromUrl;
+      categoryEl.dispatchEvent(new Event("change"));
+      const productFromUrl = query.get("product");
+      if (productFromUrl && Array.from(productEl.options).some((option) => option.value === productFromUrl)) {
+        productEl.value = productFromUrl;
+      }
+    }
+    const notesFromUrl = query.get("notes");
+    if (notesFromUrl) notesEl.value = notesFromUrl.slice(0, 1200);
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
+      const problem = validationMessage();
+      if (problem) {
+        showStatus(problem, "error");
+        const firstInvalid = [categoryEl, productEl, qtyEl, locationEl].find((el) => {
+          if (el === categoryEl) return !categoryEl.value;
+          if (el === productEl) return productEl.disabled || !productEl.value;
+          if (el === qtyEl) return !Number.isInteger(Number.parseFloat(qtyEl.value)) || Number.parseFloat(qtyEl.value) < 1;
+          return !locationEl.value.trim();
+        });
+        firstInvalid?.focus();
+        return;
+      }
+      if (isSubmitting) return;
       const msg = compose();
-      if (!msg) return;
+      if (!msg) {
+        showStatus("Lengkapi rincian wajib sebelum membuka WhatsApp.", "error");
+        return;
+      }
+      isSubmitting = true;
+      update();
       const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
-      window.open(url, "_blank", "noopener");
+      const popup = window.open(url, "_blank", "noopener,noreferrer");
+      if (!popup) {
+        isSubmitting = false;
+        showStatus("WhatsApp tidak dapat dibuka otomatis karena diblokir browser.", "error", url);
+        update();
+        return;
+      }
+      showStatus("Rincian siap. WhatsApp dibuka di tab baru untuk Anda tinjau dan kirim.", "success");
+      window.setTimeout(() => {
+        isSubmitting = false;
+        update();
+      }, 1200);
     });
 
     update();

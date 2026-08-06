@@ -13,7 +13,7 @@
 # Use Workers + Assets (not classic Cloudflare *Pages*): the Astro 7 adapter
 # emits a split output (static assets in dist/client, worker in dist/server).
 
-name = "second-shepherd"
+name = "site"
 compatibility_date = "2026-04-15"
 
 # Node.js compatibility is REQUIRED for Astro on Cloudflare Workers. Astro's
@@ -23,16 +23,23 @@ compatibility_date = "2026-04-15"
 compatibility_flags = ["nodejs_compat"]
 
 # Bindings injected by @astrojs/cloudflare for on-demand rendering
-# (Keystatic admin auth, Astro sessions). The SESSION KV MUST exist or
-# `wrangler deploy` fails. Create it once and paste its id:
+# (CMS sessions). The SESSION KV MUST exist or `wrangler deploy` fails.
+# Create it once and paste its id:
 #
 #   npx wrangler kv namespace create SESSION
 kv_namespaces = [{ binding = "SESSION", id = "21a01da3e6264da0a9f7e7dc42c1e874" }]
 
-# Keystatic PAT auth secret.
-# Create at runtime with:
-#   wrangler secret put KEYSTATIC_GITHUB_PAT
-# (paste a GitHub PAT with the `repo` scope)
+# CMS secrets. Set each at runtime with:
+#   wrangler secret put CMS_OWNER_SECRET       (owner access key for /admin/login)
+#   wrangler secret put CMS_GITHUB_PAT         (GitHub PAT with repo scope, for
+#                                               revision-branch/PR mutations)
+#   wrangler secret put CMS_DEPLOY_CALLBACK_URL     (POST target for the deploy
+#                                                   callback from GitHub Actions)
+#   wrangler secret put CMS_DEPLOY_CALLBACK_SECRET  (HMAC key for the callback)
+# The deploy workflow runs on every push to main and POSTs the deployed commit
+# SHA to the callback, which records it in SESSION KV as the "live" commit.
+# The GitHub App installation identity (ADR 0008) will replace the PAT for
+# repository mutations as the next hardening step.
 
 # Optional: Cloudflare Images binding. The adapter declares this because it can
 # serve images via Cloudflare Images. This site serves images from the repo, so

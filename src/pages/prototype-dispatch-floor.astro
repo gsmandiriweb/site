@@ -36,12 +36,10 @@
 import { Image } from "astro:assets";
 import { imageAsset } from "../utils/images.ts";
 import { categories, brcShowcase } from "../data/catalog.ts";
-import { u, waLink } from "../utils/url.ts";
+import { quoteLink, u } from "../utils/url.ts";
 
-const wa = waLink();
-const waBrc = waLink(
-  "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang, pintu, aksesoris). Mohon info harga pabrik, stok, pengiriman. Terima kasih."
-);
+const quote = quoteLink();
+const quoteBrc = quoteLink({ category: "pagar", product: "Pagar BRC" });
 
 // Hero: warehouse stock staged for dispatch (full-bleed, directional).
 const heroImg = imageAsset("pagar-brc-tumpukan-stok-gudang-1.jpg");
@@ -80,7 +78,7 @@ const reach = [
       <a href={u("/katalog")}>Katalog</a>
       <a href={u("/pagar-brc")}>Pagar BRC</a>
     </div>
-    <a class="nav__wa" href={wa} target="_blank" rel="noopener">WhatsApp</a>
+    <a class="nav__wa" href={quote}>Minta Penawaran</a>
   </nav>
 
   <!-- ===================== HERO · the dispatch bay ===================== -->
@@ -95,7 +93,7 @@ const reach = [
       <h1 class="waybill__title" id="hero-title">Material bergerak.<br />Harga pabrik.<br />Sampai proyek.</h1>
       <p class="waybill__lede">CV Bangun Sarana Makmur menggerakkan material bangunan dari gudang Surabaya ke proyek di 34 provinsi. Bukan brosur: ini lantai dispatch nyata, stok disiapkan, dibundel, dikirim.</p>
       <div class="waybill__actions">
-        <a class="cta cta--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+        <a class="cta cta--primary" href={quote}>Minta Penawaran</a>
         <a class="cta cta--ghost" href="#lini">Lihat Lini BRC</a>
       </div>
       <div class="waybill__reach">
@@ -189,14 +187,14 @@ const reach = [
                 <div class="freight-tag__spec"><dt>{sp.k}</dt><dd>{sp.v}</dd></div>
               ))}
             </dl>
-            <a class="freight-tag__wa" href={waLink(s.waContext)} target="_blank" rel="noopener">Minta penawaran unit ini →</a>
+            <a class="freight-tag__wa" href={quoteLink({ category: "pagar", product: s.name === "Pagar BRC Panel" ? "Pagar BRC" : s.name, notes: `Konteks produk: ${s.name}` })}>Susun permintaan unit ini →</a>
           </div>
         </article>
       ))}
     </div>
 
     <div class="freight__order">
-      <a class="cta cta--primary cta--lg" href={waBrc} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
+      <a class="cta cta--primary cta--lg" href={quoteBrc}>Susun permintaan BRC lengkap →</a>
     </div>
   </section>
 
@@ -223,7 +221,7 @@ const reach = [
       <span class="rail">MEJA DISPATCH · WHOLESALE</span>
       <h2 id="counter-title">Siap bergerak? Minta harga pabrik untuk proyek Anda.</h2>
       <p class="counter__sub">Hubungi tim sales BSM via WhatsApp. Harga pabrik, stok gudang, dan pengiriman ke 34 provinsi dalam satu obrolan. Konsultasi gratis, kirim Surabaya gratis.</p>
-      <a class="cta cta--primary cta--lg" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
+      <a class="cta cta--primary cta--lg" href={quote}>Susun permintaan penawaran →</a>
       <p class="counter__addr">Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472 · bsmbangun@yahoo.co.id</p>
     </div>
   </section>

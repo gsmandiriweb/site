@@ -33,12 +33,12 @@ A direct factory-price distributor in Surabaya offering unusual catalog breadth 
 ## Capabilities and Constraints
 
 - **Static site built with Astro 7**; output is fully static.
-- **Blog CMS: Decap CMS** (git-backed, React admin UI, no runtime backend) — chosen so the site stays 100% static while non-technical editors manage posts in a browser. [Confirmed, option A]
+- **Blog CMS: custom BSM dashboard** — the canonical editor at `/admin` (markdown-first WYSIWYG). It edits Markdown posts and repository images, commits each revision to its own GitHub branch and pull request (`cms/<slug>/r<N>`), and publishes by merging to `main`, which auto-deploys the static site. GitHub is the durable source of truth; the public site stays fully static. Keystatic and Decap are not part of the destination. [Confirmed]
 - **Language: Indonesian only** (`lang="id"`). No i18n routing. [Confirmed]
 - **No public price list.** Prices/stock fluctuate and must not be hardcoded or fabricated; the pattern is "request a quote" via WhatsApp/phone. [Confirmed]
 - **Product display: all 6 reference categories browsable, BRC fencing as hero/flagship.** [Confirmed]
-- React is used only where needed (Decap admin / interactive CMS surfaces), not as the default rendering model for the marketing site.
-- Deployment target not yet fixed; Decap's git backend works on any static host (Netlify/Vercel/GitHub Pages). [Open — confirm host + Decap OAuth/git backend before build]
+- React is used only where needed (the CMS dashboard / interactive admin surfaces), not as the default rendering model for the marketing site.
+- **Deployment: Cloudflare Workers + Assets** — GitHub Actions builds and deploys automatically on every push to `main`; the signed callback records the deployed commit to mark content as live. Auth and CMS mutation APIs are the only runtime routes; everything else is pre-rendered static output. [Confirmed]
 
 ## Brand Commitments
 

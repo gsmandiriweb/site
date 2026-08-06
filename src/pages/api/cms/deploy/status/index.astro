@@ -1,0 +1,25 @@
+---
+import { deployedCommit, DeployActionError, jsonResponse } from "../../../../../utils/deploy.ts";
+import { readAdminSession } from "../../../../../utils/admin-session.ts";
+
+export const prerender = false;
+
+if (Astro.request.method !== "GET") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "GET", "Cache-Control": "no-store" },
+  });
+}
+
+if (!(await readAdminSession(Astro.request))) {
+  return jsonResponse({ error: "Authentication required" }, 401);
+}
+
+try {
+  return jsonResponse({ deployed: await deployedCommit() });
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Unable to read deployment status.";
+  const status = error instanceof DeployActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---

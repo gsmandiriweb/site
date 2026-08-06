@@ -1,9 +1,15 @@
 ---
+id: "ed940a62-6272-4e1a-9d8e-5c7b3f0a6d21"
+slug: atap-upvc-vs-alderon
 title: "Atap UPVC vs Alderon: Mana yang Pas untuk Pabrik Anda?"
 kicker: "Banding Material"
 excerpt: "Atap dingin untuk gudang dan pabrik. Kami bandingkan UPVC, Alderon, dan galvalume biar keputusan tidak salah."
-date: 2026-07-09
+publishedAt: 2026-07-09
+status: published
+aliases: []
 image: atap-upvc.jpeg
+imageAlt: "Atap UPVC untuk bangunan industri"
+date: 2026-07-09
 ---
 
 Memilih atap untuk gudang atau pabrik bukan sekadar soal harga per meter, tapi soal suhu ruang, umur pakai, dan cara pemasangan. Tiga bahan paling umum adalah UPVC, Alderon, dan galvalume.

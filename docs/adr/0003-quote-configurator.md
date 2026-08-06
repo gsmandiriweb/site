@@ -10,12 +10,13 @@ Build a quote configurator at `/penawaran` that **collects buyer intent and comp
 
 - **Collected fields:** Category, Product/line (dependent on category), Quantity + unit (lembar/batang/m²/m), Project location/city, Buyer role (Kontraktor/Procurement/Arsitek/Tukang/Pribadi), Notes (freeform). Name is optional; WhatsApp carries identity.
 - **No structured Dimensions/Finishing fields.** They're product-specific (a BRC panel has dimensions; a sealant doesn't). Instead, when the selected product has a Showcase, its known specs are auto-injected into the composed message as context. Anything else goes in Notes.
-- **Output is a WhatsApp message, never a number.** The configurator's job ends at composing an RFQ; BSM's sales team answers the actual quote.
+- **Output is a WhatsApp message, never a price or logistics promise.** The configurator's job ends at composing an RFQ; BSM's sales team answers the actual quote. A later bounded helper may show one explicitly labeled BRC panel-count estimate from the known 240 cm panel width (`ceil(fence run ÷ 2.4 m)`), but it must pass the assumptions into the RFQ and must not estimate posts, gates, corners, slopes, waste, installation, compliance, price, stock, or delivery.
 - **Route:** dedicated `/penawaran` page first (linkable, SEO target for "penawaran material"). Inline pre-fill from product surfaces comes later as a query-string deep-link (`?produk=...`), not a second implementation.
 
 ## Considered Options
 
 - **Compute tonnage/lead-time like the prototype (rejected).** Requires real formulas and real lead-time data the client has not supplied; violates PRODUCT.md principle #4 and the Absences list. The prototype's numbers are aspirational, not factual.
+- **Start with a broad multi-material estimator (rejected for the first slice).** Product coverage, overlap rules, waste factors, and engineering assumptions are not verified across the catalog. The first helper is intentionally limited to BRC panel count and remains an RFQ accelerator, not a standalone calculator.
 - **Structured Dimensions/Finishing fields on every product (rejected).** Forces empty fields on products they don't apply to — decoration, which `DESIGN.md` forbids. Auto-injecting known specs from the Showcase is the honest equivalent.
 - **Inline-only configurator on product pages (rejected as the first cut).** A dedicated page is linkable from every CTA and works for any product; the inline version is a deep-link into it, not a separate build.
 

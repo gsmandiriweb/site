@@ -1,0 +1,63 @@
+name: Deploy BSM site
+
+# Automatic deploy (ADR 0010): every merge to `main` builds the site and ships
+# it. The workflow POSTs the deployed commit SHA to the signed callback so the
+# CMS can mark content as live.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: bsm-deploy
+      cancel-in-progress: false
+    env:
+      COMMIT_SHA: ${{ github.sha }}
+      CMS_DEPLOY_CALLBACK_URL: ${{ secrets.CMS_DEPLOY_CALLBACK_URL }}
+      CMS_DEPLOY_CALLBACK_SECRET: ${{ secrets.CMS_DEPLOY_CALLBACK_SECRET }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Check out the pushed commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build site
+        run: bun run build
+
+      - name: Deploy Worker and Assets
+        id: deploy
+        run: bunx wrangler deploy --config dist/server/wrangler.json
+
+      - name: Report deployment result
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.deploy.outcome }}" == "success" ]]; then
+            body=$(printf '{"commitSha":"%s","status":"succeeded"}' "$COMMIT_SHA")
+          else
+            body=$(printf '{"commitSha":"%s","status":"failed"}' "$COMMIT_SHA")
+          fi
+          timestamp=$(date +%s)
+          signature=$(printf '%s.%s' "$timestamp" "$body" | openssl dgst -sha256 -hmac "$CMS_DEPLOY_CALLBACK_SECRET" -hex | awk '{print $2}')
+          curl --fail-with-body --retry 3 --retry-delay 2 -X POST "$CMS_DEPLOY_CALLBACK_URL" \
+            -H 'Content-Type: application/json' \
+            -H "x-bsm-deploy-timestamp: $timestamp" \
+            -H "x-bsm-deploy-signature: sha256=$signature" \
+            --data "$body"

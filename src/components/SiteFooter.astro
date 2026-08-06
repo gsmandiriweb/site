@@ -1,21 +1,20 @@
 ---
 import Logo from "./Logo.astro";
-import { u, waLink } from "../utils/url.ts";
+import { quoteLink, u } from "../utils/url.ts";
 const year = new Date().getFullYear();
-const wa = waLink();
+const quote = quoteLink();
 ---
 <footer class="site-footer">
   <div class="wrap">
     <div class="footer-grid">
       <div>
         <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.9rem">
-          <span style="width:34px;height:34px;display:block"><Logo variant="light" /></span>
-          <span class="brand__mark-t" style="font-size:1.1rem">BSM</span>
+          <span class="footer__logo"><Logo /></span>
         </div>
         <h4 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">CV Bangun Sarana Makmur</h4>
         <p class="muted">Distributor &amp; supplier material konstruksi bangunan. Harga pabrik, kirim ke seluruh Indonesia.</p>
         <p style="margin-top:1rem">
-          <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran via WhatsApp</a>
+          <a class="btn btn--primary" href={quote}>Susun Permintaan Penawaran</a>
         </p>
       </div>
       <div>

@@ -3,7 +3,7 @@ import Base from "../../layouts/Base.astro";
 import CategoryIcon from "../../components/CategoryIcon.astro";
 import { Image } from "astro:assets";
 import { imageAsset } from "../../utils/images.ts";
-import { u, waLink } from "../../utils/url.ts";
+import { quoteLink, u } from "../../utils/url.ts";
 import { categories, brcProducts, getCategory } from "../../data/catalog.ts";
 
 export function getStaticPaths() {
@@ -11,9 +11,7 @@ export function getStaticPaths() {
 }
 
 const { category } = Astro.props;
-const wa = waLink(
-  `Halo BSM, saya butuh penawaran untuk kategori "${category.name}". Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.`
-);
+const quote = quoteLink({ category: category.slug });
 const isBrc = category.slug === "pagar";
 ---
 <Base title={`${category.name} — Bangun Sarana Makmur`}>
@@ -27,7 +25,7 @@ const isBrc = category.slug === "pagar";
         <h1 class="display" id="c-title" style="font-size:clamp(2rem,5vw,3.4rem)">{category.name}</h1>
         <p class="lede">{category.blurb}</p>
         <div class="hero__actions">
-          <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+          <a class="btn btn--primary" href={quote}>Susun Permintaan Penawaran</a>
           <a class="btn btn--ghost" href={u("/kategori")}>Semua Kategori</a>
         </div>
       </div>
@@ -51,12 +49,8 @@ const isBrc = category.slug === "pagar";
           {brcProducts.map((p) => (
             <a
               class="prod"
-              href={waLink(
-                `Halo BSM, saya butuh penawaran untuk \"${p.name}\" (${p.spec}). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.`
-              )}
-              target="_blank"
-              rel="noopener"
-              aria-label={p.name}>
+              href={quoteLink({ category: category.slug, product: p.name === "Pagar BRC Panel" ? "Pagar BRC" : p.name, notes: `Konteks produk: ${p.name}. Spesifikasi yang ditampilkan: ${p.spec}` })}
+              aria-label={`Susun permintaan penawaran untuk ${p.name}`}>
               <span class="specimen"><Image src={imageAsset(p.image)} alt={p.name} width={400} format="webp" loading="lazy" decoding="async" />
                 <span class="specimen__titleblock"><b>{p.name.toUpperCase()}</b><br />GALVANIS</span>
               </span>
@@ -106,7 +100,7 @@ const isBrc = category.slug === "pagar";
       Tidak ada lini yang cocok.<button type="button" class="bom-reset" id="bom-reset">Reset</button>
     </p>
     <p style="margin-top:2rem">
-      <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Minta penawaran {category.name} →</a>
+      <a class="btn btn--primary" href={quote}>Susun permintaan penawaran {category.name} →</a>
     </p>
   </section>
 </Base>

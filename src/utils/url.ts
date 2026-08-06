@@ -11,19 +11,26 @@ export function u(path: string): string {
   return base + p;
 }
 
-// Default WhatsApp number (mobile = WhatsApp). Single source of truth so the
-// deep-link target never drifts across surfaces.
+// Default WhatsApp number (mobile = WhatsApp). The final RFQ handoff keeps
+// this value in one place so the destination never drifts across the flow.
 export const WA_NUMBER = "6281249343303";
 
-// General pre-filled quote request used wherever no sharper context exists
-// (header, footer, float, hero/close CTAs).
-const WA_GENERAL =
-  "Halo BSM, saya tertarik dengan material bangunan dari CV Bangun Sarana Makmur. " +
-  "Mohon info harga pabrik, ketersediaan stok, dan pengiriman ke proyek saya. Terima kasih.";
-
-// Build a WhatsApp deep-link with an optional pre-filled message so a buyer
-// lands on a ready-to-send quote request instead of a blank chat. Pass a
-// context string (category, product, article) to slash inquiry friction.
-export function waLink(text: string = WA_GENERAL, number: string = WA_NUMBER): string {
-  return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+// Build the canonical quote-form URL. Product/category pages use this instead
+// of opening WhatsApp directly, so every inquiry passes through the same
+// validated request flow. Unknown or omitted values are handled by the form.
+export function quoteLink(
+  options: {
+    category?: string;
+    product?: string;
+    notes?: string;
+    intent?: "project" | "home";
+  } = {},
+): string {
+  const params = new URLSearchParams();
+  if (options.category) params.set("category", options.category);
+  if (options.product) params.set("product", options.product);
+  if (options.notes) params.set("notes", options.notes);
+  if (options.intent) params.set("intent", options.intent);
+  const query = params.toString();
+  return u(`/penawaran${query ? `?${query}` : ""}`);
 }

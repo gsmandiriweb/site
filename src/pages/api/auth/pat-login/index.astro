@@ -1,45 +1,57 @@
 ---
-// PAT-based login for Keystatic CMS (no GitHub OAuth needed).
-// Sets the `keystatic-gh-access-token` cookie and redirects to the Keystatic admin.
+import {
+  configuredGitHubPat,
+  configuredOwnerSecret,
+  createAdminSession,
+  secretsMatch,
+  sessionCookie,
+} from "../../../../utils/admin-session.ts";
 
-const pat = import.meta.env.KEYSTATIC_GITHUB_PAT;
+export const prerender = false;
 
-if (!pat) {
-  return new Response(
-    'PAT not configured. Add KEYSTATIC_GITHUB_PAT to .env and restart `astro dev`.',
-    { status: 500, headers: { 'Content-Type': 'text/plain' } }
-  );
+const safeNext = "/admin";
+const secure = Astro.url.protocol === "https:";
+const requestMethod = Astro.request.method;
+
+if (requestMethod !== "POST") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "POST", "Cache-Control": "no-store" },
+  });
 }
 
-// Build the Set-Cookie header (mirrors Keystatic's OAuth token cookie format).
-const maxAge = 30 * 24 * 60 * 60;
-const isProd = import.meta.env.PROD;
-const cookieParts = [
-  'Path=/',
-  'SameSite=Lax',
-  isProd ? 'Secure' : '',
-  `Max-Age=${maxAge}`,
-].filter(Boolean);
-const cookieString = `keystatic-gh-access-token=${pat}; ${cookieParts.join('; ')}`;
-
-const headers = new Headers();
-headers.set('Set-Cookie', cookieString);
-headers.set('Location', '/keystatic');
-
-// In dev mode, show a confirmation page (cookie + redirect both happen).
-if (import.meta.env.DEV) {
-  return new Response(
-    `<!DOCTYPE html><html><head><title>pat-login: cookie set</title></head>
-    <body style="font-family:system-ui;padding:2rem;">
-    <h1>pat-login: cookie set</h1>
-    <p><code>keystatic-gh-access-token</code> has been set with your PAT.</p>
-    <p><a href="/keystatic">Go to /keystatic</a></p>
-    <p style="color:#666;font-size:0.85rem;">You can also check DevTools → Application → Cookies to confirm the cookie.</p>
-    </body></html>`,
-    { status: 200, headers: { 'Content-Type': 'text/html', 'Set-Cookie': cookieString } }
-  );
+const ownerSecret = await configuredOwnerSecret();
+const pat = await configuredGitHubPat();
+if (!ownerSecret || !pat) {
+  return new Response("CMS authentication is not configured.", {
+    status: 503,
+    headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
+  });
 }
 
-// In production: set cookie + redirect.
-return new Response(null, { status: 302, headers });
+const form = await Astro.request.formData().catch(() => null);
+const submittedSecret = form?.get("secret");
+if (typeof submittedSecret !== "string" || !(await secretsMatch(submittedSecret, ownerSecret))) {
+  return new Response("Invalid credentials.", {
+    status: 401,
+    headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
+  });
+}
+
+const sessionId = await createAdminSession(pat);
+if (!sessionId) {
+  return new Response("CMS session storage is unavailable.", {
+    status: 503,
+    headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
+  });
+}
+
+return new Response(null, {
+  status: 303,
+  headers: {
+    Location: safeNext,
+    "Cache-Control": "no-store",
+    "Set-Cookie": sessionCookie(sessionId, secure),
+  },
+});
 ---

@@ -1,0 +1,42 @@
+---
+import { DraftActionError, jsonResponse } from "../../../../../utils/cms-drafts.ts";
+import {
+  createDraftPullRequest,
+  currentDraftPullRequest,
+  readMainPostSource,
+} from "../../../../../utils/draft-publish.ts";
+import { isCommitDeployed } from "../../../../../utils/deploy.ts";
+
+export const prerender = false;
+
+const body = Astro.request.method === "GET" ? null : await Astro.request.json().catch(() => null);
+const querySlug = Astro.url.searchParams.get("storageSlug");
+const queryRevision = Number(Astro.url.searchParams.get("revision"));
+const storageSlug =
+  body && typeof body.storageSlug === "string" ? body.storageSlug : querySlug ?? "";
+
+try {
+  if (Astro.request.method === "GET") {
+    const revision = Number.isInteger(queryRevision) && queryRevision > 0 ? queryRevision : undefined;
+    const pullRequest = await currentDraftPullRequest(Astro.request, storageSlug, revision);
+    const sourceMarkdown = await readMainPostSource(Astro.request, storageSlug);
+    const live =
+      pullRequest?.status === "merged" ? await isCommitDeployed(pullRequest.headSha) : false;
+    return jsonResponse({ pullRequest, sourceMarkdown, live });
+  }
+  if (Astro.request.method !== "POST") {
+    return new Response("Method Not Allowed", {
+      status: 405,
+      headers: { Allow: "GET, POST", "Cache-Control": "no-store" },
+    });
+  }
+  const value = body && "post" in body ? body.post : null;
+  return jsonResponse({
+    pullRequest: await createDraftPullRequest(Astro.request, storageSlug, value),
+  });
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Unable to create the GitHub pull request.";
+  const status = error instanceof DraftActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---

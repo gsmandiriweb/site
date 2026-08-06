@@ -2,33 +2,61 @@
 import Base from "../../layouts/Base.astro";
 import { Image } from "astro:assets";
 import { imageAsset } from "../../utils/images.ts";
-import { u, waLink } from "../../utils/url.ts";
-import { getCollection, getEntry, render } from "astro:content";
+import { quoteLink, u } from "../../utils/url.ts";
+import { getCollection, render } from "astro:content";
+import {
+  blogAliases,
+  blogPublishedAt,
+  blogSlug,
+  isPublicBlogEntry,
+  validateBlogRoutes,
+} from "../../utils/blog.ts";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog");
-  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+  const allPosts = await getCollection("blog");
+  validateBlogRoutes(allPosts);
+  const posts = allPosts.filter(isPublicBlogEntry);
+  return posts.flatMap((post) => {
+    const slug = blogSlug(post);
+    const canonical = { params: { slug }, props: { post, isAlias: false } };
+    const aliases = blogAliases(post).map((alias) => ({
+      params: { slug: alias },
+      props: { post, isAlias: true },
+    }));
+    return [canonical, ...aliases];
+  });
 }
 
-const { post } = Astro.props;
+const { post, isAlias } = Astro.props;
+const canonicalSlug = blogSlug(post);
+const canonicalUrl = u(`/blog/${canonicalSlug}`);
+const fmt = (d: Date) => new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+
 const { Content } = await render(post);
-const wa = waLink(
-  `Halo BSM, saya baru membaca artikel "${post.data.title}". Mohon info lebih lanjut mengenai material yang dibahas. Terima kasih.`
-);
-const fmt = (d) => new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+const quote = quoteLink({ notes: `Saya baru membaca artikel: ${post.data.title}` });
 ---
 <Base title={`${post.data.title} — Bangun Sarana Makmur`}>
-  <article class="section wrap" aria-labelledby="post-title">
+  <link rel="canonical" href={canonicalUrl} />
+  {
+    isAlias ? (
+      <article class="section wrap" aria-labelledby="redirect-title">
+        <!-- Static output cannot emit a runtime 301/308; aliases are compatibility fallback pages. -->
+        <meta http-equiv="refresh" content={`0;url=${canonicalUrl}`} />
+        <h1 class="display" id="redirect-title">Artikel dipindahkan</h1>
+        <p>Halaman ini memiliki alamat baru. Jika Anda tidak dialihkan otomatis, <a href={canonicalUrl}>buka artikel di alamat kanonis</a>.</p>
+      </article>
+    ) : (
+    <article class="section wrap" aria-labelledby="post-title">
     <a class="back-link" href={u("/blog")}>← Semua artikel</a>
     <header class="article-head" style="margin-top:1.5rem">
-      <span class="label">{post.data.kicker ?? "Artikel"} · {fmt(post.data.date)}</span>
+      <span class="label">{post.data.kicker ?? "Artikel"} · {fmt(blogPublishedAt(post))}</span>
       <h1 class="display" id="post-title">{post.data.title}</h1>
     </header>
 
     {
       post.data.image && (
         <figure class="article-figure">
-          <Image src={imageAsset(post.data.image)} alt={post.data.title} width={1000} format="webp" decoding="async" />
+          <Image src={imageAsset(post.data.image)} alt={post.data.imageAlt ?? post.data.title} width={1000} format="webp" decoding="async" />
         </figure>
       )
     }
@@ -38,7 +66,9 @@ const fmt = (d) => new Date(d).toLocaleDateString("id-ID", { day: "2-digit", mon
     </div>
 
     <p style="margin-top:2.5rem">
-      <a class="btn btn--primary" href={wa} target="_blank" rel="noopener">Tanya material ini via WhatsApp</a>
+      <a class="btn btn--primary" href={quote}>Susun permintaan terkait artikel</a>
     </p>
-  </article>
+    </article>
+    )
+  }
 </Base>

@@ -38,12 +38,10 @@
 import { Image } from "astro:assets";
 import { imageAsset } from "../utils/images.ts";
 import { categories, brcShowcase } from "../data/catalog.ts";
-import { u, waLink } from "../utils/url.ts";
+import { quoteLink, u } from "../utils/url.ts";
 
-const wa = waLink();
-const waBrc = waLink(
-  "Halo BSM, saya butuh penawaran lengkap pagar BRC (panel, tiang, pintu, aksesoris). Mohon info harga pabrik, stok, pengiriman. Terima kasih."
-);
+const quote = quoteLink();
+const quoteBrc = quoteLink({ category: "pagar", product: "Pagar BRC" });
 
 const heroSpecimens = [
   brcShowcase.items.find((i) => i.slug === "pagar-brc-panel")!,
@@ -78,7 +76,7 @@ const proof = brcShowcase.proof.slice(0, 4);
       <a href={u("/katalog")}>Katalog</a>
       <a href={u("/pagar-brc")}>Pagar BRC</a>
     </div>
-    <a class="nav__wa" href={wa} target="_blank" rel="noopener">WhatsApp</a>
+    <a class="nav__wa" href={quote}>Minta Penawaran</a>
   </nav>
 
   <!-- ===================== HERO · enter the library ===================== -->
@@ -88,7 +86,7 @@ const proof = brcShowcase.proof.slice(0, 4);
       <h1 class="placard__title" id="hero-title">Baja asli.<br />Dirakit.<br />Ditagih spesifikasinya.</h1>
       <p class="placard__lede">Dinding contoh CV Bangun Sarana Makmur: setiap spesimen pagar BRC dipasang, diberi tag, dan diperiksa. Ini bukan brosur. Ini gudang contoh nyata: panel dilas titik, digalvanis, siap Anda bandingkan dari setiap sisi.</p>
       <div class="placard__actions">
-        <a class="cta cta--primary" href={wa} target="_blank" rel="noopener">Minta Penawaran</a>
+        <a class="cta cta--primary" href={quote}>Minta Penawaran</a>
         <a class="cta cta--ghost" href="#koleksi">Lihat Koleksi BRC</a>
       </div>
     </div>
@@ -111,7 +109,7 @@ const proof = brcShowcase.proof.slice(0, 4);
                 <span class="tag__spec"><b>{sp.k}</b> {sp.v}</span>
               ))}
             </span>
-            <a class="tag__wa" href={waLink(s.waContext)} target="_blank" rel="noopener">Minta penawaran →</a>
+            <a class="tag__wa" href={quoteLink({ category: "pagar", product: s.name === "Pagar BRC Panel" ? "Pagar BRC" : s.name, notes: `Konteks produk: ${s.name}` })}>Susun permintaan →</a>
           </figcaption>
         </figure>
       ))}
@@ -165,7 +163,7 @@ const proof = brcShowcase.proof.slice(0, 4);
                 <span class="tag__spec"><b>{sp.k}</b> {sp.v}</span>
               ))}
             </span>
-            <a class="tag__wa" href={waLink(s.waContext)} target="_blank" rel="noopener">Minta penawaran →</a>
+            <a class="tag__wa" href={quoteLink({ category: "pagar", product: s.name === "Pagar BRC Panel" ? "Pagar BRC" : s.name, notes: `Konteks produk: ${s.name}` })}>Susun permintaan →</a>
           </figcaption>
         </article>
       ))}
@@ -177,7 +175,7 @@ const proof = brcShowcase.proof.slice(0, 4);
     </aside>
 
     <div class="collection__order" data-reveal>
-      <a class="cta cta--primary cta--lg" href={waBrc} target="_blank" rel="noopener">Minta penawaran BRC lengkap →</a>
+      <a class="cta cta--primary cta--lg" href={quoteBrc}>Susun permintaan BRC lengkap →</a>
     </div>
   </section>
 
@@ -210,7 +208,7 @@ const proof = brcShowcase.proof.slice(0, 4);
       <span class="rail">MEJA PESAN · WHOLESALE</span>
       <h2 id="counter-title">Siap pesan? Bandingkan spesimen, lalu minta harga pabrik.</h2>
       <p class="counter__sub">Hubungi tim sales BSM via WhatsApp. Harga pabrik, stok gudang, dan pengiriman ke 34 provinsi dalam satu obrolan.</p>
-      <a class="cta cta--primary cta--lg" href={wa} target="_blank" rel="noopener">WhatsApp: 0812 4934 3303</a>
+      <a class="cta cta--primary cta--lg" href={quote}>Susun permintaan penawaran →</a>
       <p class="counter__addr">Jl. Prapen Indah Gg. 6 Blok C–22, Surabaya · 031 – 99853472 · bsmbangun@yahoo.co.id</p>
     </div>
   </section>

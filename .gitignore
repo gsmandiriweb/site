@@ -34,3 +34,13 @@ dev.log
 .env.*
 !.env.example
 .dev.vars
+
+# local dev/test artifacts (never commit)
+astro.log
+wrangler.log
+desktop-write.png
+mobile-write.png
+test_conversion_flow.js
+
+# impeccable design-tool state (generated surface briefs)
+.impeccable/

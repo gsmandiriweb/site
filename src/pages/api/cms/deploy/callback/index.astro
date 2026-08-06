@@ -1,0 +1,21 @@
+---
+import { DeployActionError, jsonResponse, recordDeployCallback } from "../../../../../utils/deploy.ts";
+
+export const prerender = false;
+
+if (Astro.request.method !== "POST") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "POST", "Cache-Control": "no-store" },
+  });
+}
+
+const body = await Astro.request.text();
+try {
+  return jsonResponse({ deployed: await recordDeployCallback(Astro.request, body) });
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Unable to reconcile deployment.";
+  const status = error instanceof DeployActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---

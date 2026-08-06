@@ -48,7 +48,6 @@ export interface ShowcaseItem {
   angles: string[]; // 1+ images; angles[0] is the card/hero image
   specs: SpecEntry[]; // canonical keys, omit what doesn't apply
   callouts?: Callout[]; // optional on-photo annotation, per angle[0]
-  waContext: string; // pre-filled WhatsApp message for this item
 }
 
 export interface ProofPhoto {
@@ -193,8 +192,6 @@ export const brcShowcase: Showcase = {
         { specKey: "Diameter Kawat", type: "leader", x: 150, y: 250, lx: 250, ly: 300 },
         { specKey: "Mesh", type: "leader", x: 300, y: 190, lx: 360, ly: 150 },
       ],
-      waContext:
-        'Halo BSM, saya butuh penawaran untuk "Pagar BRC Panel" (240×150 cm, ∅6 mm, galvanis). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.',
     },
     {
       slug: "tiang-brc",
@@ -209,8 +206,6 @@ export const brcShowcase: Showcase = {
         { k: "Asal", v: "Surabaya" },
       ],
       callouts: [{ specKey: "Dimensi", type: "leader", x: 200, y: 330, lx: 320, ly: 360 }],
-      waContext:
-        'Halo BSM, saya butuh penawaran untuk "Tiang BRC" (baseplate, galvanis). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.',
     },
     {
       slug: "tiang-y-brc",
@@ -220,8 +215,6 @@ export const brcShowcase: Showcase = {
         { k: "Finishing", v: "Galvanis" },
         { k: "Asal", v: "Surabaya" },
       ],
-      waContext:
-        'Halo BSM, saya butuh penawaran untuk "Tiang Y BRC" (galvanis). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.',
     },
     {
       slug: "pintu-pagar-brc",
@@ -233,8 +226,6 @@ export const brcShowcase: Showcase = {
         { k: "Asal", v: "Surabaya" },
       ],
       callouts: [{ specKey: "Dimensi", type: "dimension", x: 40, y: 28, x2: 360, y2: 28 }],
-      waContext:
-        'Halo BSM, saya butuh penawaran untuk "Pintu Pagar BRC" (geser, grendel, galvanis). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.',
     },
     {
       slug: "aksesoris-baut-klem",
@@ -246,8 +237,6 @@ export const brcShowcase: Showcase = {
         { k: "Asal", v: "Surabaya" },
       ],
       callouts: [{ specKey: "Diameter Kawat", type: "leader", x: 200, y: 200, lx: 320, ly: 240 }],
-      waContext:
-        'Halo BSM, saya butuh penawaran untuk "Aksesoris Baut & Klem" (∅8, stainless). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.',
     },
     {
       slug: "set-tiang-rebah",
@@ -257,8 +246,6 @@ export const brcShowcase: Showcase = {
         { k: "Finishing", v: "Galvanis" },
         { k: "Asal", v: "Surabaya" },
       ],
-      waContext:
-        'Halo BSM, saya butuh penawaran untuk "Set Tiang Rebah" (galvanis). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.',
     },
   ],
   proof: [
@@ -310,12 +297,6 @@ export interface CatalogLine {
   spec?: string;
   // Present only when `rich`. Deep-link to the showcase detail page.
   detailHref?: string;
-  // Pre-filled WhatsApp RFQ for this line (rich lines carry sharper context).
-  waContext: string;
-}
-
-function lineWaContext(name: string, categoryName: string): string {
-  return `Halo BSM, saya butuh penawaran untuk "${name}" (${categoryName}). Mohon info harga pabrik, stok, dan pengiriman. Terima kasih.`;
 }
 
 export const catalogLines: CatalogLine[] = categories.flatMap((c) => {
@@ -335,7 +316,6 @@ export const catalogLines: CatalogLine[] = categories.flatMap((c) => {
       image: rich ? item!.angles[0] : undefined,
       spec: rich ? item!.specs.map((s) => s.v).join(" · ") : undefined,
       detailHref: rich ? detailHref : undefined,
-      waContext: rich ? item!.waContext : lineWaContext(line, c.name),
     } satisfies CatalogLine;
   });
 });

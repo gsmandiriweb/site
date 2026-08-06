@@ -1,33 +1,32 @@
 # Deploy to Cloudflare (Workers + Assets)
 
-This site is an Astro 7 static site with the `@astrojs/cloudflare` adapter
-(needed so the Keystatic `/keystatic` admin renders on-demand). The adapter
-emits a **split build**: static assets in `dist/client/`, the Worker in
+This site is an Astro 7 static site with the `@astrojs/cloudflare` adapter. The
+adapter emits a **split build**: static assets in `dist/client/`, the Worker in
 `dist/server/`. Deploy it as a **Cloudflare Worker + Assets** — not classic
 Cloudflare Pages, which expects a flat `dist/_worker.js` and will not serve
 this output.
 
-## Why the CSS broke on the first try
-
-The earlier GitHub-Pages config set `base: "/site"`, which prefixed every
-asset URL with `/site/` (`/site/_astro/...`). Cloudflare serves at the root,
-so those requests 404'd and the page loaded unstyled. `base` has been removed
-in `astro.config.mjs`, so assets are now root-relative (`/_astro/...`).
+The CMS is GitHub-native (ADRs 0008–0013): authors edit in the `/admin`
+dashboard, each revision becomes a branch + pull request (`cms/<slug>/r<N>`),
+and merging to `main` auto-deploys. There is **no D1, no R2, and no runtime
+content database** — GitHub is the durable source of truth. The Worker runs
+only the auth routes, the CMS mutation APIs, and the signed deploy callback.
 
 ## 1. Set the real site URL
 
 In `astro.config.mjs`, replace the placeholder with your Cloudflare domain:
 
 ```js
-site: "https://second-shepherd.pages.dev", // or your custom domain
+site: "https://site.gsmandiri-web.workers.dev", // or your custom domain
 ```
 
 (This only affects canonical URLs, not asset paths — those are already root-relative.)
 
 ## 2. Create the SESSION KV namespace
 
-The adapter requires a `SESSION` KV binding for on-demand rendering. Create it
-once and copy the id into `wrangler.toml`:
+The adapter requires a `SESSION` KV binding for the on-demand CMS routes
+(sessions + the deployed-SHA confirmation). Create it once and copy the id into
+`wrangler.toml`:
 
 ```bash
 npx wrangler kv namespace create SESSION
@@ -35,24 +34,65 @@ npx wrangler kv namespace create SESSION
 #   kv_namespaces = [{ binding = "SESSION", id = "xxxx" }]
 ```
 
-(Cloudflare Images is optional and disabled — this site serves images from the
-repo. Uncomment the `[images]` block in `wrangler.toml` only if you adopt
-Cloudflare Images.)
-
 > `wrangler.toml` deliberately contains **only** `name`, `compatibility_date`,
 > `compatibility_flags` and bindings. `compatibility_flags = ["nodejs_compat"]`
 > is **required** — Astro's server runtime uses Node globals (`Buffer`,
 > `process`, …) that workerd only exposes with this flag; without it every
-> request 500s with `Buffer is not defined` (including `/keystatic`).
+> request 500s with `Buffer is not defined`.
 >
-> Do **not** add `main` or `assets` — `@astrojs/cloudflare`
-> injects them from the build output into the generated
-> `dist/server/wrangler.json`. Setting them manually breaks `astro build`,
-> because the entry does not exist yet when the adapter validates the config.
+> Do **not** add `main` or `assets` — `@astrojs/cloudflare` injects them from
+> the build output into the generated `dist/server/wrangler.json`.
 
-## 3. Deploy
+## 3. Set the CMS secrets
 
-### Option A — Dashboard (Workers Builds, Git-connected)
+Set these as encrypted Worker secrets. Never commit values to `wrangler.toml`.
+
+```bash
+wrangler secret put CMS_OWNER_SECRET
+# The owner access key entered at /admin/login. Long random value:
+openssl rand -hex 32
+
+wrangler secret put CMS_GITHUB_PAT
+# GitHub PAT with repository Contents read/write + Pull requests read/write
+# permissions. Used server-side for revision branches and PRs; never in the browser.
+
+wrangler secret put CMS_DEPLOY_CALLBACK_URL
+# Public URL of /api/cms/deploy/callback on the deployed Worker.
+
+wrangler secret put CMS_DEPLOY_CALLBACK_SECRET
+# HMAC secret shared with the deploy workflow (same value as the GitHub
+# repository Actions secret of the same name).
+```
+
+The browser receives only the opaque `bsm-cms-session` cookie (`HttpOnly`,
+`Secure` in production, `SameSite=Lax`, 30-day expiry). `/api/auth/logout`
+revokes the session.
+
+Configure these as GitHub repository Actions secrets (Settings → Secrets and
+variables → Actions):
+
+- `CLOUDFLARE_API_TOKEN` — scoped to deploy the Worker and Assets.
+- `CLOUDFLARE_ACCOUNT_ID` — the Cloudflare account containing the `site` Worker.
+- `CMS_DEPLOY_CALLBACK_URL` — same value as the Worker secret.
+- `CMS_DEPLOY_CALLBACK_SECRET` — same HMAC secret as the Worker.
+
+## 4. Deploy
+
+The normal path is automatic: `.github/workflows/deploy.yml` runs on **every
+push to `main`**, builds the site, deploys with Wrangler, then POSTs a signed
+callback (`{commitSha, status}`) so the CMS marks merged revisions as Published.
+
+### Manual first deployment (Wrangler CLI)
+
+```bash
+bun install
+bun run build
+bunx wrangler deploy --config dist/server/wrangler.json
+```
+
+For a local smoke test before pushing: `bun run build && bunx wrangler dev`.
+
+### Cloudflare dashboard (Workers Builds, Git-connected) — optional
 
 1. Cloudflare dashboard → **Compute → Workers & Pages → Create application →
    Import a repository** → select `gsmandiriweb/site`.
@@ -60,78 +100,39 @@ Cloudflare Images.)
    - **Build command:** `npx astro build`
    - **Deploy command:** `npx wrangler deploy --config dist/server/wrangler.json`
    - **Root directory:** `/` (repo root)
-3. (Optional) You can also add the `SESSION` KV binding under **Settings →
-   Bindings**, but it is already wired via `wrangler.toml` and baked into the
-   generated `dist/server/wrangler.json`, so the deploy above already includes
-   it.
-4. **Save and Deploy.** Preview at `*.workers.dev`, then add a custom domain
+3. The `SESSION` KV binding is wired via `wrangler.toml` and baked into the
+   generated `dist/server/wrangler.json`.
+4. Add `CMS_OWNER_SECRET`, `CMS_GITHUB_PAT`, `CMS_DEPLOY_CALLBACK_URL`, and
+   `CMS_DEPLOY_CALLBACK_SECRET` as encrypted Worker secrets.
+5. **Save and Deploy.** Preview at `*.workers.dev`, then add a custom domain
    under **Settings → Domains** if desired.
 
-> The build image uses Node/npm. The repo's `package.json` build script is
-> plain `astro build`, so `npx astro build` works without `bun` on CI.
+## 5. Verify the CMS
 
-### Option B — Wrangler CLI (local)
-
-```bash
-npx astro build
-npx wrangler deploy --config dist/server/wrangler.json
-```
-
-For a local smoke test before pushing: `npx astro build && npx wrangler dev`.
-
-## 4. Connect Keystatic (after the site is live)
-
-Visit `/keystatic` on the deployed URL. The first load prompts **Create GitHub
-App** — grant it access to `gsmandiriweb/site`. That finishes the GitHub-mode
-auth (no Netlify involved). Locally you can do the same at
-`http://localhost:4321/keystatic` with `bun run dev`.
-
-### Keystatic environment variables (GitHub mode)
-
-Before GitHub login works, the Worker needs three environment variables
-available at runtime (Cloudflare does not bake them into the build):
-
-- `KEYSTATIC_GITHUB_CLIENT_ID` — from your GitHub App.
-- `KEYSTATIC_GITHUB_CLIENT_SECRET` — from your GitHub App.
-- `KEYSTATIC_SECRET` — a random string, e.g. `openssl rand -hex 32`.
-
-Set them in the Cloudflare dashboard: your Worker → **Settings → Variables
-and Secrets** (client id as a plain variable; the two secrets as encrypted
-secrets). They are then read by the `/api/keystatic` route from the Cloudflare
-RuntimeEnv.
-
-> `@keystatic/astro@5.2.0` reads the RuntimeEnv via the API removed in Astro
-> 7, which made `/api/keystatic` return HTTP 500 on Workers. A postinstall
-> patch (`scripts/patch-keystatic.mjs`, recorded in
-> `patches/@keystatic+astro.patch`) fixes this by reading `cloudflare:workers`
-> instead; it is applied automatically on every `bun install` (including
-> Cloudflare's `bun install --frozen-lockfile`).
+1. Visit `/admin/login`, enter `CMS_OWNER_SECRET`; you land on `/admin`.
+2. Edit a post and choose **Save revision & open PR** — a `cms/<slug>/r<N>`
+   branch + draft PR appears on GitHub.
+3. Review and merge the PR on GitHub. Actions auto-deploys and the callback
+   records the deployed SHA; the dashboard upgrades the revision to Published.
 
 ## Troubleshooting
 
-- **`The provided Wrangler config main field (.../dist/server/entry.mjs)
-doesn't point to an existing file`** → `wrangler.toml` still declares
-  `main`/`assets`. Remove them; the adapter supplies them and writes
-  `dist/server/wrangler.json` at build end.
-- **`Missing required config in Keystatic API setup ... KEYSTATIC_GITHUB_CLIENT_ID`**
-  → the three Keystatic env vars aren't set on the Worker. Add them in the
-  Cloudflare dashboard (Settings → Variables and Secrets) and redeploy.
-- **`Astro.locals.runtime.env has been removed in Astro v6`** → you are on a
-  build without the postinstall patch. Pull the latest commit (it adds
-  `scripts/patch-keystatic.mjs` + the `postinstall` script) and redeploy.
-- **`kv namespace SESSION ... has no id`** → you deployed before pasting the
-  KV id from step 2 into `wrangler.toml`.
-- **404 on `/_astro/*` or unstyled page** → still on the old `base: "/site"`
-  build; make sure you deployed the current commit (base removed).
-- **`Could not resolve "node:..."`** → a dependency uses a Node API the
-  Cloudflare runtime lacks; check the package for `node:` import support.
-- **HTTP 500 on every route (incl. `/keystatic`) with `Buffer is not defined`**
-  → the `nodejs_compat` compatibility flag is missing. It is set in
-  `wrangler.toml`; make sure you deployed the current commit (the generated
-  `dist/server/wrangler.json` should show `"compatibility_flags":["nodejs_compat"]`).
-- **HTTP 500 only on `/keystatic` / `/api/keystatic`** → different from the
-  `Buffer` issue above. Check (a) the three Keystatic env vars are set on the
-  Worker, and (b) the `SESSION` KV id in `wrangler.toml` matches a real
-  namespace in your account. Both are read at request time by the Keystatic
-  API.
+- **`The provided Wrangler config main field (.../dist/server/entry.mjs)`
+  doesn't point to an existing file** → `wrangler.toml` still declares
+  `main`/`assets`. Remove them; the adapter supplies them.
+- **`CMS authentication is not configured`** → add `CMS_OWNER_SECRET` and
+  `CMS_GITHUB_PAT` Worker secrets, then redeploy.
+- **`CMS session storage is unavailable`** → check that the `SESSION` KV id in
+  `wrangler.toml` matches a real namespace and that the Worker has access to it.
+- **`kv namespace SESSION ... has no id`** → paste the KV id into `wrangler.toml`.
+- **PR creation returns 422** → the revision branch already exists or conflicts.
+  Reconcile the PR; revision branches are written once per revision.
+- **Callback returns 401** → timestamp too old or HMAC mismatch; callbacks must
+  be freshly signed (`x-bsm-deploy-timestamp`, `x-bsm-deploy-signature`).
+- **Merged but not Published** → inspect the Actions run's callback step;
+  verify both callback secrets are byte-for-byte identical.
+- **404 on `/_astro/*` or unstyled page** → make sure `base` is removed and
+  deploy the current build.
+- **HTTP 500 on every route with `Buffer is not defined`** → ensure
+  `nodejs_compat` is present in `wrangler.toml`.
 - **Hydration mismatches** → disable Cloudflare **Auto Minify** under Speed.

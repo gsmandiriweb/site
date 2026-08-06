@@ -283,16 +283,26 @@ body::before {
   text-decoration: none;
 }
 .brand__mark {
-  height: 38px;
+  height: 2.35rem;
   width: auto;
   flex: none;
   display: flex;
   align-items: center;
 }
-.brand__logo {
-  height: 100%;
+.brand__mark .logo {
   width: auto;
-  max-width: 180px;
+  height: 100%;
+  max-width: 7.8rem;
+  display: block;
+  object-fit: contain;
+}
+.footer__logo {
+  width: clamp(7.5rem, 18vw, 10rem);
+  display: block;
+}
+.footer__logo .logo {
+  width: 100%;
+  height: auto;
   display: block;
   object-fit: contain;
 }
@@ -318,24 +328,12 @@ body::before {
   margin-top: 3px;
 }
 
-/* Logo monogram */
+/* Approved BSM wordmark */
 .logo {
-  width: 100%;
-  height: 100%;
   display: block;
-  color: var(--blueprint);
-}
-.logo-frame {
-  stroke: currentColor;
-}
-.logo-b {
-  stroke: var(--ink);
-}
-.logo--light {
-  color: var(--steel);
-}
-.logo--light .logo-b {
-  stroke: var(--paper);
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 .nav {
   display: flex;
@@ -1188,19 +1186,6 @@ body::before {
 .brand {
   gap: 0.8rem;
 }
-.brand__monogram {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.15rem;
-  height: 2.15rem;
-  border: 1px solid var(--yard-beam);
-  color: var(--yard-beam);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
 .brand__mark-t {
   font-size: 0.76rem;
   letter-spacing: 0.12em;
@@ -1210,25 +1195,6 @@ body::before {
   margin-top: 0.28rem;
   font-size: 0.5rem;
   letter-spacing: 0.12em;
-}
-.site-header__status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-left: auto;
-  margin-right: 0.5rem;
-  color: var(--ink-muted);
-  font-family: var(--font-mono);
-  font-size: 0.56rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.site-header__status-dot {
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 50%;
-  background: var(--signal);
-  box-shadow: 0 0 0 3px rgba(232, 85, 30, 0.12);
 }
 .nav {
   gap: clamp(0.5rem, 1.5vw, 1rem);
@@ -1255,23 +1221,9 @@ body::before {
   padding: 0.65rem 0.9rem;
   font-size: 0.64rem;
 }
-.nav__mobile-status {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.6rem 0 0.2rem;
-  color: var(--ink-muted);
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
 @media (max-width: 760px) {
   .site-header__bar {
     height: 60px;
-  }
-  .site-header__status {
-    display: none;
   }
   .brand__sub {
     display: none;
@@ -1335,15 +1287,8 @@ body::before {
 .site-footer a:hover {
   border-bottom-color: var(--yard-beam);
 }
-.logo {
-  color: var(--yard-beam);
-}
-.logo-b,
-.logo--light .logo-b {
-  stroke: var(--yard-light);
-}
-.logo--light {
-  color: var(--yard-beam);
+.footer__logo {
+  opacity: 0.92;
 }
 
 /* Shared hero floor for catalog, quote, category and article surfaces. */
@@ -1879,10 +1824,6 @@ body::before {
 .rfq__disclaimer {
   color: var(--ink-muted);
 }
-.rfq__select::after {
-  border-color: var(--yard-beam);
-}
-
 .prose {
   color: rgba(245, 245, 244, 0.86);
 }

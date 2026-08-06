@@ -1,0 +1,48 @@
+@import "tailwindcss/theme.css";
+@import "tailwindcss/utilities.css";
+@plugin "@tailwindcss/forms";
+@import "tw-animate-css";
+
+@theme inline {
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-muted: var(--paper-deep);
+  --color-muted-foreground: var(--ink-muted);
+  --color-primary: var(--signal-deep);
+  --color-primary-foreground: var(--paper-text);
+  --color-secondary: var(--paper-deep);
+  --color-secondary-foreground: var(--ink);
+  --color-input: var(--steel);
+  --color-border: var(--steel);
+  --color-ring: var(--blueprint);
+  --color-outline: var(--blueprint);
+  --color-error: #ef6a61;
+  --color-error-foreground: #fff;
+  --radius-md: var(--r-md);
+}
+
+/* Starwind components use Tailwind utilities; the existing BSM stylesheet
+   remains the visual authority. This file intentionally does not add a
+   preflight reset, so other Astro surfaces keep their current rendering. */
+@layer components {
+  .bsm-starwind-field {
+    font-family: var(--font-body);
+    border-radius: var(--r-md);
+    background: var(--yard-mid);
+    color: var(--yard-light);
+    border-color: rgba(130, 138, 147, 0.5);
+  }
+
+  .bsm-starwind-field::placeholder {
+    color: rgba(174, 180, 186, 0.68);
+  }
+
+  .bsm-starwind-field:focus-visible {
+    border-color: var(--yard-beam);
+    box-shadow: 0 0 0 2px rgba(201, 180, 138, 0.2);
+  }
+
+  .bsm-starwind-field[aria-invalid="true"] {
+    border-color: #ef6a61;
+  }
+}

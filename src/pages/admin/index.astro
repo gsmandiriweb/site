@@ -1,0 +1,28 @@
+---
+import CmsDashboard from "../../components/CmsDashboard.tsx";
+import { readAdminSession } from "../../utils/admin-session.ts";
+import { mediaAssets } from "../../utils/images.ts";
+import "../../styles/cms-dashboard.css";
+
+// The CMS dashboard is a runtime surface: it checks the admin session before
+// hydration so GitHub/deploy status is only wired for authenticated owners.
+export const prerender = false;
+
+const isAuthenticated = Boolean(await readAdminSession(Astro.request));
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <title>BSM Editorial Control</title>
+  </head>
+  <body>
+    <CmsDashboard
+      client:only="react"
+      mediaAssets={mediaAssets()}
+      isAuthenticated={isAuthenticated}
+    />
+  </body>
+</html>

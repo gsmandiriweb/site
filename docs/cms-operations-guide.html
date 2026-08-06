@@ -1,0 +1,1364 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="An operator's guide to the BSM CMS: the /admin dashboard, per-revision GitHub pull requests, auto-deploy on merge, Cloudflare Workers + Assets, secrets, the signed deploy callback, and recovery procedures."
+    />
+    <title>BSM CMS · Operator's Field Guide</title>
+    <style>
+      :root {
+        --paper: #f7f4ed;
+        --paper-deep: #eee9dd;
+        --ink: #25231f;
+        --muted: #716d64;
+        --faint: #a7a094;
+        --rule: #d8d0c1;
+        --accent: #a33f2f;
+        --accent-soft: #ead7d0;
+        --blue: #315d72;
+        --green: #52735e;
+        --code: #eee9df;
+        --serif:
+          Charter, "Bitstream Charter", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia,
+          serif;
+        --sans:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        --measure: 43rem;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #20201d;
+          --paper-deep: #292823;
+          --ink: #e8e1d4;
+          --muted: #b0a89b;
+          --faint: #827b71;
+          --rule: #49443a;
+          --accent: #e38c77;
+          --accent-soft: #4b302b;
+          --blue: #93c1d3;
+          --green: #9fc3a4;
+          --code: #2a2925;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--serif);
+        font-size: 18px;
+        line-height: 1.62;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-thickness: 0.08em;
+        text-underline-offset: 0.15em;
+      }
+      a:hover {
+        color: var(--accent);
+      }
+      ::selection {
+        background: var(--accent-soft);
+      }
+      .page {
+        width: min(100% - 2rem, 76rem);
+        margin: 0 auto;
+        padding: 4rem 0 7rem;
+      }
+      header {
+        max-width: var(--measure);
+        margin: 0 auto 4.5rem;
+      }
+      .kicker,
+      .eyebrow,
+      .label,
+      nav,
+      .small,
+      .meta,
+      code,
+      pre,
+      .button {
+        font-family: var(--sans);
+      }
+      .kicker {
+        color: var(--accent);
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      h1,
+      h2,
+      h3 {
+        font-weight: 400;
+        letter-spacing: -0.025em;
+      }
+      h1 {
+        margin: 0.65rem 0 1rem;
+        font-size: clamp(3rem, 8vw, 5.8rem);
+        line-height: 0.94;
+      }
+      h2 {
+        margin: 4.8rem 0 1rem;
+        font-size: 2.1rem;
+        line-height: 1.08;
+      }
+      h3 {
+        margin: 2.5rem 0 0.55rem;
+        font-size: 1.35rem;
+        line-height: 1.2;
+      }
+      p {
+        max-width: var(--measure);
+        margin: 0 0 1.15rem;
+      }
+      .dek {
+        max-width: 38rem;
+        color: var(--muted);
+        font-size: 1.28rem;
+        line-height: 1.45;
+      }
+      .meta {
+        margin-top: 1.5rem;
+        color: var(--faint);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .rule {
+        border: 0;
+        border-top: 1px solid var(--rule);
+        margin: 2.5rem 0;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, var(--measure)) minmax(13rem, 18rem);
+        gap: 4rem;
+        justify-content: center;
+        align-items: start;
+      }
+      main {
+        min-width: 0;
+      }
+      aside {
+        position: sticky;
+        top: 1.5rem;
+        color: var(--muted);
+        font-size: 0.87rem;
+        line-height: 1.4;
+      }
+      aside .aside-title {
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 0.68rem;
+        font-weight: 750;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+      aside nav {
+        margin-top: 0.65rem;
+      }
+      aside ol {
+        margin: 0;
+        padding-left: 1.25rem;
+      }
+      aside li {
+        margin: 0.48rem 0;
+      }
+      aside a {
+        color: inherit;
+        text-decoration: none;
+      }
+      aside a:hover {
+        color: var(--accent);
+      }
+      .sidenote {
+        float: right;
+        clear: right;
+        width: 15rem;
+        margin: 0.25rem -19rem 1rem 1.5rem;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.4;
+      }
+      .sidenote::before {
+        content: "✳  ";
+        color: var(--accent);
+      }
+      .sidenote strong {
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 0.7rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .callout {
+        margin: 1.8rem 0;
+        padding: 1rem 1.25rem 1.05rem;
+        border-left: 3px solid var(--accent);
+        background: var(--accent-soft);
+      }
+      .callout p:last-child {
+        margin-bottom: 0;
+      }
+      .callout .label {
+        margin-bottom: 0.35rem;
+        color: var(--accent);
+        font-size: 0.68rem;
+        font-weight: 750;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+      .callout.note {
+        border-left-color: var(--blue);
+        background: color-mix(in srgb, var(--blue) 10%, var(--paper));
+      }
+      .callout.note .label {
+        color: var(--blue);
+      }
+      .callout.success {
+        border-left-color: var(--green);
+        background: color-mix(in srgb, var(--green) 11%, var(--paper));
+      }
+      .callout.success .label {
+        color: var(--green);
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.35rem;
+        margin: 2rem 0 2.5rem;
+        font-family: var(--sans);
+      }
+      .flow-step {
+        position: relative;
+        min-height: 7.2rem;
+        padding: 0.75rem 0.65rem;
+        border: 1px solid var(--rule);
+        background: var(--paper-deep);
+      }
+      .flow-step:not(:last-child)::after {
+        content: "→";
+        position: absolute;
+        z-index: 1;
+        top: 2.3rem;
+        right: -0.72rem;
+        color: var(--accent);
+        font-size: 1.2rem;
+      }
+      .flow-step b {
+        display: block;
+        margin-bottom: 0.35rem;
+        color: var(--accent);
+        font: 750 0.65rem/1.2 var(--mono);
+        letter-spacing: 0.08em;
+      }
+      .flow-step span {
+        display: block;
+        font-size: 0.78rem;
+        line-height: 1.35;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0 2rem;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        padding: 0.65rem 0.55rem;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+        text-align: left;
+      }
+      th {
+        color: var(--muted);
+        font-family: var(--sans);
+        font-size: 0.67rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      td:first-child {
+        width: 34%;
+      }
+      code {
+        padding: 0.1em 0.28em;
+        border-radius: 0.18rem;
+        background: var(--code);
+        font-size: 0.78em;
+      }
+      pre {
+        position: relative;
+        overflow: auto;
+        margin: 1.4rem 0 1.8rem;
+        padding: 1rem 1.1rem;
+        border: 1px solid var(--rule);
+        background: var(--code);
+        color: var(--ink);
+        font-size: 0.73rem;
+        line-height: 1.55;
+        tab-size: 2;
+      }
+      pre code {
+        padding: 0;
+        background: transparent;
+        font-size: inherit;
+      }
+      .copy {
+        position: absolute;
+        top: 0.55rem;
+        right: 0.55rem;
+        border: 1px solid var(--rule);
+        border-radius: 0.25rem;
+        padding: 0.3rem 0.5rem;
+        background: var(--paper);
+        color: var(--muted);
+        cursor: pointer;
+        font: 700 0.62rem var(--sans);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .copy:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .checklist {
+        margin: 1.3rem 0 1.8rem;
+        padding: 0;
+        list-style: none;
+      }
+      .checklist li {
+        position: relative;
+        margin: 0.6rem 0;
+        padding-left: 1.75rem;
+      }
+      .checklist li::before {
+        content: "□";
+        position: absolute;
+        left: 0;
+        color: var(--accent);
+        font-family: var(--sans);
+        font-size: 1.05rem;
+      }
+      .numbered {
+        counter-reset: item;
+        list-style: none;
+        padding: 0;
+      }
+      .numbered li {
+        counter-increment: item;
+        position: relative;
+        margin: 1.1rem 0;
+        padding-left: 2.3rem;
+      }
+      .numbered li::before {
+        content: counter(item, decimal-leading-zero);
+        position: absolute;
+        left: 0;
+        top: 0.12rem;
+        color: var(--accent);
+        font: 700 0.72rem var(--mono);
+      }
+      .state-table td:first-child {
+        width: 18%;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+      }
+      .state-table td:nth-child(2) {
+        width: 22%;
+        font-family: var(--sans);
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .warning {
+        color: var(--accent);
+      }
+      .quiet {
+        color: var(--muted);
+      }
+      .source-list {
+        padding-left: 1.25rem;
+        font-size: 0.9rem;
+      }
+      .source-list li {
+        margin: 0.55rem 0;
+      }
+      footer {
+        max-width: var(--measure);
+        margin: 5rem auto 0;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--rule);
+        color: var(--muted);
+        font-size: 0.83rem;
+      }
+      .backtop {
+        float: right;
+        font-family: var(--sans);
+        font-size: 0.72rem;
+      }
+      @media (max-width: 74rem) {
+        .sidenote {
+          float: none;
+          width: auto;
+          margin: 0.8rem 0;
+          padding: 0.6rem 0.8rem;
+          border-top: 1px solid var(--rule);
+          border-bottom: 1px solid var(--rule);
+        }
+      }
+      @media (max-width: 58rem) {
+        .page {
+          padding-top: 2.5rem;
+        }
+        .layout {
+          display: block;
+        }
+        aside {
+          position: static;
+          margin-bottom: 3rem;
+          padding: 1rem;
+          border: 1px solid var(--rule);
+          background: var(--paper-deep);
+        }
+        aside ol {
+          columns: 2;
+          column-gap: 2rem;
+        }
+        .flow {
+          grid-template-columns: 1fr;
+        }
+        .flow-step {
+          min-height: auto;
+          padding: 0.8rem;
+        }
+        .flow-step:not(:last-child)::after {
+          content: "↓";
+          top: auto;
+          right: 0.9rem;
+          bottom: -0.95rem;
+        }
+      }
+      @media (max-width: 34rem) {
+        body {
+          font-size: 17px;
+        }
+        .page {
+          width: min(100% - 1.25rem, 43rem);
+        }
+        h2 {
+          font-size: 1.8rem;
+        }
+        aside ol {
+          columns: 1;
+        }
+        table {
+          display: block;
+          overflow-x: auto;
+          white-space: normal;
+        }
+        th,
+        td {
+          min-width: 10rem;
+        }
+      }
+      @media print {
+        :root {
+          --paper: #fff;
+          --ink: #111;
+          --muted: #444;
+          --rule: #aaa;
+        }
+        body {
+          font-size: 11pt;
+        }
+        .page {
+          width: auto;
+          padding: 0;
+        }
+        aside {
+          display: none;
+        }
+        .layout {
+          display: block;
+        }
+        .copy {
+          display: none;
+        }
+        a {
+          color: inherit;
+        }
+        h2 {
+          break-before: page;
+        }
+        pre {
+          white-space: pre-wrap;
+        }
+      }
+    </style>
+  </head>
+  <body id="top">
+    <div class="page">
+      <header>
+        <div class="kicker">BSM / private publishing system</div>
+        <h1>Operator's<br />field guide.</h1>
+        <p class="dek">
+          How an article travels from the <code>/admin</code> dashboard to a per-revision GitHub
+          pull request, through owner review and a merge to <code>main</code>, and finally onto a
+          fully static Cloudflare site.
+        </p>
+        <div class="meta">
+          A practical manual · settled operating model (ADRs 0008–0013) · read before configuring
+          production
+        </div>
+      </header>
+
+      <div class="layout">
+        <main>
+          <section id="read-first">
+            <h2>Read this first</h2>
+            <div class="callout note">
+              <div class="label">Migration status</div>
+              <p>
+                This guide documents the <strong>operating model in effect</strong>. The
+                D1/Keystatic-era machinery (Keystatic routes and config, the postinstall patch, the
+                D1 <code>CMS_DB</code> binding, migrations, the drafts save/list API, and the manual
+                deploy dispatch) has been removed; the CMS is GitHub-native per ADRs 0009–0013.
+                <code>publish.ts</code> was absorbed into <code>draft-publish.ts</code> — provenance
+                now lives in the PR metadata fingerprint created at PR time.
+              </p>
+            </div>
+            <div class="callout">
+              <div class="label">The central distinction</div>
+              <p>
+                <strong
+                  >“Publishing” in this CMS means merging a reviewed pull request to
+                  <code>main</code>.</strong
+                >
+                There is no separate deploy button: every merge auto-deploys. GitHub is the durable
+                source of truth for content, revisions, and PR metadata; the small Worker runtime
+                exists only for admin authentication, GitHub mutations, and deployment confirmation.
+                The public site is fully static.
+              </p>
+            </div>
+            <p>The system is therefore a deliberately reviewed chain:</p>
+            <div class="flow" aria-label="CMS publishing flow">
+              <div class="flow-step">
+                <b>01 · AUTHOR</b
+                ><span
+                  >Edit in the <code>/admin</code> dashboard. The browser holds a local draft, not a
+                  GitHub token.</span
+                >
+              </div>
+              <div class="flow-step">
+                <b>02 · REVISION</b
+                ><span
+                  >“Save revision &amp; open PR” commits to
+                  <code>cms/&lt;slug&gt;/r&lt;N&gt;</code> and opens a pull request.</span
+                >
+              </div>
+              <div class="flow-step">
+                <b>03 · REVIEW</b
+                ><span
+                  >The PR diff is the review surface. A new revision supersedes the older PR.</span
+                >
+              </div>
+              <div class="flow-step">
+                <b>04 · MERGE</b
+                ><span>The owner merges to <code>main</code>. Merged PRs are immutable.</span>
+              </div>
+              <div class="flow-step">
+                <b>05 · DEPLOY</b
+                ><span>GitHub Actions builds and deploys the static site automatically.</span>
+              </div>
+              <div class="flow-step">
+                <b>06 · LIVE</b
+                ><span
+                  >The signed callback records the deployed SHA; the CMS marks the revision
+                  Published.</span
+                >
+              </div>
+            </div>
+          </section>
+
+          <section id="architecture">
+            <h2>1. The architecture in one page</h2>
+            <p>
+              There are four actors. Keeping their responsibilities separate is what prevents an
+              editor click from becoming an unreviewed production change.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Actor</th>
+                  <th>What it owns</th>
+                  <th>What it must never receive</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Editor browser</strong></td>
+                  <td>Dashboard authoring, local autosave, media upload, PR lifecycle status.</td>
+                  <td>
+                    GitHub PATs, Cloudflare API tokens, callback secrets, or the owner secret.
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Astro / Cloudflare Worker</strong></td>
+                  <td>
+                    Sessions, GitHub branch/commit/PR mutations, PR metadata, provenance
+                    verification, deployment-confirmation callback.
+                  </td>
+                  <td>
+                    Nothing is sent back to the browser except opaque session state and API results.
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>GitHub</strong></td>
+                  <td>
+                    Repository history, blog files and media, branches, pull requests, Actions, and
+                    repository secrets.
+                  </td>
+                  <td>The owner’s CMS session or arbitrary callback destinations.</td>
+                </tr>
+                <tr>
+                  <td><strong>Cloudflare</strong></td>
+                  <td>
+                    Workers + Assets runtime, session KV + deployed-SHA KV, and the public site.
+                  </td>
+                  <td>The editor’s raw GitHub token.</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              The repository’s server build is a split Astro output: static files are written to
+              <code>dist/client/</code>; the Cloudflare Worker is written to
+              <code>dist/server/</code>. The generated <code>dist/server/wrangler.json</code> is the
+              deployment config used by the workflow.
+            </p>
+            <aside class="sidenote">
+              <strong>Why not Pages?</strong><br />The adapter output is Worker + Assets. Classic
+              flat-output Pages deployment expects a different shape and is not the target for this
+              setup.
+            </aside>
+            <p>The relevant implementation seams are:</p>
+            <ul>
+              <li>
+                <code>src/pages/admin/login.astro</code> — owner sign-in; the dashboard lives at
+                <code>/admin</code>.
+              </li>
+              <li>
+                <code>src/utils/draft-publish.ts</code> — per-revision branch + PR creation and the
+                PR metadata block.
+              </li>
+              <li>
+                <code>src/utils/draft-publish.ts</code> — revision branch + PR creation, the PR
+                metadata fingerprint, and the main-source reader for the editor.
+              </li>
+              <li>
+                <code>src/utils/deploy.ts</code> — the deployment-confirmation callback (deployed
+                SHA).
+              </li>
+              <li>
+                <code>.github/workflows/deploy.yml</code> — auto-deploy on push to
+                <code>main</code>, then signs a callback.
+              </li>
+              <li>
+                <code>wrangler.toml</code> — Worker name, compatibility, and the
+                <code>SESSION</code> KV binding.
+              </li>
+            </ul>
+          </section>
+
+          <section id="roles">
+            <h2>2. Roles and approval boundaries</h2>
+            <p>
+              The dashboard may display editor/owner distinctions, but the role switch is only a
+              client-side demonstration until server-enforced roles are implemented (the GitHub App
+              hardening step). Today all CMS API guards check for a valid admin session, and the
+              owner-secret session is the only production credential. Treat the owner access key
+              accordingly.
+            </p>
+            <h3>Editor</h3>
+            <p>
+              An editor writes content in the dashboard and creates revision pull requests. That is
+              the extent of an editor’s reach: nothing an editor does changes <code>main</code> or
+              the live site. “Ready” is a content state, not a server-enforced permission boundary.
+            </p>
+            <h3>Owner</h3>
+            <p>
+              The owner supplies the access key at <code>/admin/login</code>. The server compares it
+              against <code>CMS_OWNER_SECRET</code>, creates a random session ID, and stores the
+              GitHub credential behind that session in the <code>SESSION</code> KV namespace. The
+              browser receives only the <code>HttpOnly</code> <code>bsm-cms-session</code> cookie.
+              The owner reviews PRs on GitHub and merges them — merging is the approval that
+              triggers deployment.
+            </p>
+            <div class="callout note">
+              <div class="label">Operational rule</div>
+              <p>
+                Do not paste a GitHub token into the browser, into a blog field, into a workflow
+                input, or into a checked-in file. If a token has appeared in a browser console, URL,
+                screenshot, or commit, revoke it and issue a replacement.
+              </p>
+            </div>
+          </section>
+
+          <section id="content-flow">
+            <h2>3. The authoring and publishing flow</h2>
+            <ol class="numbered">
+              <li>
+                <strong>Sign in.</strong> Visit <code>/admin/login</code> and enter the owner access
+                key. You land on the <code>/admin</code> dashboard.
+              </li>
+              <li>
+                <strong>Write in the dashboard.</strong> The editor is a markdown-first WYSIWYG
+                (headings, lists, links, quotes, inline styles). Edit title, kicker, excerpt, body,
+                slug, stable ID, <code>publishedAt</code>, status, aliases, and the featured image.
+                Autosave is browser-local only: nothing reaches GitHub until you explicitly save a
+                revision.
+              </li>
+              <li>
+                <strong>Add media per the contract.</strong> The contract (ADR 0011) targets
+                <code>src/images/blog/&lt;slug&gt;/</code> (featured image
+                <code>cover.&lt;ext&gt;</code>, body images
+                <code>01-&lt;name&gt;.&lt;ext&gt;</code>…), only JPEG/PNG/WebP, ≤ 5 MB and 8000 px
+                longest edge, CMS-generated names, and required alt text. Uploading from the Media
+                dialog (<code>/api/cms/media</code>) validates magic bytes and dimensions
+                server-side, writes the file to the pending revision branch
+                (<code>cms/&lt;slug&gt;/r&lt;N&gt;</code>), and lists both staged and merged assets.
+                The picker also draws from the existing repo-backed pool.
+              </li>
+              <li>
+                <strong>Save revision &amp; open PR.</strong> The CMS validates the post payload,
+                records the referenced media in the PR metadata block, creates branch
+                <code>cms/&lt;slug&gt;/r&lt;N&gt;</code> from <code>main</code>, commits the
+                serialized Markdown, opens a draft pull request, and supersedes older open PRs.
+              </li>
+              <li>
+                <strong>Review on GitHub.</strong> The PR diff is the review surface. If a new
+                revision is saved while an older PR is still open, the older PR is closed as
+                <strong>superseded</strong> with a comment linking the new one. Closed-unmerged PRs
+                are never reopened; merged PRs are immutable.
+              </li>
+              <li>
+                <strong>Owner merges.</strong> Merging to <code>main</code> is the approval. GitHub
+                Actions auto-builds and deploys the static site.
+              </li>
+              <li>
+                <strong>Published.</strong> The deploy workflow posts a signed callback with the
+                deployed commit SHA; the CMS upgrades every merged revision whose merge commit is
+                deployed to <strong>Published</strong>.
+              </li>
+            </ol>
+            <div class="callout">
+              <div class="label">Provenance, not trust</div>
+              <p>
+                After a merge, the CMS recomputes the SHA-256 of the merged file and compares it
+                with the fingerprint recorded in the PR metadata block at PR-creation time. Any
+                drift is flagged <strong>“changed since review”</strong> and is never presented as
+                published.
+              </p>
+            </div>
+          </section>
+
+          <section id="revisions">
+            <h2>4. Revisions, branches, and the PR metadata block</h2>
+            <p>
+              Every durable fact about a revision lives in GitHub itself — there is no content
+              database.
+            </p>
+            <ul>
+              <li>
+                <strong>Branch naming</strong> encodes the revision:
+                <code>cms/&lt;slug&gt;/r&lt;N&gt;</code>.
+              </li>
+              <li>
+                <strong>Revision discovery</strong> lists PRs filtered by the head prefix
+                <code>cms/&lt;slug&gt;/</code> (robust even after branch deletion), plus branch
+                listing while branches exist. The live revision is the highest <code>N</code> with
+                an open PR; the maximum <code>N</code> overall gives the next revision number.
+              </li>
+              <li>
+                <strong>PR metadata block</strong> — a versioned HTML comment in the PR body,
+                invisible in the GitHub UI:
+              </li>
+            </ul>
+            <pre><button class="copy" type="button">Copy</button><code>&lt;!-- bsm-cms:revision v1 --&gt;
+storageSlug: cara-memilih-pagar-brc
+revision: 4
+contentFingerprint: sha256:&lt;64-character-hex&gt;
+media: [blog/cara-memilih-pagar-brc/cover.jpg]</code></pre>
+            <p>
+              The block is written at PR creation and parsed for status reconciliation and the
+              post-merge exact-match check. If it is ever absent, the CMS falls back to branch-name
+              parsing.
+            </p>
+            <h3>Lifecycle states</h3>
+            <table class="state-table">
+              <thead>
+                <tr>
+                  <th>State</th>
+                  <th>Meaning</th>
+                  <th>What to do</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Draft</td>
+                  <td>Browser-local only</td>
+                  <td>Keep editing; nothing is on GitHub yet.</td>
+                </tr>
+                <tr>
+                  <td>In review</td>
+                  <td>A PR is open for the latest revision</td>
+                  <td>Review the PR diff on GitHub; merge when ready.</td>
+                </tr>
+                <tr>
+                  <td>Merged</td>
+                  <td>The revision is in <code>main</code>, queued for deploy</td>
+                  <td>Wait for the auto-deploy; verify the site.</td>
+                </tr>
+                <tr>
+                  <td>Published</td>
+                  <td>Deployment confirmed for the merge commit</td>
+                  <td>Nothing — the live site serves this revision.</td>
+                </tr>
+                <tr>
+                  <td>Superseded</td>
+                  <td>Closed-unmerged PR replaced by a newer revision</td>
+                  <td>Ignore; the newer PR owns the review. Never reopened.</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              <strong>Published</strong> is never derived from GitHub alone: it requires the
+              deployed SHA recorded in KV plus an ancestry check against the merge commit (ADR
+              0010).
+            </p>
+          </section>
+
+          <section id="workflow">
+            <h2>5. What GitHub Actions actually does</h2>
+            <p>
+              The workflow is <code>.github/workflows/deploy.yml</code>. It is triggered by every
+              push to <code>main</code> — there are no manual dispatch inputs anymore. The old
+              stage/trigger/dispatch machinery and its <code>CMS_GITHUB_ACTIONS_PAT</code> secret
+              are removed.
+            </p>
+            <ol class="numbered">
+              <li>
+                <strong>Trigger on merge.</strong> <code>on: push: branches: [main]</code> fires
+                once per merged PR.
+              </li>
+              <li>
+                <strong>Check out <code>main</code>.</strong> The merge commit is the source of
+                truth for the build.
+              </li>
+              <li>
+                <strong>Install and build.</strong> <code>bun install --frozen-lockfile</code>, then
+                <code>bun run build</code>. The build creates <code>dist/client/</code> and
+                <code>dist/server/wrangler.json</code>.
+              </li>
+              <li>
+                <strong>Deploy.</strong>
+                <code>bunx wrangler deploy --config dist/server/wrangler.json</code> using the
+                repository’s Cloudflare credentials.
+              </li>
+              <li>
+                <strong>Report the deployed SHA.</strong> A final step posts a signed callback with
+                the deployed commit SHA and terminal status, so the CMS can upgrade revisions to
+                Published.
+              </li>
+            </ol>
+            <pre><button class="copy" type="button">Copy</button><code>on:
+  push:
+    branches: [main]
+
+# The deployment target is the generated adapter config:
+bunx wrangler deploy --config dist/server/wrangler.json</code></pre>
+          </section>
+
+          <section id="callback">
+            <h2>6. The signed deploy callback</h2>
+            <p>
+              GitHub Actions calls <code>/api/cms/deploy/callback</code> after the deployment step.
+              The body names the deployed commit and a terminal status:
+            </p>
+            <pre><button class="copy" type="button">Copy</button><code>{"commitSha":"&lt;40-character-git-sha&gt;","status":"succeeded"}
+
+# or
+{"commitSha":"&lt;40-character-git-sha&gt;","status":"failed","error":"GitHub Actions deployment failed."}</code></pre>
+            <p>The workflow signs the timestamp and raw JSON body with HMAC-SHA256:</p>
+            <pre><button class="copy" type="button">Copy</button><code>message = timestamp + "." + rawJsonBody
+signature = "sha256=" + HMAC_SHA256(CMS_DEPLOY_CALLBACK_SECRET, message)
+
+x-bsm-deploy-timestamp: &lt;unix-seconds&gt;
+x-bsm-deploy-signature: sha256=&lt;64-character-hex-hmac&gt;</code></pre>
+            <p>The Worker accepts the callback only when:</p>
+            <ul>
+              <li>the timestamp is an integer within five minutes of the current time;</li>
+              <li>the HMAC is valid for the exact raw body;</li>
+              <li>the body contains a well-formed commit SHA and a terminal status.</li>
+            </ul>
+            <p>
+              The accepted callback is written to KV as the <strong>last deployed SHA</strong>. The
+              CMS then marks Published every merged revision whose merge commit is an ancestor of
+              that SHA. Duplicate terminal callbacks are idempotent.
+            </p>
+            <div class="callout success">
+              <div class="label">A healthy end state</div>
+              <p>
+                A revision PR is merged, the Actions run is green, the callback records the deployed
+                SHA, the dashboard shows <strong>Published</strong>, and the fully static site
+                serves the merged content.
+              </p>
+            </div>
+          </section>
+
+          <section id="rollback">
+            <h2>7. Rollback (revert PRs)</h2>
+            <p>Undoing a published change is a first-class action, not a history rewrite.</p>
+            <ol class="numbered">
+              <li>
+                The owner triggers a <strong>revert PR</strong> from the dashboard for a merged
+                revision.
+              </li>
+              <li>
+                The CMS computes the inverse diff of that revision (Markdown and the media it added)
+                and opens a revert PR against <code>main</code>.
+              </li>
+              <li>The revert PR flows through the same review → merge → auto-deploy path.</li>
+            </ol>
+            <p>
+              Git history is never rewritten; every production change — forward and backward — is
+              reviewed and auditable. Unreferenced orphan images left by a revert are kept; cleanup
+              is out of scope.
+            </p>
+          </section>
+
+          <section id="bootstrap">
+            <h2>8. One-time production setup</h2>
+            <p>
+              Do the bootstrap in this order. The first deployment may be performed manually with
+              Wrangler if the Worker does not exist yet; subsequent content changes deploy through
+              the PR → merge → Actions path. The repository currently contains a production-looking
+              <code>SESSION</code> namespace ID; do not replace it casually, because changing the
+              namespace invalidates sessions and stored CMS state.
+            </p>
+            <ol class="numbered">
+              <li>
+                <strong>Install the expected toolchain.</strong> Use Node
+                <code>&gt;=22.12.0</code> and Bun (the repository’s configured Bun version). Run
+                <code>bun install</code>.
+              </li>
+              <li>
+                <strong>Confirm the KV namespace.</strong> If this is a new environment, run
+                <code>npx wrangler kv namespace create SESSION</code> and put the returned ID in
+                <code>wrangler.toml</code>. For the existing environment, verify the current ID and
+                binding. The binding name must remain <code>SESSION</code>.
+              </li>
+              <li>
+                <strong>Set Worker secrets.</strong> Use the commands below. Never commit values to
+                <code>wrangler.toml</code>.
+              </li>
+              <li>
+                <strong>Set repository Actions secrets.</strong> These are separate from Worker
+                secrets, although the callback values must match exactly.
+              </li>
+              <li>
+                <strong>Build and make the first deployment.</strong> Run
+                <code>bun run build</code>, then
+                <code>bunx wrangler deploy --config dist/server/wrangler.json</code> from a trusted
+                environment. Confirm the Worker URL and the callback route exist.
+              </li>
+              <li>
+                <strong>Log in.</strong> Visit <code>/admin/login</code>, enter the owner access
+                key, and confirm the redirect to <code>/admin</code>.
+              </li>
+              <li>
+                <strong>Run a small real smoke test.</strong> Make a harmless revision PR, merge it,
+                watch Actions, and confirm the callback upgrades it to Published.
+              </li>
+            </ol>
+            <h3>Worker secrets</h3>
+            <pre><button class="copy" type="button">Copy</button><code># From the repository root, authenticated to the target Cloudflare account
+wrangler secret put CMS_GITHUB_PAT
+wrangler secret put CMS_OWNER_SECRET
+wrangler secret put CMS_DEPLOY_CALLBACK_URL
+wrangler secret put CMS_DEPLOY_CALLBACK_SECRET</code></pre>
+            <h3>GitHub repository Actions secrets</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Secret</th>
+                  <th>Value / purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>CLOUDFLARE_API_TOKEN</code></td>
+                  <td>
+                    A narrowly scoped Cloudflare token allowed to deploy the Worker and Assets.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>CLOUDFLARE_ACCOUNT_ID</code></td>
+                  <td>The account containing the <code>second-shepherd</code> Worker.</td>
+                </tr>
+                <tr>
+                  <td><code>CMS_DEPLOY_CALLBACK_URL</code></td>
+                  <td>
+                    Exactly the deployed Worker URL plus <code>/api/cms/deploy/callback</code>.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>CMS_DEPLOY_CALLBACK_SECRET</code></td>
+                  <td>Exactly the same random value as the Worker secret.</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="callout note">
+              <div class="label">Removed with the migration</div>
+              <p>
+                <code>CMS_GITHUB_ACTIONS_PAT</code> and
+                <code>CMS_GITHUB_ACTIONS_DISPATCH_SECRET</code> (manual workflow dispatch) and the
+                D1 <code>CMS_DB</code> binding are gone. <code>KEYSTATIC_GITHUB_PAT</code> is
+                renamed <code>CMS_GITHUB_PAT</code>. The GitHub App installation identity (ADR 0008)
+                will replace the PAT for repository mutations as the next hardening step.
+              </p>
+            </div>
+          </section>
+
+          <section id="local-development">
+            <h2>9. Local development and safe testing</h2>
+            <p>
+              Local Astro development does not use the Cloudflare runtime adapter. The application
+              reads development variables from the process environment while using in-memory
+              session/state stores. This is useful for a smoke test, but it is not a production-like
+              persistence test.
+            </p>
+            <div class="callout warning">
+              <div class="label">Local safety boundary</div>
+              <p>
+                Use fake credentials and a local mock GitHub API for this test. If
+                <code>CMS_GITHUB_API_URL</code> is omitted in development, the app defaults to the
+                real GitHub API and could create real branches and PRs if real credentials are
+                loaded.
+              </p>
+            </div>
+            <pre><button class="copy" type="button">Copy</button><code>CMS_OWNER_SECRET='local-owner-secret' \
+CMS_GITHUB_PAT='local-github-token' \
+CMS_DEPLOY_CALLBACK_URL='https://example.test/api/cms/deploy/callback' \
+CMS_DEPLOY_CALLBACK_SECRET='local-callback-secret' \
+CMS_GITHUB_API_URL='http://127.0.0.1:4344' \
+bun run dev</code></pre>
+            <p>
+              For an end-to-end local PR test, run a mock GitHub API on the port you configure
+              above. The <code>CMS_GITHUB_API_URL</code> override is development-only; production
+              always calls <code>https://api.github.com</code>.
+            </p>
+            <p>Before deploying a change, run:</p>
+            <pre><button class="copy" type="button">Copy</button><code>bun install
+bun run build
+bunx astro check</code></pre>
+            <p class="quiet">
+              The project’s build is the authoritative check for the Worker adapter output. If
+              <code>astro check</code> reports existing project diagnostics, separate those from
+              errors introduced by the change.
+            </p>
+          </section>
+
+          <section id="troubleshooting">
+            <h2>10. Troubleshooting by symptom</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Symptom</th>
+                  <th>Likely cause</th>
+                  <th>First check</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>CMS authentication is not configured</code></td>
+                  <td>Worker lacks the owner secret or the GitHub PAT.</td>
+                  <td>
+                    Check <code>CMS_OWNER_SECRET</code> and <code>CMS_GITHUB_PAT</code>, then
+                    redeploy.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>CMS session storage is unavailable</code></td>
+                  <td>The <code>SESSION</code> KV binding is missing or has the wrong ID.</td>
+                  <td>Compare <code>wrangler.toml</code> with the KV namespace and redeploy.</td>
+                </tr>
+                <tr>
+                  <td>PR creation returns 422</td>
+                  <td>Branch already exists or content conflicts on the revision branch.</td>
+                  <td>
+                    Reconcile the PR; the revision branch is meant to be written once. Do not
+                    force-update a merged branch.
+                  </td>
+                </tr>
+                <tr>
+                  <td>PR creation is rejected for media</td>
+                  <td>
+                    The dangling-reference gate found an image reference that does not resolve on
+                    the revision branch (or fails the media contract).
+                  </td>
+                  <td>
+                    Upload the referenced image in the Media workspace first, then retry; the gate
+                    reports the exact unresolved path.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Dashboard shows “changed since review”</td>
+                  <td>The merged file does not match the PR metadata fingerprint.</td>
+                  <td>
+                    Do not treat it as published; investigate what changed between review and merge.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Merged but not Published</td>
+                  <td>The callback was lost or rejected.</td>
+                  <td>
+                    Inspect the Actions run’s callback step; verify the two callback secrets are
+                    byte-for-byte identical.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Callback returns 401</td>
+                  <td>Timestamp too old or HMAC mismatch.</td>
+                  <td>Callbacks must be freshly signed; never replay an old callback verbatim.</td>
+                </tr>
+                <tr>
+                  <td>Every route returns 500 with <code>Buffer is not defined</code></td>
+                  <td>Cloudflare Node compatibility is absent.</td>
+                  <td>Confirm <code>compatibility_flags = ["nodejs_compat"]</code>.</td>
+                </tr>
+                <tr>
+                  <td>Page is unstyled or <code>/_astro/*</code> is 404</td>
+                  <td>A stale base path or wrong deployment target is being used.</td>
+                  <td>
+                    Confirm <code>base</code> is not set and deploy Worker + Assets using the
+                    generated config.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="recovery">
+            <h2>11. Recovery playbooks</h2>
+            <h3>A. A revision PR is open but should be superseded</h3>
+            <ol class="numbered">
+              <li>
+                Save a new revision from the dashboard — the CMS closes the older PR with a linking
+                comment.
+              </li>
+              <li>Review the newer PR; ignore the superseded one. It is never reopened.</li>
+            </ol>
+            <h3>B. Merged but not Published</h3>
+            <ol class="numbered">
+              <li>Open GitHub Actions and find the run for the merge commit.</li>
+              <li>
+                If the deploy succeeded but the callback failed, fix the callback configuration and
+                use a controlled operator procedure to send a newly timestamped, freshly HMAC-signed
+                callback carrying the deployed SHA and terminal status. An expired callback cannot
+                be replayed verbatim.
+              </li>
+              <li>
+                If the deploy failed, fix the cause and re-run the workflow on the same commit. Do
+                not create a second PR merely to redeploy.
+              </li>
+            </ol>
+            <h3>C. A mistake was merged</h3>
+            <ol class="numbered">
+              <li>Trigger a revert PR from the dashboard (section 7).</li>
+              <li>
+                Review and merge it like any other PR; the site rolls back through the normal deploy
+                path.
+              </li>
+            </ol>
+            <h3>D. A secret was exposed</h3>
+            <ol class="numbered">
+              <li>Revoke the exposed GitHub or Cloudflare credential immediately.</li>
+              <li>Generate a replacement and update every location that shares it.</li>
+              <li>Redeploy the Worker if a Worker secret changed.</li>
+              <li>Run a login and a revision-PR smoke test.</li>
+              <li>Record the rotation date without recording the secret value.</li>
+            </ol>
+            <div class="callout warning">
+              <div class="label">Do not “fix” production state by hand first</div>
+              <p>
+                Do not hand-edit KV, force-push a merged branch, or reopen a closed PR. The states
+                exist to keep every production change reviewed and every revision traceable.
+                Investigate first, then act through the dashboard or GitHub.
+              </p>
+            </div>
+          </section>
+
+          <section id="checklist">
+            <h2>12. Release checklist</h2>
+            <ul class="checklist">
+              <li>
+                The post has the intended title, slug, date, featured image, required alt text, and
+                status.
+              </li>
+              <li>
+                Every image reference resolves in the revision; the media contract limits are met.
+              </li>
+              <li>
+                The revision PR contains the correct Markdown + media and the PR metadata block.
+              </li>
+              <li>No older PR for the same post is left open when it should be superseded.</li>
+              <li>The owner has reviewed the PR diff on GitHub.</li>
+              <li>The merge is to <code>main</code>; merged PRs are never force-updated.</li>
+              <li>GitHub Actions repository secrets are present and not expired.</li>
+              <li>The deploy run is green and the signed callback records the deployed SHA.</li>
+              <li>The dashboard shows <strong>Published</strong> for the merged revision.</li>
+              <li>The public blog route shows the intended content and drafts remain absent.</li>
+            </ul>
+          </section>
+
+          <section id="reference">
+            <h2>13. Reference links and files</h2>
+            <p>
+              Use these sources when the platform changes. The repository’s own files remain the
+              source of truth for its naming and endpoint contracts.
+            </p>
+            <ul class="source-list">
+              <li>
+                <a href="deploy-cloudflare.md"
+                  >Repository deployment notes: <code>docs/deploy-cloudflare.md</code></a
+                >
+              </li>
+              <li>
+                <a href="../.github/workflows/deploy.yml"
+                  >Deployment workflow: <code>.github/workflows/deploy.yml</code></a
+                >
+              </li>
+              <li>
+                <a href="../docs/research/cms-inventory-github-migration.md"
+                  >CMS migration inventory:
+                  <code>docs/research/cms-inventory-github-migration.md</code></a
+                >
+              </li>
+              <li>
+                <a href="../docs/adr/0009-draft-to-pr-lifecycle.md"
+                  >ADR 0009 — draft-to-PR lifecycle</a
+                >
+              </li>
+              <li>
+                <a href="../docs/adr/0010-static-deployment-boundary.md"
+                  >ADR 0010 — static deployment boundary</a
+                >
+              </li>
+              <li>
+                <a href="../docs/adr/0011-media-contract.md"
+                  >ADR 0011 — repository media contract</a
+                >
+              </li>
+              <li>
+                <a href="../docs/adr/0012-canonical-editor-boundary.md"
+                  >ADR 0012 — canonical editor boundary</a
+                >
+              </li>
+              <li>
+                <a href="../docs/adr/0013-github-derived-revision-metadata.md"
+                  >ADR 0013 — GitHub-derived PR and revision metadata</a
+                >
+              </li>
+              <li>
+                <a href="https://docs.github.com/en/rest/pulls/pulls">GitHub REST: pull requests</a>
+              </li>
+              <li>
+                <a href="https://docs.github.com/en/rest/repos/contents"
+                  >GitHub REST: repository contents</a
+                >
+              </li>
+              <li>
+                <a href="https://docs.astro.build/en/guides/integrations-guide/cloudflare/"
+                  >Astro: <code>@astrojs/cloudflare</code> adapter</a
+                >
+              </li>
+              <li>
+                <a href="https://developers.cloudflare.com/workers/wrangler/"
+                  >Cloudflare: Wrangler</a
+                >
+              </li>
+            </ul>
+            <p class="quiet">
+              Guide status: written for the settled BSM operating model (ADRs 0008–0013). Revisit
+              this document whenever branch naming, the PR metadata block, secret names, callback
+              headers, or the Cloudflare adapter output changes.
+            </p>
+          </section>
+        </main>
+
+        <aside aria-label="Table of contents">
+          <div class="aside-title">Contents</div>
+          <nav>
+            <ol>
+              <li><a href="#read-first">Read this first</a></li>
+              <li><a href="#architecture">Architecture</a></li>
+              <li><a href="#roles">Roles</a></li>
+              <li><a href="#content-flow">Authoring flow</a></li>
+              <li><a href="#revisions">Revisions &amp; PR metadata</a></li>
+              <li><a href="#workflow">GitHub Actions</a></li>
+              <li><a href="#callback">Signed callback</a></li>
+              <li><a href="#rollback">Rollback</a></li>
+              <li><a href="#bootstrap">Production setup</a></li>
+              <li><a href="#local-development">Local testing</a></li>
+              <li><a href="#troubleshooting">Troubleshooting</a></li>
+              <li><a href="#recovery">Recovery</a></li>
+              <li><a href="#checklist">Release checklist</a></li>
+              <li><a href="#reference">References</a></li>
+            </ol>
+          </nav>
+          <hr class="rule" />
+          <p>
+            <strong>Remember:</strong><br />edit in <code>/admin</code>, open the revision PR,
+            review on GitHub, merge to <code>main</code>, and wait for the signed callback.
+          </p>
+        </aside>
+      </div>
+
+      <footer>
+        <a class="backtop" href="#top">↑ Back to top</a>
+        <div class="kicker">BSM / field guide</div>
+        <p>
+          Keep this file close to the deployment repository, but never store secret values in it.
+        </p>
+      </footer>
+    </div>
+    <script>
+      document.querySelectorAll(".copy").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const code = button.parentElement.querySelector("code");
+          if (!code) return;
+          try {
+            await navigator.clipboard.writeText(code.textContent || "");
+            const original = button.textContent;
+            button.textContent = "Copied";
+            window.setTimeout(() => {
+              button.textContent = original;
+            }, 1200);
+          } catch {
+            button.textContent = "Select";
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

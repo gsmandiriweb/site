@@ -16,7 +16,7 @@
 // fetching, no un-optimized fallbacks.
 import { Image } from "astro:assets";
 import { imageAsset } from "../utils/images.ts";
-import { waLink } from "../utils/url.ts";
+import { quoteLink } from "../utils/url.ts";
 import SpecTable from "./SpecTable.astro";
 import DimensionOverlay from "./DimensionOverlay.astro";
 import { brcShowcase } from "../data/catalog.ts";
@@ -31,7 +31,6 @@ const itemJson = showcase.items.map((i) => ({
   angles: i.angles,
   callouts: i.callouts ?? [],
   specs: i.specs,
-  waContext: i.waContext,
 }));
 ---
 
@@ -117,7 +116,7 @@ const itemJson = showcase.items.map((i) => ({
         <div class="showcase__spectable" data-spectable>
           <SpecTable specs={first.specs} />
         </div>
-        <a class="btn btn--primary showcase__cta" data-cta href={waLink(first.waContext)} target="_blank" rel="noopener">
+        <a class="btn btn--primary showcase__cta" data-cta href={quoteLink({ category: "pagar", product: first.name === "Pagar BRC Panel" ? "Pagar BRC" : first.name, notes: `Konteks produk: ${first.name}` })}>
           Minta Penawaran
         </a>
       </div>
@@ -395,7 +394,7 @@ const itemJson = showcase.items.map((i) => ({
 <script>
   import EmblaCarousel from "embla-carousel";
   import gsap from "gsap";
-  import { waLink } from "../utils/url.ts";
+  import { quoteLink } from "../utils/url.ts";
 
   type Callout = { specKey: string; type: string; x: number; y: number; x2?: number; y2?: number; lx?: number; ly?: number };
   type Item = {
@@ -405,7 +404,6 @@ const itemJson = showcase.items.map((i) => ({
     angles: string[];
     callouts: Callout[];
     specs: { k: string; v: string }[];
-    waContext: string;
   };
 
   const root = document.querySelector<HTMLElement>(".showcase__root");
@@ -640,7 +638,7 @@ const itemJson = showcase.items.map((i) => ({
         t.setAttribute("aria-selected", String(sel));
         t.tabIndex = sel ? 0 : -1;
       });
-      if (cta) cta.href = waLink(item.waContext);
+      if (cta) cta.href = quoteLink({ category: "pagar", product: item.name === "Pagar BRC Panel" ? "Pagar BRC" : item.name, notes: `Konteks produk: ${item.name}` });
       if (titleblock) titleblock.innerHTML = `<b>${item.name.toUpperCase()}</b><br>ORIGIN SBY`;
       if (panel) panel.setAttribute("aria-labelledby", `brc-tab-${item.slug}`);
 

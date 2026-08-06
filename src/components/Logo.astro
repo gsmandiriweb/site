@@ -1,17 +1,12 @@
 ---
-// BSM monogram — a drafting-sheet frame with a welded "B".
-// variant: "dark" (on paper) | "light" (on ink footer)
-const { variant = "dark" } = Astro.props;
+import logoSrc from "../images/logo.png";
+
+// The approved BSM wordmark, shared by the site chrome and footer.
 ---
-<svg
-  class:list={["logo", variant === "light" && "logo--light"]}
-  viewBox="0 0 48 48"
-  fill="none"
-  role="img"
-  aria-label="Logo BSM"
->
-  <rect class="logo-frame" x="5" y="5" width="38" height="38" rx="4" stroke-width="2.5" />
-  <path class="logo-b" d="M17 13 V29" stroke-width="2.6" stroke-linecap="round" />
-  <path class="logo-b" d="M17 13 H25 Q30 13 30 17 Q30 21 25 21 H17" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
-  <path class="logo-b" d="M17 21 H25 Q30 21 30 25 Q30 29 25 29 H17" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
-</svg>
+<img
+  class="logo"
+  src={logoSrc.src}
+  width={logoSrc.width}
+  height={logoSrc.height}
+  alt="BSM — Bangun Sarana Makmur"
+/>

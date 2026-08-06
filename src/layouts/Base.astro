@@ -1,6 +1,8 @@
 ---
 import "../styles/global.css";
+import "../styles/starwind.css";
 import { u } from "../utils/url.ts";
+import logoSrc from "../images/logo.png";
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import WhatsAppFloat from "../components/WhatsAppFloat.astro";
@@ -15,7 +17,7 @@ const desc =
 <html lang="id">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href={u("/favicon.svg")} />
+    <link rel="icon" type="image/png" href={logoSrc.src} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script is:inline>
       // Mark that JS is present and about to animate, so CSS can pre-hide hero
@@ -114,7 +116,10 @@ const desc =
             });
           });
 
-        const grids = gsap.utils.toArray(".cat, .prod, .post, .trust__cell, .bom__row, .showcase__proof-tile, .rfq__field, .rfq__preview");
+        // The BRC helper is conditionally revealed by the RFQ script. Keep it
+        // outside the shared batch so toggling `hidden` cannot leave it at
+        // GSAP's initial autoAlpha: 0 state.
+        const grids = gsap.utils.toArray(".cat, .prod, .post, .trust__cell, .bom__row, .showcase__proof-tile, .rfq__field:not(.rfq__helper), .rfq__preview");
         gsap.set(grids, { autoAlpha: 0, y: 24 });
         ScrollTrigger.batch(grids, {
           start: "top 88%",

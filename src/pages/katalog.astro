@@ -11,7 +11,7 @@
 import Base from "../layouts/Base.astro";
 import { Image } from "astro:assets";
 import { imageAsset } from "../utils/images.ts";
-import { u, waLink } from "../utils/url.ts";
+import { quoteLink, u } from "../utils/url.ts";
 import { categories, catalogLines } from "../data/catalog.ts";
 
 const total = catalogLines.length;
@@ -108,10 +108,8 @@ const total = catalogLines.length;
             ) : (
               <a
                 class="catalog__row"
-                href={waLink(line.waContext)}
-                target="_blank"
-                rel="noopener"
-                aria-label={`Minta penawaran ${line.name}`}
+                href={quoteLink({ category: line.categorySlug, product: line.name })}
+                aria-label={`Susun permintaan penawaran untuk ${line.name}`}
               >
                 <span class="catalog__row-tick tick" aria-hidden="true" />
                 <span class="catalog__row-main">
@@ -133,8 +131,8 @@ const total = catalogLines.length;
     </p>
 
     <p style="margin-top:2.5rem">
-      <a class="btn btn--primary" href={waLink()} target="_blank" rel="noopener">
-        Minta penawaran lengkap →
+      <a class="btn btn--primary" href={quoteLink()}>
+        Susun permintaan penawaran →
       </a>
     </p>
   </section>

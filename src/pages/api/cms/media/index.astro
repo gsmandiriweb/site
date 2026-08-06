@@ -1,0 +1,79 @@
+---
+import { DraftActionError, jsonResponse } from "../../../../utils/cms-drafts.ts";
+import {
+  listMediaAssets,
+  uploadMediaFile,
+} from "../../../../utils/draft-publish.ts";
+import { MEDIA_MAX_BYTES, validateMediaBytes } from "../../../../utils/media.ts";
+
+// ADR 0011 media contract endpoint:
+// - GET  /api/cms/media?storageSlug=<slug>  — list media staged on the pending
+//   revision branch plus the merged media on main, for the dashboard picker.
+// - POST /api/cms/media (multipart/form-data: storageSlug, kind[cover|body],
+//   name?, file) — validate magic bytes + limits, then commit the image into
+//   `src/images/blog/<slug>/` on the pending revision branch.
+export const prerender = false;
+
+try {
+  // The request body is consumed exactly once: multipart parsing happens here
+  // for POST, and the parsed form is reused for both storageSlug and the file.
+  const form = Astro.request.method === "POST"
+    ? await Astro.request.formData().catch(() => null)
+    : null;
+  const storageSlug =
+    Astro.request.method === "GET"
+      ? Astro.url.searchParams.get("storageSlug") ?? ""
+      : form?.get("storageSlug");
+
+  if (typeof storageSlug !== "string") {
+    return jsonResponse({ error: "A storageSlug is required." }, 400);
+  }
+
+  if (Astro.request.method === "GET") {
+    return jsonResponse(await listMediaAssets(Astro.request, storageSlug));
+  }
+
+  if (Astro.request.method !== "POST") {
+    return new Response("Method Not Allowed", {
+      status: 405,
+      headers: { Allow: "GET, POST", "Cache-Control": "no-store" },
+    });
+  }
+
+  if (!form) {
+    return jsonResponse({ error: "Expected a multipart/form-data body." }, 400);
+  }
+  const kind = form.get("kind");
+  const rawName = form.get("name");
+  const file = form.get("file");
+  if (kind !== "cover" && kind !== "body") {
+    return jsonResponse({ error: "kind must be \"cover\" or \"body\"." }, 400);
+  }
+  if (!file || typeof file !== "object" || !("arrayBuffer" in file)) {
+    return jsonResponse({ error: "A file is required." }, 400);
+  }
+  // Reject oversized uploads before buffering so a huge body can never pin
+  // memory (validateMediaBytes re-checks the same limit on the bytes).
+  if ("size" in file && typeof file.size === "number" && file.size > MEDIA_MAX_BYTES) {
+    return jsonResponse({ error: "Files must be 5 MB or smaller." }, 400);
+  }
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const verdict = validateMediaBytes(bytes);
+  if (!verdict.ok) return jsonResponse({ error: verdict.reason }, 400);
+
+  const asset = await uploadMediaFile(Astro.request, storageSlug, {
+    kind,
+    rawName: typeof rawName === "string" ? rawName : "image",
+    bytes,
+    type: verdict.type,
+    width: verdict.width,
+    height: verdict.height,
+  });
+  return jsonResponse({ asset }, 201);
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Unable to process the media upload.";
+  const status = error instanceof DraftActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---
