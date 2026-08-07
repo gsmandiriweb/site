@@ -4,12 +4,28 @@
 // product-shaped illusion. CSS is the visual floor when WebGL is unavailable.
 import { Renderer, Triangle, Program, Mesh } from "ogl";
 
-const PALETTE = {
-  deep: [0.045, 0.051, 0.061],
-  air: [0.085, 0.094, 0.108],
-  steel: [0.34, 0.38, 0.42],
-  beam: [0.46, 0.4, 0.3],
-};
+const PALETTES = {
+  dark: {
+    deep: [0.045, 0.051, 0.061],
+    air: [0.085, 0.094, 0.108],
+    steel: [0.34, 0.38, 0.42],
+    beam: [0.46, 0.4, 0.3],
+  },
+  light: {
+    // Warm drafting paper and galvanized blue-steel light. The shader remains
+    // atmospheric, but now belongs to the same light world as the page.
+    deep: [0.82, 0.79, 0.72],
+    air: [0.94, 0.92, 0.86],
+    steel: [0.25, 0.35, 0.46],
+    beam: [0.56, 0.42, 0.22],
+  },
+} as const;
+
+type Palette = (typeof PALETTES)[keyof typeof PALETTES];
+
+function themePalette(): Palette {
+  return document.documentElement.dataset.theme === "light" ? PALETTES.light : PALETTES.dark;
+}
 
 export function initSteelYardHeroShader(container: HTMLElement): (() => void) | null {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
@@ -92,15 +108,31 @@ export function initSteelYardHeroShader(container: HTMLElement): (() => void) | 
     uniforms: {
       uTime: { value: 0 },
       uResolution: { value: [1, 1] },
-      uDeep: { value: PALETTE.deep },
-      uAir: { value: PALETTE.air },
-      uSteel: { value: PALETTE.steel },
-      uBeam: { value: PALETTE.beam },
+      uDeep: { value: PALETTES.dark.deep },
+      uAir: { value: PALETTES.dark.air },
+      uSteel: { value: PALETTES.dark.steel },
+      uBeam: { value: PALETTES.dark.beam },
     },
   });
 
   const geometry = new Triangle(gl);
   const mesh = new Mesh(gl, { geometry, program });
+
+  const applyTheme = () => {
+    const palette = themePalette();
+    program.uniforms.uDeep.value = [...palette.deep];
+    program.uniforms.uAir.value = [...palette.air];
+    program.uniforms.uSteel.value = [...palette.steel];
+    program.uniforms.uBeam.value = [...palette.beam];
+  };
+  applyTheme();
+  const themeObserver = new MutationObserver((mutations) => {
+    if (mutations.some((mutation) => mutation.attributeName === "data-theme")) applyTheme();
+  });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
 
   const resize = () => {
     const width = container.clientWidth;
@@ -152,6 +184,7 @@ export function initSteelYardHeroShader(container: HTMLElement): (() => void) | 
     cancelAnimationFrame(raf);
     resizeObserver.disconnect();
     intersectionObserver.disconnect();
+    themeObserver.disconnect();
     document.removeEventListener("visibilitychange", onVisibilityChange);
     geometry.remove();
     program.remove();

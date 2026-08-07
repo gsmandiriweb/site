@@ -5,18 +5,34 @@
 // through, not flat pictures. The shader is the atmosphere; the photos are the
 // stock. Together they're immersion.
 //
-// Discipline (same as reactiveMesh/materialLibraryShader): lazy-init after first
+// Discipline: lazy-init after first
 // paint, pause offscreen/hidden, prefers-reduced-motion -> no init (static
 // gradient is the floor), no-WebGL -> no init. The page is fully usable without.
 import { Renderer, Triangle, Program, Mesh } from "ogl";
 
-const PALETTE = {
-  air: [0.063, 0.071, 0.082], // #101216 deep yard air
-  airDeep: [0.039, 0.045, 0.055], // #0a0b0e
-  beam: [0.788, 0.706, 0.541], // warm warehouse light #c9b48a
-  steel: [0.561, 0.639, 0.722], // galvanized sheen
-  signal: [0.91, 0.333, 0.118], // signal orange (rare accent)
-};
+const PALETTES = {
+  dark: {
+    air: [0.063, 0.071, 0.082], // #101216 deep yard air
+    airDeep: [0.039, 0.045, 0.055], // #0a0b0e
+    beam: [0.788, 0.706, 0.541], // warm warehouse light #c9b48a
+    steel: [0.561, 0.639, 0.722], // galvanized sheen
+  },
+  light: {
+    // The same warehouse atmosphere translated onto the site's warm drafting
+    // paper. Beams are softened in the shader so additive light does not wash
+    // out the light page or compete with the product photograph.
+    air: [0.94, 0.92, 0.86],
+    airDeep: [0.82, 0.79, 0.72],
+    beam: [0.56, 0.42, 0.22],
+    steel: [0.25, 0.35, 0.46],
+  },
+} as const;
+
+type Palette = (typeof PALETTES)[keyof typeof PALETTES];
+
+function themePalette(): Palette {
+  return document.documentElement.dataset.theme === "light" ? PALETTES.light : PALETTES.dark;
+}
 
 export function initSteelYardAtmosphere(container: HTMLElement): (() => void) | null {
   const probe = document.createElement("canvas");
@@ -62,6 +78,7 @@ export function initSteelYardAtmosphere(container: HTMLElement): (() => void) | 
       uniform vec3 uAirDeep;
       uniform vec3 uBeam;
       uniform vec3 uSteel;
+      uniform float uLightMode;  // 0 for dark yard, 1 for light drafting paper
 
       float hash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
       float noise(vec2 p){
@@ -100,7 +117,8 @@ export function initSteelYardAtmosphere(container: HTMLElement): (() => void) | 
         // Beams brighten toward the top (light comes from above, like warehouse
         // skylights) and fade toward the floor.
         light *= mix(0.4, 1.2, vert);
-        col += light * uBeam * 0.35;
+        // Keep the light expressive in dark mode, but restrained over warm paper.
+        col += light * uBeam * mix(0.35, 0.12, uLightMode);
 
         // ---- Dust / particulate motes suspended in the air. Slow, organic drift. ----
         // Layered fbm so the motes cluster and thin like real dust in a light beam.
@@ -108,11 +126,11 @@ export function initSteelYardAtmosphere(container: HTMLElement): (() => void) | 
         float dust = fbm(dustUv);
         // Motes are brightest where the light is (you see dust in a light beam).
         float motes = smoothstep(0.45, 0.85, dust) * (0.3 + light * 1.5);
-        col += motes * uBeam * 0.12;
+        col += motes * uBeam * mix(0.12, 0.04, uLightMode);
 
         // ---- Scroll depth: as you scroll, the air subtly shifts (parallax of
         //      the space), reinforcing moving through the yard. ----
-        col = mix(col, col * 1.08, smoothstep(0.0, 0.3, uScroll) * 0.3);
+        col = mix(col, col * mix(1.08, 1.02, uLightMode), smoothstep(0.0, 0.3, uScroll) * 0.3);
 
         // ---- Grain: reads as a real photographed space, not a flat fill. ----
         float grain = hash(p * 700.0 + uTime * 0.4) * 0.02;
@@ -120,7 +138,7 @@ export function initSteelYardAtmosphere(container: HTMLElement): (() => void) | 
 
         // ---- Vignette: focus toward center, darker edges (the yard recedes). ----
         float vig = smoothstep(1.25, 0.4, length(uv - 0.5));
-        col *= mix(0.7, 1.0, vig);
+        col *= mix(mix(0.7, 0.9, uLightMode), 1.0, vig);
 
         gl_FragColor = vec4(col, 1.0);
       }
@@ -131,15 +149,34 @@ export function initSteelYardAtmosphere(container: HTMLElement): (() => void) | 
       uMouse: { value: [0.5, 0.5] },
       uMouseStrength: { value: 0 },
       uScroll: { value: 0 },
-      uAir: { value: PALETTE.air },
-      uAirDeep: { value: PALETTE.airDeep },
-      uBeam: { value: PALETTE.beam },
-      uSteel: { value: PALETTE.steel },
+      uAir: { value: PALETTES.dark.air },
+      uAirDeep: { value: PALETTES.dark.airDeep },
+      uBeam: { value: PALETTES.dark.beam },
+      uSteel: { value: PALETTES.dark.steel },
+      uLightMode: { value: 0 },
     },
   });
 
   const geometry = new Triangle(glCtx);
   const mesh = new Mesh(glCtx, { geometry, program });
+
+  const applyTheme = () => {
+    const light = document.documentElement.dataset.theme === "light";
+    const palette = themePalette();
+    program.uniforms.uAir.value = [...palette.air];
+    program.uniforms.uAirDeep.value = [...palette.airDeep];
+    program.uniforms.uBeam.value = [...palette.beam];
+    program.uniforms.uSteel.value = [...palette.steel];
+    program.uniforms.uLightMode.value = light ? 1 : 0;
+  };
+  applyTheme();
+  const themeObserver = new MutationObserver((mutations) => {
+    if (mutations.some((mutation) => mutation.attributeName === "data-theme")) applyTheme();
+  });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
 
   function resize() {
     const w = container.clientWidth;
@@ -220,6 +257,7 @@ export function initSteelYardAtmosphere(container: HTMLElement): (() => void) | 
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("scroll", onScroll);
     document.removeEventListener("visibilitychange", onVis);
+    themeObserver.disconnect();
     geometry.remove();
     program.remove();
     const ext = renderer.gl.getExtension("WEBGL_lose_context");
