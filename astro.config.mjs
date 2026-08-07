@@ -26,11 +26,6 @@ const skipAdapter = cmd === "dev" || cmd === "check" || cmd === "sync";
 export default defineConfig({
   site: "https://site.gsmandiri-web.workers.dev",
   integrations: [react()],
-  // The legacy prototype route is preserved as a redirect to the canonical
-  // dashboard (ADR 0012). Astro emits a static meta-refresh redirect page.
-  redirects: {
-    "/prototype-cms": "/admin",
-  },
   vite: {
     plugins: [tailwindcss()],
   },
