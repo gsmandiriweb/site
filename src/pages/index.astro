@@ -90,10 +90,10 @@ const fmtBlogDate = (date: Date) =>
     </div>
     <div class="hero__grid">
       <div class="hero__content" data-reveal>
-        <span class="hero__eyebrow">PAGAR BRC &amp; MATERIAL KONSTRUKSI</span>
+        <span class="hero__eyebrow">HARGA PABRIK · MATERIAL UNTUK PROYEK</span>
         <h1 class="hero__title" id="hero-title">
-          <span class="hero__title-mask"><span class="hero__title-line" data-line>Mulai dari spesifikasi.</span></span>
-          <span class="hero__title-mask"><span class="hero__title-line hero__title-line--accent" data-line>Berangkat ke proyek.</span></span>
+          <span class="hero__title-mask"><span class="hero__title-line" data-line>Harga pabrik.</span></span>
+          <span class="hero__title-mask"><span class="hero__title-line hero__title-line--accent" data-line>Kualitas prima.</span></span>
         </h1>
         <p class="hero__lede">BSM memasok pagar BRC, atap, bondek, dan material konstruksi dari Surabaya. Periksa spesifikasi produk, lalu sampaikan kebutuhan, volume, dan lokasi proyek untuk mendapatkan penawaran harga pabrik dengan pengiriman ke seluruh Indonesia.</p>
         <div class="hero__actions">
@@ -576,14 +576,14 @@ const fmtBlogDate = (date: Date) =>
   .hero__field-marker--bottom::before { display: none; }
   .hero__grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.08fr); align-items: center; gap: clamp(2.5rem, 7vw, 8rem); width: min(1180px, 100%); margin: 0 auto; }
   .hero__content { max-width: 35rem; }
-  .hero__eyebrow { display: block; margin-bottom: 1rem; font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.16em; line-height: 1.3; color: var(--beam); }
-  .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 118%; font-size: clamp(2.35rem, 4.9vw, 4.45rem); line-height: 0.94; letter-spacing: -0.03em; margin-bottom: 1.2rem; text-wrap: balance; }
+  .hero__eyebrow { display: block; margin-bottom: 1.25rem; font-family: var(--fm); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; line-height: 1.3; color: var(--beam); }
+  .hero__title { font-family: var(--fd); font-weight: 800; font-stretch: 125%; font-size: clamp(2.4rem, 6vw, 4.6rem); line-height: 0.98; letter-spacing: -0.02em; margin-bottom: 1.35rem; text-wrap: balance; }
   .hero__title-mask { display: block; overflow: hidden; }
   .hero__title-line { display: block; }
   .hero__title-line--accent { color: var(--yard-accent); }
-  .hero__lede { font-size: clamp(1rem, 1.35vw, 1.1rem); line-height: 1.62; color: var(--theme-text); opacity: 0.88; max-width: 43ch; margin-bottom: 2.15rem; }
+  .hero__lede { font-size: clamp(1.0625rem, 1.5vw, 1.15rem); line-height: 1.62; color: var(--theme-text); opacity: 0.92; max-width: 40ch; margin-bottom: 2.15rem; }
   .hero__actions { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-  .hero__actions .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 3.15rem; font-size: 0.76rem; letter-spacing: 0.11em; }
+  .hero__actions .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 3.15rem; font-size: 0.75rem; letter-spacing: 0.12em; }
   .hero__intent { margin-top: 1.35rem; padding-top: 0.9rem; border-top: 1px solid rgba(130,138,147,0.2); max-width: 35rem; }
   .hero__intent-label { display: block; margin-bottom: 0.45rem; font-family: var(--fm); font-size: 0.61rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yard-steel); }
   .hero__intent-links { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; }
@@ -641,15 +641,15 @@ const fmtBlogDate = (date: Date) =>
      makes the CTA and the beginning of the warehouse story visible together;
      the portrait plate is sized inside that explicit budget. */
   @media (min-width: 861px) {
-    .hero { height: auto; min-height: 0; padding: clamp(4rem, 7svh, 5rem) clamp(1rem, 5vw, 4rem) clamp(1rem, 2svh, 1.5rem); }
+    .hero { height: auto; min-height: 0; padding: calc(64px + clamp(1rem, 3svh, 2rem)) clamp(1rem, 5vw, 4rem) clamp(1rem, 2svh, 1.5rem); }
     .hero__grid { gap: clamp(1.75rem, 4vw, 4rem); }
     .hero__plate-image { height: clamp(260px, 40svh, 390px); }
     .hero__scroll { display: none; }
   }
   @media (min-width: 1060px) and (max-height: 700px) {
-    .hero { min-height: 0; padding-top: 3.75rem; padding-bottom: 0.75rem; }
+    .hero { min-height: 0; padding-top: 5rem; padding-bottom: 0.75rem; }
     .hero__grid { gap: 1.5rem; }
-    .hero__title { font-size: clamp(2.25rem, 4.7vw, 3.8rem); margin-bottom: 1.25rem; }
+    .hero__title { font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 1.35rem; }
     .hero__lede { margin-bottom: 1.35rem; }
     .hero__proof { margin-top: 1.5rem; }
     .hero__plate-image { height: 260px; }
@@ -660,7 +660,7 @@ const fmtBlogDate = (date: Date) =>
   @media (min-width: 861px) and (max-width: 1059px) {
     .hero { height: auto; min-height: 0; padding-top: 5rem; padding-bottom: 2rem; }
     .hero__grid { gap: 1.5rem; }
-    .hero__title { font-size: clamp(2.35rem, 4.6vw, 3.8rem); margin-bottom: 1.25rem; }
+    .hero__title { font-size: clamp(2.6rem, 5vw, 4rem); margin-bottom: 1.35rem; }
     .hero__lede { margin-bottom: 1.5rem; }
     .hero__proof { margin-top: 1.75rem; }
     .hero__plate-image { height: clamp(260px, calc(100svh - 19rem), 360px); }
@@ -690,8 +690,8 @@ const fmtBlogDate = (date: Date) =>
   }
   @media (max-width: 520px) {
     .hero { padding-inline: 1rem; }
-    .hero__title { font-size: clamp(2.3rem, 11vw, 3.35rem); line-height: 0.94; margin-bottom: 1rem; }
-    .hero__eyebrow { margin-bottom: 0.8rem; font-size: 0.62rem; letter-spacing: 0.12em; }
+    .hero__title { font-size: clamp(2.55rem, 12vw, 3.8rem); line-height: 0.96; letter-spacing: -0.02em; margin-bottom: 1.1rem; }
+    .hero__eyebrow { margin-bottom: 0.9rem; font-size: 0.68rem; letter-spacing: 0.1em; }
     .hero__lede { margin-bottom: 1.6rem; }
     .hero__actions { display: grid; grid-template-columns: 1fr; gap: 0.7rem; }
     .hero__intent { margin-top: 1.1rem; }
