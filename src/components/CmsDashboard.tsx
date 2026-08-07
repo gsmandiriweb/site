@@ -369,6 +369,56 @@ export default function CmsDashboard({
   const selectedStorageSlugRef = useRef(initialPosts[selectedPost].storageSlug);
 
   useEffect(() => {
+    const root = document.documentElement;
+    const button = document.querySelector<HTMLButtonElement>("[data-cms-theme-toggle]");
+    const label = button?.querySelector<HTMLElement>("[data-cms-theme-label]");
+    const applyTheme = (theme: "light" | "dark") => {
+      const light = theme === "light";
+      root.dataset.theme = theme;
+      button?.setAttribute("aria-pressed", String(light));
+      button?.setAttribute("aria-label", light ? "Activate dark mode" : "Activate light mode");
+      button?.setAttribute("title", light ? "Activate dark mode" : "Activate light mode");
+      if (label) label.textContent = light ? "Dark" : "Light";
+    };
+    let stored: string | null = null;
+    try {
+      stored = window.localStorage.getItem("bsm-theme");
+    } catch {
+      // Restricted storage should not prevent the dashboard from rendering.
+    }
+    applyTheme(
+      stored === "light" || stored === "dark"
+        ? stored
+        : root.dataset.theme === "light"
+          ? "light"
+          : "dark",
+    );
+    const onClick = () => {
+      const next = root.dataset.theme === "light" ? "dark" : "light";
+      applyTheme(next);
+      try {
+        window.localStorage.setItem("bsm-theme", next);
+      } catch {
+        // Restricted storage should not prevent switching.
+      }
+    };
+    const onSystemThemeChange = (event: MediaQueryListEvent) => {
+      try {
+        if (!window.localStorage.getItem("bsm-theme")) applyTheme(event.matches ? "light" : "dark");
+      } catch {
+        applyTheme(event.matches ? "light" : "dark");
+      }
+    };
+    const systemTheme = window.matchMedia("(prefers-color-scheme: light)");
+    button?.addEventListener("click", onClick);
+    systemTheme.addEventListener("change", onSystemThemeChange);
+    return () => {
+      button?.removeEventListener("click", onClick);
+      systemTheme.removeEventListener("change", onSystemThemeChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isPreviewOpen && !isHelpOpen && !isMediaOpen) return;
     restoreFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -959,6 +1009,17 @@ export default function CmsDashboard({
               <option value="editor">Editor</option>
             </select>
           </label>
+          <button
+            type="button"
+            className="cms-theme-toggle"
+            data-cms-theme-toggle
+            aria-pressed="false"
+            aria-label="Activate light mode"
+            title="Activate light mode"
+          >
+            <span aria-hidden="true">☼</span>
+            <span data-cms-theme-label>Light</span>
+          </button>
           <Button
             variant="ghost"
             size="icon"

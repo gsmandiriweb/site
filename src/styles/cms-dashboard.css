@@ -1695,3 +1695,115 @@ body:has([data-cms-dashboard]) {
     width: 100%;
   }
 }
+
+/* Theme parity: the CMS keeps its control-room geometry while swapping its
+   near-black surfaces for warm editorial paper in light mode. */
+.cms-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--cms-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cms-muted);
+  cursor: pointer;
+  font: 600 9px var(--font-mono, monospace);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cms-theme-toggle:hover,
+.cms-theme-toggle:focus-visible {
+  border-color: var(--cms-beam);
+  color: var(--cms-ink);
+  outline: 2px solid var(--cms-beam);
+  outline-offset: 2px;
+}
+html[data-theme="light"] {
+  --cms-paper: #f3efe5;
+  --cms-surface: #fffaf2;
+  --cms-surface-raised: #f7f1e6;
+  --cms-surface-soft: #e7e0d2;
+  --cms-line: #17212b2e;
+  --cms-line-strong: #694b1f80;
+  --cms-ink: #17212b;
+  --cms-muted: #46545f;
+  --cms-beam: #694b1f;
+  --cms-orange: #8f2f09;
+  --cms-green: #287044;
+  --cms-red: #a5362d;
+  --cms-shadow: 0 24px 60px #17212b24;
+}
+html[data-theme="light"] body:has([data-cms-dashboard]) {
+  background: var(--cms-paper);
+  color: var(--cms-ink);
+}
+html[data-theme="light"] .cms-dashboard {
+  background: radial-gradient(circle at 75% -15%, #694b1f14, transparent 34%), var(--cms-paper);
+}
+html[data-theme="light"] .cms-topbar {
+  background: #f3efe5e8;
+}
+html[data-theme="light"] .cms-sidebar {
+  background: linear-gradient(#fffaf2f5, #f3efe5f0);
+}
+html[data-theme="light"] .cms-nav button:hover,
+html[data-theme="light"] .cms-nav button.is-active,
+html[data-theme="light"] .cms-nav button[aria-pressed="true"],
+html[data-theme="light"] .cms-post-list button:hover,
+html[data-theme="light"] .cms-post-list button.is-selected,
+html[data-theme="light"] .cms-post-list button[aria-pressed="true"] {
+  background: #17212b0d;
+}
+html[data-theme="light"] .cms-editor-tabs {
+  background: #e7e0d294;
+}
+html[data-theme="light"] .cms-notice {
+  color: #1f5b35;
+  background: #28704414;
+  border-color: #28704466;
+}
+html[data-theme="light"] .cms-error {
+  color: #7f241e;
+  background: #a5362d12;
+  border-color: #a5362d66;
+}
+html[data-theme="light"] .cms-modal-backdrop {
+  background: #17212bb8;
+}
+html[data-theme="light"] .cms-wysiwyg__content {
+  color: var(--cms-ink);
+}
+html[data-theme="light"] .cms-wysiwyg .mdxeditor {
+  --accentBase: #694b1f;
+  --accentBg: #694b1f1f;
+  --baseBase: #fffaf2;
+  --baseBg: transparent;
+  --baseBgSubtle: #f7f1e6;
+  --baseBgHover: #e7e0d2;
+  --baseBgActive: #d9d0bf;
+  --baseLine: #17212b2e;
+  --baseBorder: #17212b2e;
+  --baseText: #17212b;
+  --baseTextContrast: #17212b;
+  --baseTextSecondary: #46545f;
+  --baseTextSecondaryContrast: #33434e;
+}
+html[data-theme="light"] .cms-wysiwyg__content code,
+html[data-theme="light"] .cms-markdown-input,
+html[data-theme="light"] .cms-markdown,
+html[data-theme="light"] .cms-wysiwyg__content pre,
+html[data-theme="light"] .cms-markdown-input:focus {
+  background: #f0e9dc;
+  color: #33434e;
+}
+html[data-theme="light"] .cms-ui-button--secondary {
+  color: #fffaf2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cms-theme-toggle {
+    transition: none;
+  }
+}

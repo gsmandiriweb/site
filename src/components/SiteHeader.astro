@@ -1,71 +1,117 @@
 ---
 import Logo from "./Logo.astro";
-import { u } from "../utils/url.ts";
+import { quoteLink, u } from "../utils/url.ts";
+
 const path = Astro.url.pathname;
 const isActive = (href: string) =>
-  !href.includes("#") &&
-  (href === u("/") ? path === u("/") : path.startsWith(href));
+  href === u("/") ? path === u("/") : path.startsWith(href);
 ---
 <header class="site-header">
-  <div class="wrap site-header__bar">
-    <a class="brand" href={u("/")} aria-label="Beranda Bangun Sarana Makmur">
-      <span class="brand__mark"><Logo /></span>
-      <span class="brand__text">
-        <span class="brand__mark-t">Bangun Sarana Makmur</span>
-        <span class="brand__sub">MATERIAL / DISTRIBUSI · SURABAYA</span>
-      </span>
+  <nav class="nav" aria-label="Navigasi utama">
+    <a class="nav__brand" href={u("/")} aria-label="Beranda Bangun Sarana Makmur">
+      <Logo />
     </a>
-    <nav class="nav" aria-label="Navigasi utama">
-      <div class="nav__links">
-        <a href={u("/")} aria-current={isActive(u("/")) ? "page" : undefined}>Beranda</a>
-        <a href={u("/kategori")} aria-current={isActive(u("/kategori")) ? "page" : undefined}>Produk</a>
-        <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Catatan</a>
-        <a href={u("/#kontak")}>Kontak</a>
-      </div>
-      <a class="btn btn--primary nav__cta" href={u("/penawaran")}>Minta Penawaran</a>
-      <button
-        class="nav__toggle"
-        type="button"
-        aria-expanded="false"
-        aria-controls="mobile-menu"
-        aria-label="Buka menu"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-          <path d="M4 7h16M4 12h16M4 17h16" />
-        </svg>
-      </button>
-    </nav>
-  </div>
+    <div class="nav__links">
+      <a href={u("/")} aria-current={isActive(u("/")) ? "page" : undefined}>Beranda</a>
+      <a href={u("/katalog")} aria-current={isActive(u("/katalog")) ? "page" : undefined}>Katalog</a>
+      <a href={u("/pagar-brc")} aria-current={isActive(u("/pagar-brc")) ? "page" : undefined}>Pagar BRC</a>
+      <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
+    </div>
+    <a class="nav__wa" href={quoteLink()}>Minta Penawaran</a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Aktifkan mode terang" title="Aktifkan mode terang">
+      <span class="theme-toggle__icon" aria-hidden="true">☼</span>
+      <span class="theme-toggle__text">Terang</span>
+    </button>
+    <button
+      class="nav__toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      aria-label="Buka menu"
+    >
+      <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </nav>
   <div class="nav__mobile" id="mobile-menu" hidden>
     <a href={u("/")} aria-current={isActive(u("/")) ? "page" : undefined}>Beranda</a>
-    <a href={u("/kategori")} aria-current={isActive(u("/kategori")) ? "page" : undefined}>Produk</a>
-    <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Catatan</a>
-    <a href={u("/#kontak")}>Kontak</a>
-    <a class="btn btn--primary" href={u("/penawaran")}>Minta Penawaran</a>
+    <a href={u("/katalog")} aria-current={isActive(u("/katalog")) ? "page" : undefined}>Katalog</a>
+    <a href={u("/pagar-brc")} aria-current={isActive(u("/pagar-brc")) ? "page" : undefined}>Pagar BRC</a>
+    <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
+    <button class="theme-toggle theme-toggle--mobile" type="button" data-theme-toggle aria-pressed="false" aria-label="Aktifkan mode terang" title="Aktifkan mode terang">
+      <span class="theme-toggle__icon" aria-hidden="true">☼</span>
+      <span class="theme-toggle__text">Mode terang</span>
+    </button>
+    <a class="nav__mobile-cta" href={quoteLink()}>Minta Penawaran →</a>
   </div>
 </header>
 
 <script>
-  const btn = document.querySelector(".nav__toggle");
-  const menu = document.getElementById("mobile-menu");
-  btn?.addEventListener("click", () => {
-    const open = menu?.hasAttribute("hidden") ?? false;
-    if (!menu) return;
-    if (open) {
-      menu.removeAttribute("hidden");
-      btn.setAttribute("aria-expanded", "true");
-      btn.setAttribute("aria-label", "Tutup menu");
+  const navToggle = document.querySelector<HTMLButtonElement>(".nav__toggle");
+  const mobileMenu = document.getElementById("mobile-menu");
+  const closeMobileMenu = () => {
+    mobileMenu?.setAttribute("hidden", "");
+    navToggle?.setAttribute("aria-expanded", "false");
+    navToggle?.setAttribute("aria-label", "Buka menu");
+  };
+
+  navToggle?.addEventListener("click", () => {
+    if (!mobileMenu) return;
+    const isOpen = !mobileMenu.hasAttribute("hidden");
+    if (isOpen) {
+      closeMobileMenu();
     } else {
-      menu.setAttribute("hidden", "");
-      btn.setAttribute("aria-expanded", "false");
-      btn.setAttribute("aria-label", "Buka menu");
+      mobileMenu.removeAttribute("hidden");
+      navToggle.setAttribute("aria-expanded", "true");
+      navToggle.setAttribute("aria-label", "Tutup menu");
     }
   });
-  menu?.querySelectorAll("a").forEach((a) =>
-    a.addEventListener("click", () => {
-      menu.setAttribute("hidden", "");
-      btn?.setAttribute("aria-expanded", "false");
-      btn?.setAttribute("aria-label", "Buka menu");
+
+  mobileMenu?.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMobileMenu));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && mobileMenu && !mobileMenu.hasAttribute("hidden")) {
+      closeMobileMenu();
+      navToggle?.focus();
+    }
+  });
+
+  const themeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-theme-toggle]"));
+  const themeRoot = document.documentElement;
+  const applyTheme = (theme: "light" | "dark") => {
+    themeRoot.dataset.theme = theme;
+    themeButtons.forEach((button) => {
+      const light = theme === "light";
+      button.setAttribute("aria-pressed", String(light));
+      button.setAttribute("aria-label", light ? "Aktifkan mode gelap" : "Aktifkan mode terang");
+      button.setAttribute("title", light ? "Aktifkan mode gelap" : "Aktifkan mode terang");
+      const label = button.querySelector<HTMLElement>(".theme-toggle__text");
+      if (label) label.textContent = button.classList.contains("theme-toggle--mobile")
+        ? light ? "Mode gelap" : "Mode terang"
+        : light ? "Gelap" : "Terang";
+      const icon = button.querySelector<HTMLElement>(".theme-toggle__icon");
+      if (icon) icon.textContent = light ? "☾" : "☼";
+    });
+  };
+
+  themeButtons.forEach((button) =>
+    button.addEventListener("click", () => {
+      const nextTheme = themeRoot.dataset.theme === "light" ? "dark" : "light";
+      applyTheme(nextTheme);
+      try {
+        window.localStorage.setItem("bsm-theme", nextTheme);
+      } catch {
+        // Private browsing or blocked storage should not prevent switching.
+      }
     })
   );
+  applyTheme(themeRoot.dataset.theme === "light" ? "light" : "dark");
+  const systemTheme = window.matchMedia("(prefers-color-scheme: light)");
+  systemTheme.addEventListener("change", (event) => {
+    try {
+      if (!window.localStorage.getItem("bsm-theme")) {
+        applyTheme(event.matches ? "light" : "dark");
+      }
+    } catch {
+      applyTheme(event.matches ? "light" : "dark");
+    }
+  });
 </script>

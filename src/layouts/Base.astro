@@ -1,7 +1,6 @@
 ---
 import "../styles/global.css";
 import "../styles/starwind.css";
-import { u } from "../utils/url.ts";
 import logoSrc from "../images/logo.png";
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
@@ -20,6 +19,18 @@ const desc =
     <link rel="icon" type="image/png" href={logoSrc.src} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script is:inline>
+      (function () {
+        try {
+          var stored = window.localStorage.getItem("bsm-theme");
+          var theme = stored === "light" || stored === "dark"
+            ? stored
+            : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          document.documentElement.dataset.theme = theme;
+        } catch {
+          document.documentElement.dataset.theme = "dark";
+        }
+      })();
+
       // Mark that JS is present and about to animate, so CSS can pre-hide hero
       // pieces without a flash. The 3s fallback guarantees content is never
       // left hidden if the animation bundle fails to load.

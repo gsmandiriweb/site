@@ -16,6 +16,19 @@ const isAuthenticated = Boolean(await readAdminSession(Astro.request));
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow, noarchive" />
+    <script is:inline>
+      (function () {
+        try {
+          var stored = window.localStorage.getItem("bsm-theme");
+          var theme = stored === "light" || stored === "dark"
+            ? stored
+            : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          document.documentElement.dataset.theme = theme;
+        } catch {
+          document.documentElement.dataset.theme = "dark";
+        }
+      })();
+    </script>
     <title>BSM Editorial Control</title>
   </head>
   <body>
