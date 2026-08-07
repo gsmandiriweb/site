@@ -17,30 +17,27 @@ const isActive = (href: string) =>
       <a href={u("/pagar-brc")} aria-current={isActive(u("/pagar-brc")) ? "page" : undefined}>Pagar BRC</a>
       <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
     </div>
-    <a class="nav__wa" href={quoteLink()}>Minta Penawaran</a>
-    <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Aktifkan mode terang" title="Aktifkan mode terang">
-      <span class="theme-toggle__icon" aria-hidden="true">☼</span>
-      <span class="theme-toggle__text">Terang</span>
-    </button>
-    <button
-      class="nav__toggle"
+    <div class="nav__actions">
+      <a class="nav__wa" href={quoteLink()}>Minta Penawaran</a>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Aktifkan mode terang" title="Aktifkan mode terang">
+        <span class="theme-toggle__icon" aria-hidden="true">☼</span>
+      </button>
+      <button
+        class="nav__toggle"
       type="button"
       aria-expanded="false"
       aria-controls="mobile-menu"
       aria-label="Buka menu"
     >
-      <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
-    </button>
+        <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+      </button>
+    </div>
   </nav>
   <div class="nav__mobile" id="mobile-menu" hidden>
     <a href={u("/")} aria-current={isActive(u("/")) ? "page" : undefined}>Beranda</a>
     <a href={u("/katalog")} aria-current={isActive(u("/katalog")) ? "page" : undefined}>Katalog</a>
     <a href={u("/pagar-brc")} aria-current={isActive(u("/pagar-brc")) ? "page" : undefined}>Pagar BRC</a>
     <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
-    <button class="theme-toggle theme-toggle--mobile" type="button" data-theme-toggle aria-pressed="false" aria-label="Aktifkan mode terang" title="Aktifkan mode terang">
-      <span class="theme-toggle__icon" aria-hidden="true">☼</span>
-      <span class="theme-toggle__text">Mode terang</span>
-    </button>
     <a class="nav__mobile-cta" href={quoteLink()}>Minta Penawaran →</a>
   </div>
 </header>
@@ -83,10 +80,6 @@ const isActive = (href: string) =>
       button.setAttribute("aria-pressed", String(light));
       button.setAttribute("aria-label", light ? "Aktifkan mode gelap" : "Aktifkan mode terang");
       button.setAttribute("title", light ? "Aktifkan mode gelap" : "Aktifkan mode terang");
-      const label = button.querySelector<HTMLElement>(".theme-toggle__text");
-      if (label) label.textContent = button.classList.contains("theme-toggle--mobile")
-        ? light ? "Mode gelap" : "Mode terang"
-        : light ? "Gelap" : "Terang";
       const icon = button.querySelector<HTMLElement>(".theme-toggle__icon");
       if (icon) icon.textContent = light ? "☾" : "☼";
     });

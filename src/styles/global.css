@@ -2332,10 +2332,10 @@ body::before {
   width: 100%;
   min-height: 64px;
   padding: 0.85rem clamp(1rem, 4vw, 3rem);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(2rem, 1fr) auto minmax(2rem, 1fr);
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: clamp(0.75rem, 2vw, 2rem);
 }
 .site-header .nav__brand {
   display: inline-flex;
@@ -2352,7 +2352,10 @@ body::before {
 }
 .site-header .nav__links {
   display: flex;
-  gap: 1.6rem;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 2.2vw, 1.8rem);
+  min-width: 0;
 }
 .site-header .nav__links a {
   position: relative;
@@ -2386,6 +2389,13 @@ body::before {
 .site-header .nav__links a:hover::after,
 .site-header .nav__links a[aria-current="page"]::after {
   transform: scaleX(1);
+}
+.site-header .nav__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  min-width: 0;
 }
 .site-header .nav__wa {
   display: inline-flex;
@@ -2480,16 +2490,6 @@ body::before {
   .site-header .nav {
     min-height: 60px;
   }
-  .site-header .nav__links,
-  .site-header .nav__wa {
-    display: none;
-  }
-  .site-header .nav__toggle {
-    display: grid;
-  }
-  .site-header .nav__mobile:not([hidden]) {
-    display: grid;
-  }
 }
 @media (min-width: 761px) {
   #app > main {
@@ -2499,7 +2499,8 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .site-header .nav__links a,
   .site-header .nav__links a::after,
-  .site-header .nav__wa {
+  .site-header .nav__wa,
+  .site-header .theme-toggle {
     transition: none;
   }
 }
@@ -2588,15 +2589,16 @@ html[data-theme="light"] .site-footer a {
   color: #f3efe5;
 }
 
-/* The theme control is deliberately compact: it reads as a mode switch, not
-   a competing CTA, and remains available next to the mobile menu trigger. */
+/* The theme control is an icon-only utility: it stays quiet beside the
+   primary quote action while its accessible label and title explain the state. */
 .site-header .theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  min-width: 5.35rem;
-  padding: 0.45rem 0.6rem;
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
   border: 1px solid rgba(130, 138, 147, 0.42);
   border-radius: 3px;
   background: transparent;
@@ -2621,34 +2623,19 @@ html[data-theme="light"] .site-footer a {
   font-size: 1rem;
   line-height: 0.8;
 }
-.site-header .theme-toggle--mobile {
-  display: none;
-}
-@media (max-width: 760px) {
-  .site-header .theme-toggle {
-    min-width: 2.5rem;
-    width: 2.5rem;
-    height: 2.5rem;
-    padding: 0;
+@media (max-width: 900px) {
+  .site-header .nav {
+    grid-template-columns: minmax(2rem, 1fr) auto;
   }
-  .site-header .theme-toggle__text {
+  .site-header .nav__links,
+  .site-header .nav__wa {
     display: none;
   }
-  .site-header .theme-toggle--mobile {
-    display: inline-flex;
-    width: 100%;
-    height: auto;
-    min-height: 2.75rem;
-    justify-content: flex-start;
-    padding: 0.75rem 0.2rem;
-    border: 0;
-    border-bottom: 1px solid rgba(130, 138, 147, 0.14);
-    border-radius: 0;
-    color: var(--yard-steel);
-    text-align: left;
+  .site-header .nav__toggle {
+    display: grid;
   }
-  .site-header .theme-toggle--mobile .theme-toggle__text {
-    display: inline;
+  .site-header .nav__mobile:not([hidden]) {
+    display: grid;
   }
 }
 html[data-theme="light"] .site-header .theme-toggle {
