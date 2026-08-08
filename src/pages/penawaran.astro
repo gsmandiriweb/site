@@ -27,6 +27,7 @@ const roles = [
   "Pribadi / Renovasi",
 ];
 const units = ["lembar", "batang", "m²", "m", "unit", "set"];
+const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug, name })));
 ---
 
 <Base
@@ -49,13 +50,13 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
   </section>
 
   <!-- ===================== CONFIGURATOR ===================== -->
-  <section class="section wrap" style="padding-top:0" aria-labelledby="config-title">
+  <section class="section wrap" style="padding-top:clamp(3.5rem, 8vw, 6rem)" aria-labelledby="config-title">
     <div class="section-head">
       <span class="label">Formulir Penawaran</span>
       <h2 class="headline" id="config-title">Rincian kebutuhan material</h2>
     </div>
 
-    <form class="rfq" id="rfq-form" data-lines={linesJson} data-wa={WA_NUMBER} novalidate>
+    <form class="rfq" id="rfq-form" data-lines={linesJson} data-categories={categoriesJson} data-wa={WA_NUMBER} novalidate>
       <fieldset class="rfq__intent" aria-labelledby="rfq-intent-title">
         <legend class="label" id="rfq-intent-title">Konteks kebutuhan <span class="rfq__optional">· opsional</span></legend>
         <div class="rfq__intent-options">
@@ -71,59 +72,52 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
         <p class="rfq__intent-note" id="rfq-intent-note">Pilihan ini hanya membantu tim memahami kebutuhan Anda; alurnya tetap sama.</p>
       </fieldset>
 
-      <div class="rfq__grid">
-        {/* Category */}
-        <div class="rfq__field">
-          <label class="label" for="rfq-category">Kategori material</label>
-          <NativeSelect id="rfq-category" name="category" required size="md">
-            <option value="">— Pilih kategori —</option>
-            {categories.map((c) => (
-              <option value={c.slug}>{c.name}</option>
-            ))}
-          </NativeSelect>
-        </div>
-
-        {/* Product (dependent on category) */}
-        <div class="rfq__field">
-          <label class="label" for="rfq-product">Produk / lini</label>
-          <NativeSelect id="rfq-product" name="product" required disabled size="md">
-            <option value="">— Pilih kategori dulu —</option>
-          </NativeSelect>
-          <span class="rfq__hint" id="rfq-spec-hint" aria-live="polite"></span>
-        </div>
-
-        {/* Quantity + unit */}
-        <div class="rfq__field rfq__field--qty">
-          <label class="label" for="rfq-qty">Jumlah</label>
-          <div class="rfq__qty">
-            <Input id="rfq-qty" name="qty" type="number" min="1" step="1" inputmode="numeric" placeholder="mis. 100" required size="md" />
-            <NativeSelect id="rfq-unit" name="unit" aria-label="Satuan" size="md">
-              {units.map((u2) => (
-                <option value={u2}>{u2}</option>
-              ))}
-            </NativeSelect>
+      <div class="rfq__items" id="rfq-items" aria-live="polite"></div>
+      <template id="rfq-item-template">
+        <article class="rfq__item">
+          <div class="rfq__item-head">
+            <span class="rfq__item-title">Material 1</span>
+            <button class="rfq__remove-item" type="button">Hapus</button>
           </div>
-        </div>
+          <div class="rfq__item-grid">
+            <div class="rfq__field">
+              <label class="label" for="rfq-category-template">Kategori material</label>
+              <NativeSelect id="rfq-category-template" data-role="category" name="items[0][category]" required size="md">
+                <option value="">— Pilih kategori —</option>
+                {categories.map((c) => (
+                  <option value={c.slug}>{c.name}</option>
+                ))}
+              </NativeSelect>
+            </div>
+            <div class="rfq__field">
+              <label class="label" for="rfq-product-template">Produk / lini</label>
+              <NativeSelect id="rfq-product-template" data-role="product" name="items[0][product]" required disabled size="md">
+                <option value="">— Pilih kategori dulu —</option>
+              </NativeSelect>
+            </div>
+            <div class="rfq__field">
+              <label class="label" for="rfq-qty-template">Jumlah</label>
+              <Input id="rfq-qty-template" data-role="quantity" name="items[0][qty]" type="number" min="1" step="1" inputmode="numeric" placeholder="mis. 100" required size="md" />
+            </div>
+            <div class="rfq__field">
+              <label class="label" for="rfq-unit-template">Satuan</label>
+              <NativeSelect id="rfq-unit-template" data-role="unit" name="items[0][unit]" aria-label="Satuan" size="md">
+                {units.map((u2) => (
+                  <option value={u2}>{u2}</option>
+                ))}
+              </NativeSelect>
+            </div>
+            <span class="rfq__item-hint" data-role="hint" aria-live="polite"></span>
+          </div>
+        </article>
+      </template>
+      <button class="rfq__add-item" id="rfq-add-item" type="button">+ Tambah material lain</button>
 
+      <div class="rfq__meta-grid">
         {/* Project location */}
         <div class="rfq__field">
           <label class="label" for="rfq-location">Lokasi proyek / kota</label>
           <Input id="rfq-location" name="location" type="text" placeholder="mis. Surabaya, Jakarta, Balikpapan…" required size="md" />
-        </div>
-
-        {/* BRC quantity helper: deliberately narrow and assumption-bound. */}
-        <div class="rfq__field rfq__field--full rfq__helper" id="brc-helper" hidden>
-          <div class="rfq__helper-head">
-            <span class="label">Bantu hitung panel BRC · perkiraan awal</span>
-            <span class="rfq__helper-tag">BRC · 2,4 m / panel</span>
-          </div>
-          <label class="label" for="rfq-run">Panjang bentang pagar</label>
-          <div class="rfq__qty rfq__helper-input">
-            <Input id="rfq-run" name="run" type="number" min="0.1" step="0.1" inputmode="decimal" placeholder="mis. 24" size="md" />
-            <span class="rfq__unit-static">meter</span>
-          </div>
-          <output class="rfq__estimate" id="rfq-estimate" aria-live="polite"></output>
-          <p class="rfq__helper-note">Perkiraan minimum panel = pembulatan ke atas panjang ÷ 2,4 m. Belum termasuk tiang, pintu, sudut, kemiringan, waste, pemasangan, harga, stok, atau pengiriman.</p>
         </div>
 
         {/* Buyer role */}
@@ -151,12 +145,9 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
       </div>
 
       <div class="rfq__actions">
-        <button type="submit" class="btn btn--primary rfq__submit" id="rfq-submit" disabled aria-describedby="rfq-status">
+        <button type="submit" class="btn btn--primary rfq__submit" id="rfq-submit" aria-describedby="rfq-status">
           Buka WhatsApp dengan permintaan ini
         </button>
-        <span class="rfq__disclaimer label">
-          WhatsApp hanya dibuka setelah rincian wajib lengkap dan pratinjau siap.
-        </span>
       </div>
       <p class="rfq__status" id="rfq-status" role="status" aria-live="polite" hidden></p>
     </form>
@@ -182,19 +173,19 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
   .rfq__intent-option:has(input:checked) { border-color: var(--blueprint); background: rgba(201, 180, 138, 0.12); }
   .rfq__intent-option input { width: auto; accent-color: var(--blueprint); }
   .rfq__intent-option span { font-size: 0.92rem; }
-  .rfq__intent-note, .rfq__helper-note { margin-top: 0.55rem; color: var(--ink-muted); font-size: 0.82rem; line-height: 1.5; }
-  .rfq__helper { padding: 1rem; border: 1px solid var(--blueprint); border-radius: var(--r-md); background: rgba(201, 180, 138, 0.08); }
-  .rfq__helper-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.7rem; }
-  .rfq__helper-tag { font-family: var(--font-mono); font-size: 0.65rem; color: var(--blueprint); letter-spacing: 0.06em; text-transform: uppercase; }
-  .rfq__helper-input { max-width: 20rem; margin-top: 0.35rem; }
-  .rfq__unit-static { display: inline-flex; align-items: center; padding: 0 0.85rem; border: 1px solid var(--ink); border-left: 0; border-radius: 0 var(--r-md) var(--r-md) 0; background: var(--paper-deep); color: var(--ink-muted); }
-  .rfq__helper-input input { border-radius: var(--r-md) 0 0 var(--r-md); }
-  .rfq__estimate { display: block; margin-top: 0.8rem; font-family: var(--font-mono); font-size: 0.85rem; color: var(--blueprint); min-height: 1.3em; }
-  .rfq__grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.2rem 1.5rem;
-  }
+  .rfq__intent-note { margin-top: 0.55rem; color: var(--ink-muted); font-size: 0.82rem; line-height: 1.5; }
+  .rfq__items { display: grid; gap: 1rem; }
+  .rfq__item { padding: 1rem; border: 1px solid var(--steel); border-radius: var(--r-md); background: var(--paper-deep); }
+  .rfq__item-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.8rem; }
+  .rfq__item-title { color: var(--ink); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .rfq__remove-item { border: 0; background: transparent; color: var(--ink-muted); cursor: pointer; font: inherit; font-size: 0.78rem; }
+  .rfq__remove-item:hover { color: #c84b40; }
+  .rfq__item-grid, .rfq__meta-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem 1.5rem; }
+  .rfq__item-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr) minmax(7rem, 0.7fr) minmax(7rem, 0.75fr); align-items: end; }
+  .rfq__item-hint { grid-column: 1 / -1; }
+  .rfq__add-item { margin-top: 1rem; border: 1px dashed var(--blueprint); border-radius: var(--r-md); padding: 0.7rem 1rem; background: transparent; color: var(--blueprint); cursor: pointer; font: inherit; }
+  .rfq__add-item:hover { background: rgba(201, 180, 138, 0.1); }
+  .rfq__meta-grid { margin-top: 1.6rem; }
   .rfq__field {
     display: flex;
     flex-direction: column;
@@ -203,32 +194,12 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
   .rfq__field--full {
     grid-column: 1 / -1;
   }
-  .rfq__field--qty {
-    grid-column: span 1;
-  }
   .rfq__field .label {
     color: var(--ink-muted);
   }
 
-  /* Quantity row */
-  .rfq__qty {
-    display: flex;
-    gap: 0.6rem;
-  }
-  .rfq__qty input {
-    flex: 1 1 auto;
-  }
-  .rfq__qty > [data-slot="native-select-wrapper"] {
-    flex: 0 0 7rem;
-  }
-
-  .rfq__hint {
-    font-family: var(--font-mono);
-    font-size: 0.66rem;
-    letter-spacing: 0.06em;
-    color: var(--blueprint);
-    min-height: 1em;
-  }
+  .rfq__item-hint { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.06em; color: var(--blueprint); }
+  .rfq__item-hint:empty { display: none; }
 
   /* Preview */
   .rfq__preview {
@@ -273,10 +244,6 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     opacity: 0.45;
     cursor: not-allowed;
   }
-  .rfq__disclaimer {
-    color: var(--ink-muted);
-    max-width: 32ch;
-  }
   .rfq__status {
     margin: 1rem 0 0;
     padding: 0.75rem 0.9rem;
@@ -300,67 +267,121 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     text-underline-offset: 0.15em;
   }
 
-  @media (max-width: 640px) {
-    .rfq__grid {
-      grid-template-columns: 1fr;
-    }
-    .rfq__qty {
-      flex-direction: column;
-    }
-    .rfq__qty > [data-slot="native-select-wrapper"] {
-      flex: 1 1 auto;
-    }
+  @media (max-width: 980px) {
+    .rfq__item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
+
+  @media (max-width: 640px) {
+    .rfq__item-grid, .rfq__meta-grid { grid-template-columns: 1fr; }
+    }
 </style>
 
 <script>
   const form = document.getElementById("rfq-form") as HTMLFormElement | null;
   if (form) {
-    const lines: Record<string, { name: string; specContext?: string }[]> = JSON.parse(
-      form.dataset.lines || "{}",
-    );
+    const lines: Record<string, { name: string; specContext?: string }[]> = JSON.parse(form.dataset.lines || "{}");
+    const categoryOptions: { slug: string; name: string }[] = JSON.parse(form.dataset.categories || "[]");
     const waNumber = form.dataset.wa || "6281249343303";
-
-    const categoryEl = document.getElementById("rfq-category") as HTMLSelectElement;
-    const productEl = document.getElementById("rfq-product") as HTMLSelectElement;
-    const qtyEl = document.getElementById("rfq-qty") as HTMLInputElement;
-    const unitEl = document.getElementById("rfq-unit") as HTMLSelectElement;
+    const itemsEl = document.getElementById("rfq-items") as HTMLDivElement;
+    const addItemEl = document.getElementById("rfq-add-item") as HTMLButtonElement;
     const locationEl = document.getElementById("rfq-location") as HTMLInputElement;
     const roleEl = document.getElementById("rfq-role") as HTMLSelectElement;
     const notesEl = document.getElementById("rfq-notes") as HTMLTextAreaElement;
     const intentEls = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="intent"]'));
     const intentNoteEl = document.getElementById("rfq-intent-note");
-    const helperEl = document.getElementById("brc-helper");
-    const runEl = document.getElementById("rfq-run") as HTMLInputElement;
-    const estimateEl = document.getElementById("rfq-estimate");
-    const hintEl = document.getElementById("rfq-spec-hint");
     const messageEl = document.getElementById("rfq-message");
     const submitEl = document.getElementById("rfq-submit") as HTMLButtonElement;
     const statusEl = document.getElementById("rfq-status");
     let isSubmitting = false;
+    const defaultMessage = "Halo BSM, saya ingin meminta penawaran material. Mohon bantu info produk yang sesuai, harga pabrik, ketersediaan stok, dan pengiriman. Terima kasih.";
+    let itemCount = 0;
 
-    const categoryName = (slug: string) =>
-      categoryEl.options[categoryEl.selectedIndex]?.text ?? slug;
+    const categoryName = (slug: string) => categoryOptions.find((category) => category.slug === slug)?.name ?? slug;
+    const itemTemplate = document.getElementById("rfq-item-template") as HTMLTemplateElement;
 
-    // Populate the dependent product dropdown when a category is chosen.
-    categoryEl.addEventListener("change", () => {
-      const slug = categoryEl.value;
-      const opts = lines[slug] ?? [];
-      productEl.innerHTML = "";
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = opts.length ? "— Pilih produk —" : "— Tidak ada lini —";
-      productEl.appendChild(placeholder);
-      opts.forEach((o) => {
-        const opt = document.createElement("option");
-        opt.value = o.name;
-        opt.textContent = o.name;
-        productEl.appendChild(opt);
+    function createItem() {
+      itemCount += 1;
+      const item = document.importNode(itemTemplate.content, true).firstElementChild as HTMLElement;
+      item.dataset.item = String(itemCount);
+      itemsEl.appendChild(item);
+      bindItem(item);
+      return item;
+    }
+
+    function bindItem(item: HTMLElement) {
+      const number = Number(item.dataset.item || "1");
+      const category = item.querySelector<HTMLSelectElement>('[data-role="category"]')!;
+      const product = item.querySelector<HTMLSelectElement>('[data-role="product"]')!;
+      const quantity = item.querySelector<HTMLInputElement>('[data-role="quantity"]')!;
+      const unit = item.querySelector<HTMLSelectElement>('[data-role="unit"]')!;
+      const hint = item.querySelector<HTMLElement>('[data-role="hint"]')!;
+      const remove = item.querySelector<HTMLButtonElement>(".rfq__remove-item")!;
+      const updateHint = () => {
+        const specContext = lines[category.value]?.find((option) => option.name === product.value)?.specContext;
+        hint.textContent = specContext ? `Spesifikasi terlampir: ${specContext}` : "";
+      };
+      category.id = `rfq-category-${number}`;
+      product.id = `rfq-product-${number}`;
+      quantity.id = `rfq-qty-${number}`;
+      unit.id = `rfq-unit-${number}`;
+      category.name = `items[${number}][category]`;
+      product.name = `items[${number}][product]`;
+      quantity.name = `items[${number}][qty]`;
+      unit.name = `items[${number}][unit]`;
+      item.querySelector<HTMLLabelElement>(`label[for="rfq-category-template"]`)!.htmlFor = category.id;
+      item.querySelector<HTMLLabelElement>(`label[for="rfq-product-template"]`)!.htmlFor = product.id;
+      item.querySelector<HTMLLabelElement>(`label[for="rfq-qty-template"]`)!.htmlFor = quantity.id;
+      item.querySelector<HTMLLabelElement>(`label[for="rfq-unit-template"]`)!.htmlFor = unit.id;
+      remove.addEventListener("click", () => {
+        if (itemsEl.children.length === 1) return;
+        item.remove();
+        renumberItems();
+        update();
       });
-      productEl.disabled = opts.length === 0;
-      productEl.value = "";
-      update();
-    });
+      category.addEventListener("change", () => {
+        const options = lines[category.value] ?? [];
+        product.innerHTML = `<option value="">${options.length ? "— Pilih produk —" : "— Tidak ada lini —"}</option>`;
+        options.forEach((option) => product.add(new Option(option.name, option.name)));
+        product.disabled = options.length === 0;
+        updateHint();
+        clearStatus();
+        update();
+      });
+      product.addEventListener("change", () => { updateHint(); clearStatus(); update(); });
+      [quantity, unit].forEach((element) => {
+        element.addEventListener("input", () => { clearStatus(); update(); });
+        element.addEventListener("change", () => { clearStatus(); update(); });
+      });
+    }
+
+    function renumberItems() {
+      Array.from(itemsEl.children).forEach((element, index) => {
+        const item = element as HTMLElement;
+        const itemNumber = index + 1;
+        item.dataset.item = String(itemNumber);
+        item.querySelector<HTMLElement>(".rfq__item-title")!.textContent = `Material ${itemNumber}`;
+        item.dataset.item = String(itemNumber);
+        const category = item.querySelector<HTMLSelectElement>('[data-role="category"]');
+        const product = item.querySelector<HTMLSelectElement>('[data-role="product"]');
+        const quantity = item.querySelector<HTMLInputElement>('[data-role="quantity"]');
+        const unit = item.querySelector<HTMLSelectElement>('[data-role="unit"]');
+        if (category) { category.name = `items[${itemNumber}][category]`; category.id = `rfq-category-${itemNumber}`; }
+        if (product) { product.name = `items[${itemNumber}][product]`; product.id = `rfq-product-${itemNumber}`; }
+        if (quantity) { quantity.name = `items[${itemNumber}][qty]`; quantity.id = `rfq-qty-${itemNumber}`; }
+        if (unit) { unit.name = `items[${itemNumber}][unit]`; unit.id = `rfq-unit-${itemNumber}`; }
+        const labels = item.querySelectorAll<HTMLLabelElement>("label");
+        if (labels[0] && category) labels[0].htmlFor = category.id;
+        if (labels[1] && product) labels[1].htmlFor = product.id;
+        if (labels[2] && quantity) labels[2].htmlFor = quantity.id;
+        if (labels[3] && unit) labels[3].htmlFor = unit.id;
+        const remove = item.querySelector<HTMLButtonElement>(".rfq__remove-item");
+        if (remove) remove.disabled = itemsEl.children.length === 1;
+      });
+    }
+
+    addItemEl.addEventListener("click", () => { createItem(); renumberItems(); update(); });
+    createItem();
+    renumberItems();
 
     // Compose the WhatsApp RFQ from the buyer's inputs. Computes nothing —
     // only assembles text. Known specs (from the Showcase) are injected as
@@ -369,48 +390,33 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
       return intentEls.find((el) => el.checked)?.value || "";
     }
 
-    function updateBrcHelper() {
-      const isBrcPanel = categoryEl.value === "pagar" && productEl.value === "Pagar BRC";
-      if (helperEl) helperEl.hidden = !isBrcPanel;
-      if (!isBrcPanel) {
-        if (estimateEl) estimateEl.textContent = "";
-        return;
-      }
-      const run = Number.parseFloat(runEl?.value || "");
-      if (!Number.isFinite(run) || run <= 0) {
-        if (estimateEl) estimateEl.textContent = "Masukkan panjang bentang untuk melihat perkiraan panel.";
-        return;
-      }
-      const panels = Math.ceil(run / 2.4);
-      if (estimateEl) estimateEl.textContent = `Perkiraan minimum: ${panels} panel · asumsi lebar panel 2,4 m`;
+    function readItems() {
+      return Array.from(itemsEl.querySelectorAll<HTMLElement>(".rfq__item")).map((item) => {
+        const category = item.querySelector<HTMLSelectElement>('select[name*="[category]"]')!;
+        const product = item.querySelector<HTMLSelectElement>('select[name*="[product]"]')!;
+        const quantity = item.querySelector<HTMLInputElement>('input[name*="[qty]"]')!;
+        const unit = item.querySelector<HTMLSelectElement>('select[name*="[unit]"]')!;
+        return { item, category: category.value, product: product.value, qty: quantity.value.trim(), unit: unit.value, productOptions: product.options };
+      });
     }
 
     function compose(): string {
-      const cat = categoryEl.value;
-      const product = productEl.value;
-      const qty = qtyEl.value.trim();
-      const unit = unitEl.value;
+      const items = readItems();
       const location = locationEl.value.trim();
       const role = roleEl.value;
       const notes = notesEl.value.trim();
       const intent = selectedIntent();
-      const run = Number.parseFloat(runEl?.value || "");
 
-      if (!cat || !product || !qty || !location) return "";
+      if (validationMessage()) return defaultMessage;
 
-      const specContext = lines[cat]?.find((o) => o.name === product)?.specContext;
-      const lines_: string[] = [];
-      lines_.push("Halo BSM, saya ingin meminta penawaran material:");
-      lines_.push("");
-      lines_.push(`• Kategori: ${categoryName(cat)}`);
-      lines_.push(`• Produk: ${product}`);
+      const lines_: string[] = ["Halo BSM, saya ingin meminta penawaran beberapa material:", ""];
+      items.forEach((entry, index) => {
+        const specContext = lines[entry.category]?.find((option) => option.name === entry.product)?.specContext;
+        lines_.push(`${index + 1}. ${categoryName(entry.category)} — ${entry.product}`);
+        lines_.push(`   Jumlah: ${entry.qty} ${entry.unit}`);
+        if (specContext) lines_.push(`   Spesifikasi: ${specContext}`);
+      });
       if (intent) lines_.push(`• Konteks: ${intent === "project" ? "Untuk proyek / pengadaan" : "Untuk rumah / renovasi"}`);
-      if (specContext) lines_.push(`• Spesifikasi: ${specContext}`);
-      lines_.push(`• Jumlah: ${qty} ${unit}`);
-      if (cat === "pagar" && product === "Pagar BRC" && Number.isFinite(run) && run > 0) {
-        lines_.push(`• Perkiraan panel awal: ${Math.ceil(run / 2.4)} panel dari bentang ${run} m (asumsi lebar panel 2,4 m)`);
-        lines_.push("• Catatan estimasi: belum termasuk tiang, pintu, sudut, kemiringan, waste, pemasangan, harga, stok, atau pengiriman.");
-      }
       lines_.push(`• Lokasi proyek: ${location}`);
       if (role) lines_.push(`• Profesi: ${role}`);
       if (notes) {
@@ -423,14 +429,13 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     }
 
     function validationMessage(): string {
-      if (!categoryEl.value) return "Pilih kategori material terlebih dahulu.";
-      if (productEl.disabled || !productEl.value) return "Pilih produk atau lini material terlebih dahulu.";
-      if (!Array.from(productEl.options).some((option) => option.value === productEl.value)) {
-        return "Produk yang dipilih tidak tersedia. Pilih ulang dari daftar produk.";
-      }
-      const quantity = Number.parseFloat(qtyEl.value);
-      if (!Number.isFinite(quantity) || quantity < 1 || !Number.isInteger(quantity)) {
-        return "Masukkan jumlah minimal 1 dalam angka bulat.";
+      const items = readItems();
+      if (!items.length) return "Tambahkan minimal satu material.";
+      for (const item of items) {
+        if (!item.category) return "Pilih kategori untuk setiap material.";
+        if (!item.product || !Array.from(item.productOptions).some((option) => option.value === item.product)) return "Pilih produk untuk setiap material.";
+        const quantity = Number.parseFloat(item.qty);
+        if (!Number.isFinite(quantity) || quantity < 1 || !Number.isInteger(quantity)) return "Masukkan jumlah minimal 1 dalam angka bulat untuk setiap material.";
       }
       if (!locationEl.value.trim()) return "Masukkan lokasi proyek atau kota pengiriman.";
       return "";
@@ -462,71 +467,45 @@ const units = ["lembar", "batang", "m²", "m", "unit", "set"];
     function update() {
       const msg = compose();
       if (messageEl) messageEl.textContent = msg;
-      submitEl.disabled = Boolean(validationMessage()) || isSubmitting;
+      // WhatsApp is always available. Complete details produce the tailored
+      // RFQ; otherwise compose() supplies a standard inquiry message.
+      submitEl.disabled = isSubmitting;
 
-      // Show the auto-injected spec context as a hint (transparency: the buyer
-      // sees what context we added on their behalf).
-      const slug = categoryEl.value;
-      const product = productEl.value;
-      const specContext = lines[slug]?.find((o) => o.name === product)?.specContext;
-      if (hintEl) hintEl.textContent = specContext ? `Spesifikasi terlampir: ${specContext}` : "";
       const intent = selectedIntent();
       if (intentNoteEl) intentNoteEl.textContent = intent ? `Konteks dipilih: ${intent === "project" ? "untuk proyek / pengadaan" : "untuk rumah / renovasi"}.` : "Pilihan ini hanya membantu tim memahami kebutuhan Anda; alurnya tetap sama.";
-      updateBrcHelper();
     }
 
-    [categoryEl, productEl, qtyEl, unitEl, locationEl, roleEl, notesEl, runEl, ...intentEls].forEach((el) =>
+    [locationEl, roleEl, notesEl, ...intentEls].forEach((el) =>
       el.addEventListener("input", () => {
         clearStatus();
         update();
       }),
     );
-    categoryEl.addEventListener("change", () => {
-      clearStatus();
-      categoryEl.dispatchEvent(new Event("input"));
-      updateBrcHelper();
-    });
-    productEl.addEventListener("change", () => {
-      clearStatus();
-      update();
-    });
 
     const query = new URLSearchParams(window.location.search);
     const intentFromUrlEl = intentEls.find((el) => el.value === query.get("intent"));
     if (intentFromUrlEl) intentFromUrlEl.checked = true;
 
     const categoryFromUrl = query.get("category");
-    if (categoryFromUrl && Array.from(categoryEl.options).some((option) => option.value === categoryFromUrl)) {
-      categoryEl.value = categoryFromUrl;
-      categoryEl.dispatchEvent(new Event("change"));
+    if (categoryFromUrl && categoryOptions.some((option) => option.slug === categoryFromUrl)) {
+      const firstCategory = itemsEl.querySelector<HTMLSelectElement>('select[name*="[category]"]');
+      firstCategory!.value = categoryFromUrl;
+      firstCategory!.dispatchEvent(new Event("change"));
       const productFromUrl = query.get("product");
-      if (productFromUrl && Array.from(productEl.options).some((option) => option.value === productFromUrl)) {
-        productEl.value = productFromUrl;
+      const firstProduct = itemsEl.querySelector<HTMLSelectElement>('select[name*="[product]"]');
+      if (productFromUrl && firstProduct && Array.from(firstProduct.options).some((option) => option.value === productFromUrl)) {
+        firstProduct.value = productFromUrl;
+        firstProduct.dispatchEvent(new Event("change"));
       }
     }
     const notesFromUrl = query.get("notes");
     if (notesFromUrl) notesEl.value = notesFromUrl.slice(0, 1200);
+    update();
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const problem = validationMessage();
-      if (problem) {
-        showStatus(problem, "error");
-        const firstInvalid = [categoryEl, productEl, qtyEl, locationEl].find((el) => {
-          if (el === categoryEl) return !categoryEl.value;
-          if (el === productEl) return productEl.disabled || !productEl.value;
-          if (el === qtyEl) return !Number.isInteger(Number.parseFloat(qtyEl.value)) || Number.parseFloat(qtyEl.value) < 1;
-          return !locationEl.value.trim();
-        });
-        firstInvalid?.focus();
-        return;
-      }
       if (isSubmitting) return;
       const msg = compose();
-      if (!msg) {
-        showStatus("Lengkapi rincian wajib sebelum membuka WhatsApp.", "error");
-        return;
-      }
       isSubmitting = true;
       update();
       const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
