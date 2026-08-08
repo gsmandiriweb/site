@@ -1,5 +1,9 @@
 # Deploy to Cloudflare (Workers + Assets)
 
+> **Ops shortcut:** for the quick secrets checklist, first-deploy steps, and
+> verification flow, see [`deploy-runbook.md`](./deploy-runbook.md). This guide
+> has the full background and troubleshooting detail.
+
 This site is an Astro 7 static site with the `@astrojs/cloudflare` adapter. The
 adapter emits a **split build**: static assets in `dist/client/`, the Worker in
 `dist/server/`. Deploy it as a **Cloudflare Worker + Assets** — not classic
