@@ -148,6 +148,7 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
         <button type="submit" class="btn btn--primary rfq__submit" id="rfq-submit" aria-describedby="rfq-status">
           Buka WhatsApp dengan permintaan ini
         </button>
+        <button type="button" class="rfq__clear" id="rfq-clear">Bersihkan formulir</button>
       </div>
       <p class="rfq__status" id="rfq-status" role="status" aria-live="polite" hidden></p>
     </form>
@@ -244,6 +245,22 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
     opacity: 0.45;
     cursor: not-allowed;
   }
+  .rfq__clear {
+    border: 1px solid var(--steel);
+    border-radius: var(--r-md);
+    padding: 0.75rem 1rem;
+    background: transparent;
+    color: var(--ink-muted);
+    cursor: pointer;
+    font: inherit;
+    transition: border-color 0.18s var(--ease), color 0.18s var(--ease), background 0.18s var(--ease);
+  }
+  .rfq__clear:hover,
+  .rfq__clear:focus-visible {
+    border-color: var(--ink);
+    color: var(--ink);
+    background: var(--paper-deep);
+  }
   .rfq__status {
     margin: 1rem 0 0;
     padding: 0.75rem 0.9rem;
@@ -284,6 +301,7 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
     const waNumber = form.dataset.wa || "6281249343303";
     const itemsEl = document.getElementById("rfq-items") as HTMLDivElement;
     const addItemEl = document.getElementById("rfq-add-item") as HTMLButtonElement;
+    const clearEl = document.getElementById("rfq-clear") as HTMLButtonElement;
     const locationEl = document.getElementById("rfq-location") as HTMLInputElement;
     const roleEl = document.getElementById("rfq-role") as HTMLSelectElement;
     const notesEl = document.getElementById("rfq-notes") as HTMLTextAreaElement;
@@ -380,6 +398,22 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
     }
 
     addItemEl.addEventListener("click", () => { createItem(); renumberItems(); update(); });
+
+    clearEl.addEventListener("click", () => {
+      itemsEl.replaceChildren();
+      itemCount = 0;
+      isSubmitting = false;
+      intentEls.forEach((element) => { element.checked = false; });
+      locationEl.value = "";
+      roleEl.value = "";
+      notesEl.value = "";
+      clearStatus();
+      createItem();
+      renumberItems();
+      update();
+      itemsEl.querySelector<HTMLSelectElement>('[data-role="category"]')?.focus();
+    });
+
     createItem();
     renumberItems();
 
