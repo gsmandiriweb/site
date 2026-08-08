@@ -39,7 +39,6 @@ import { quoteLink, u } from "../utils/url.ts";
 const quoteBrc = quoteLink({ category: "pagar", product: "Pagar BRC" });
 
 const heroProduct = brcShowcase.items[0];
-const heroSecondary = brcShowcase.items[1];
 const yardBreak1 = imageAsset("pagar-brc-tumpukan-stok-gudang-2.jpg");
 const yardBreak2 = imageAsset("pagar-brc-terpasang-outdoor-1.jpg");
 const yardStock = brcShowcase.items;
@@ -83,11 +82,6 @@ const fmtBlogDate = (date: Date) =>
   <!-- ===================== HERO · one product, one action ===================== -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero__ambient" data-hero-shader aria-hidden="true"></div>
-    <div class="hero__field-markers" aria-hidden="true">
-      <span class="hero__field-marker hero__field-marker--top">FIELD / 01</span>
-      <span class="hero__field-marker hero__field-marker--side">INSPECTION BAY <i></i> SBY</span>
-      <span class="hero__field-marker hero__field-marker--bottom">BRC SPECIMEN · FIELD 01</span>
-    </div>
     <div class="hero__grid">
       <div class="hero__content" data-reveal>
         <span class="hero__eyebrow">HARGA PABRIK · MATERIAL UNTUK PROYEK</span>
@@ -115,31 +109,16 @@ const fmtBlogDate = (date: Date) =>
       </div>
 
       <div class="hero__plate-stack">
-        <figure class="hero__plate-rear" aria-hidden="true">
-          <div class="hero__plate-rear-image">
-            <Image src={imageAsset(heroSecondary.angles[0])} alt="" width={900} height={1600} loading="lazy" decoding="async" class="hero__plate-rear-img" />
-            <span class="hero__plate-mark">BRC / 02</span>
-          </div>
-        </figure>
         <a class="hero__plate-link" href={u("/pagar-brc")} aria-label="Lihat detail Pagar BRC Panel">
           <figure class="hero__plate" data-reveal>
             <div class="hero__plate-image">
               <Image src={imageAsset(heroProduct.angles[0])} alt="Pagar BRC Panel, tampak perspektif" width={900} height={1600} loading="eager" fetchpriority="high" decoding="async" class="hero__plate-img" />
-              <div class="hero__plate-scan" aria-hidden="true"><span></span></div>
-              <span class="hero__plate-corner hero__plate-corner--tl" aria-hidden="true"></span>
-              <span class="hero__plate-corner hero__plate-corner--br" aria-hidden="true"></span>
-              <span class="hero__plate-mark">BRC / 01</span>
             </div>
             <figcaption class="hero__plate-caption">
               <span class="hero__plate-label">PAGAR BRC PANEL · PRODUK UNGGULAN</span>
               <b>{heroProduct.name}</b>
               <span>Foto produk nyata · didistribusikan dari Surabaya</span>
             </figcaption>
-            <div class="hero__plate-status" aria-hidden="true">
-              <span><i></i> VISUAL CHECK</span>
-              <span>ORIGIN / SBY</span>
-              <span>PLATE / 01—06</span>
-            </div>
             <dl class="hero__plate-specs">
               {heroProduct.specs.slice(0, 4).map((spec) => (
                 <div><dt>{spec.k}</dt><dd>{spec.v}</dd></div>
@@ -154,7 +133,7 @@ const fmtBlogDate = (date: Date) =>
 
   <!-- ===================== WALK THE YARD · full-bleed break 1 ===================== -->
   <section class="yard-break" aria-label="Tumpukan stok di gudang">
-    <div class="yard-break__photo" data-parallax-layer="-0.08">
+    <div class="yard-break__photo">
       <Image src={yardBreak1} alt="Tumpukan pagar BRC disiapkan di gudang BSM" width={1600} height={2000} loading="lazy" class="yard-break__img" />
     </div>
     <div class="yard-break__scrim"></div>
@@ -179,10 +158,9 @@ const fmtBlogDate = (date: Date) =>
 
     <div class="stock__yard" data-carousel-track="stock" role="region" aria-roledescription="carousel" aria-label="Produk BRC dari stok gudang" tabindex="0">
       {yardStock.map((s, i) => (
-        <article class={`stock-item carousel__slide`} role="group" aria-label={`Produk ${i + 1} dari ${yardStock.length}`} data-mount>
+        <article class={`stock-item carousel__slide`} role="group" aria-label={`Produk ${i + 1} dari ${yardStock.length}`}>
           <div class="stock-item__photo">
             <Image src={imageAsset(s.angles[0])} alt={s.name} width={720} height={720} loading="lazy" class="stock-item__img" />
-            <div class="stock-item__spot" aria-hidden="true"></div>
           </div>
           <div class="stock-item__meta">
             <span class="stock-item__no">UNIT {String(i + 1).padStart(2, "0")} · BRC</span>
@@ -205,7 +183,7 @@ const fmtBlogDate = (date: Date) =>
 
   <!-- ===================== WALK THE YARD · full-bleed break 2 ===================== -->
   <section class="yard-break" aria-label="Pagar BRC terpasang di proyek">
-    <div class="yard-break__photo" data-parallax-layer="-0.08">
+    <div class="yard-break__photo">
       <Image src={yardBreak2} alt="Pagar BRC terpasang di proyek" width={1600} height={2000} loading="lazy" class="yard-break__img" />
     </div>
     <div class="yard-break__scrim"></div>
@@ -229,7 +207,7 @@ const fmtBlogDate = (date: Date) =>
     </header>
     <div class="catalog__grid" data-carousel-track="categories" role="region" aria-roledescription="carousel" aria-label="Enam kelompok material BSM" tabindex="0">
       {categories.map((c, i) => (
-        <a class="cat-tile carousel__slide" aria-label={`${c.name} · kelompok ${i + 1} dari ${categories.length}`} data-mount href={u(`/kategori/${c.slug}`)}>
+        <a class="cat-tile carousel__slide" aria-label={`${c.name} · kelompok ${i + 1} dari ${categories.length}`} href={u(`/kategori/${c.slug}`)}>
           <Image src={imageAsset(c.image)} alt={c.name} width={600} height={450} loading="lazy" class="cat-tile__img" />
           <div class="cat-tile__overlay"></div>
           <div class="cat-tile__body">
@@ -253,7 +231,7 @@ const fmtBlogDate = (date: Date) =>
     </div>
     <div class="field-notes__grid">
       {featuredPosts.map((post, i) => (
-        <a class="field-note" href={u(`/blog/${blogSlug(post)}`)} data-mount>
+        <a class="field-note" href={u(`/blog/${blogSlug(post)}`)}>
           <div class="field-note__image">
             {post.data.image ? (
               <Image src={imageAsset(post.data.image)} alt={post.data.imageAlt ?? post.data.title} width={720} height={420} loading="lazy" class="field-note__img" />
@@ -277,7 +255,7 @@ const fmtBlogDate = (date: Date) =>
   <section class="yard-break yard-break--proof" aria-label="Bukti jangkauan">
     <div class="reach-strip" data-reveal>
       {proof.map((p, i) => (
-        <figure class={`reach-tile reach-tile--${i + 1}`} data-mount>
+        <figure class={`reach-tile reach-tile--${i + 1}`}>
           <Image src={imageAsset(p.image)} alt={p.caption} width={640} height={480} loading="lazy" class="reach-tile__img" />
           <figcaption class="reach-tile__cap">{p.caption}</figcaption>
         </figure>
@@ -344,8 +322,6 @@ const fmtBlogDate = (date: Date) =>
 
   // The lower stock/catalog surfaces use a restrained shared spotlight. Keep
   // that interaction lightweight; the hero itself does not depend on it.
-  const root = document.documentElement;
-
   // On fine pointers, the specimen behaves like a physical inspection plate:
   // a tiny amount of tilt and parallax follows the cursor. Touch, reduced
   // motion, and keyboard users keep the static, fully legible floor.
@@ -390,34 +366,8 @@ const fmtBlogDate = (date: Date) =>
     hero.addEventListener("pointerleave", resetPlate, { passive: true });
   }
 
-  root.style.setProperty("--mx", "0.5");
-  root.style.setProperty("--my", "0.5");
-  root.style.setProperty("--ml", "0.5");
-  let pointerRaf = 0;
-  let targetX = 0.5;
-  let targetY = 0.5;
-  let currentX = 0.5;
-  let currentY = 0.5;
-  function updatePointer(e: PointerEvent) {
-    targetX = e.clientX / window.innerWidth;
-    targetY = 1 - e.clientY / window.innerHeight;
-    if (!pointerRaf) pointerRaf = requestAnimationFrame(tickPointer);
-  }
-  function tickPointer() {
-    currentX += (targetX - currentX) * 0.12;
-    currentY += (targetY - currentY) * 0.12;
-    root.style.setProperty("--mx", currentX.toFixed(3));
-    root.style.setProperty("--my", currentY.toFixed(3));
-    root.style.setProperty("--ml", (currentX * 0.6 + 0.2).toFixed(3));
-    if (Math.abs(targetX - currentX) > 0.001 || Math.abs(targetY - currentY) > 0.001) {
-      pointerRaf = requestAnimationFrame(tickPointer);
-    } else {
-      pointerRaf = 0;
-    }
-  }
-  if (!reduceMotion) window.addEventListener("pointermove", updatePointer, { passive: true });
+  // Carousel cards use static shadows rather than a page-wide cursor follower.
   window.addEventListener("pagehide", () => {
-    if (pointerRaf) cancelAnimationFrame(pointerRaf);
     cancelHeroShaderStart();
     disposeHeroShader?.();
   }, { once: true });
@@ -438,7 +388,6 @@ const fmtBlogDate = (date: Date) =>
     if (!slides.length) return;
 
     let active = 0;
-    const reduceCarouselMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const setActive = (index: number) => {
       active = Math.max(0, Math.min(index, slides.length - 1));
       slides.forEach((slide, i) => slide.setAttribute("aria-current", i === active ? "true" : "false"));
@@ -448,7 +397,7 @@ const fmtBlogDate = (date: Date) =>
     };
     const goTo = (index: number) => {
       const target = Math.max(0, Math.min(index, slides.length - 1));
-      track.scrollTo({ left: slides[target].offsetLeft, behavior: reduceCarouselMotion ? "auto" : "smooth" });
+      track.scrollTo({ left: slides[target].offsetLeft, behavior: "auto" });
       setActive(target);
     };
     const syncActive = () => {
@@ -494,27 +443,14 @@ const fmtBlogDate = (date: Date) =>
       gsap.to(heroReveals, { autoAlpha: 1, y: 0, duration: 1.0, ease: "power3.out", stagger: 0.12, delay: 0.2 });
     }
 
-    // Stock rises into view as you walk past (material you stand among).
-    const mounts = gsap.utils.toArray<HTMLElement>("[data-mount]");
-    mounts.forEach((el) => {
-      gsap.set(el, { autoAlpha: 0, y: 60, scale: 0.95 });
-      ScrollTrigger.create({
-        trigger: el, start: "top 90%", once: true,
-        onEnter: () => gsap.to(el, { autoAlpha: 1, y: 0, scale: 1, duration: 0.9, ease: "power2.out" }),
-      });
-    });
+    // Keep the product rails static while scrolling. The carousel itself is
+    // the interaction; per-card entrance animations made the page feel busy.
 
     // Section heads + reveals.
-    const heads = gsap.utils.toArray<HTMLElement>("[data-reveal]:not(.hero [data-reveal]):not([data-mount])");
+    const heads = gsap.utils.toArray<HTMLElement>("[data-reveal]:not(.hero [data-reveal])");
     heads.forEach((el) => {
       gsap.set(el, { autoAlpha: 0, y: 26 });
       ScrollTrigger.create({ trigger: el, start: "top 86%", once: true, onEnter: () => gsap.to(el, { autoAlpha: 1, y: 0, duration: 0.9, ease: "power2.out" }) });
-    });
-
-    // Parallax: full-bleed photos + layers drift at different rates (depth).
-    gsap.utils.toArray<HTMLElement>("[data-parallax-layer]").forEach((el) => {
-      const amt = parseFloat(el.dataset.parallaxLayer || "0") * 100;
-      gsap.to(el, { y: () => amt, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } });
     });
 
     ScrollTrigger.refresh();
@@ -531,10 +467,9 @@ const fmtBlogDate = (date: Date) =>
     --theme-text: var(--yard-light); --theme-muted: var(--yard-steel); --theme-line: rgba(130,138,147,0.28);
     --fd: "Archivo","Arial Narrow",sans-serif; --fb: "Hanken Grotesk",system-ui,sans-serif;
     --fm: "JetBrains Mono",ui-monospace,monospace;
-    --mx: 0.5; --my: 0.5; --ml: 0.5;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: auto; }
   body {
     background: var(--theme-page); color: var(--theme-text);
     font-family: var(--fb); font-size: 1.0625rem; line-height: 1.6;
@@ -565,15 +500,6 @@ const fmtBlogDate = (date: Date) =>
   .hero__ambient::after { content: ""; position: absolute; inset: 0; z-index: 1; opacity: 0.14; background-image: radial-gradient(circle at 1px 1px, rgba(201,180,138,0.5) 0 1px, transparent 1.5px), linear-gradient(90deg, rgba(130,138,147,0.24) 1px, transparent 1px), linear-gradient(rgba(130,138,147,0.18) 1px, transparent 1px); background-size: clamp(72px, 9vw, 120px) clamp(72px, 9vw, 120px); mask-image: linear-gradient(90deg, transparent 18%, black 52%, black 78%, transparent 100%); }
   .hero__ambient canvas { position: relative; z-index: 0; opacity: 0.54; mix-blend-mode: screen; }
   :global(html[data-theme="light"]) .hero__ambient canvas { opacity: 0.2; mix-blend-mode: multiply; }
-  .hero__field-markers { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-  .hero__field-marker { position: absolute; font-family: var(--fm); font-size: 0.58rem; letter-spacing: 0.15em; color: color-mix(in srgb, var(--theme-muted) 76%, transparent); text-transform: uppercase; }
-  .hero__field-marker::before { content: ""; display: inline-block; width: 1.8rem; height: 1px; margin: 0 0.55rem 0.2rem 0; background: var(--beam); opacity: 0.7; }
-  .hero__field-marker--top { top: 6.25rem; left: clamp(1rem, 5vw, 4rem); }
-  .hero__field-marker--side { top: 50%; right: clamp(0.8rem, 2vw, 2rem); writing-mode: vertical-rl; transform: translateY(-50%); }
-  .hero__field-marker--side::before { width: 1px; height: 1.8rem; margin: 0 0 0.55rem 0.2rem; }
-  .hero__field-marker--side i { display: inline-block; width: 0.3rem; height: 0.3rem; margin: 0.5rem 0; border: 1px solid var(--yard-accent); border-radius: 50%; }
-  .hero__field-marker--bottom { right: clamp(1rem, 5vw, 4rem); bottom: 1.5rem; }
-  .hero__field-marker--bottom::before { display: none; }
   .hero__grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.08fr); align-items: center; gap: clamp(2.5rem, 7vw, 8rem); width: min(1180px, 100%); margin: 0 auto; }
   .hero__content { max-width: 35rem; }
   .hero__eyebrow { display: block; margin-bottom: 1.25rem; font-family: var(--fm); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; line-height: 1.3; color: var(--beam); }
@@ -603,30 +529,12 @@ const fmtBlogDate = (date: Date) =>
   .hero__plate-stack::before { content: ""; position: absolute; z-index: -2; inset: 7% -8% -5% 8%; border: 1px solid color-mix(in srgb, var(--beam) 24%, transparent); clip-path: polygon(0 0, 76% 0, 76% 12%, 100% 12%, 100% 100%, 24% 100%, 24% 88%, 0 88%); transform: translate(calc(var(--plate-shift-x) * -0.35px), calc(var(--plate-shift-y) * -0.35px)); opacity: 0.72; transition: opacity 0.4s ease; }
   .hero__plate-stack::after { content: ""; position: absolute; z-index: -2; left: 13%; right: -4%; bottom: 4%; height: 1px; background: linear-gradient(90deg, transparent, var(--beam), transparent); opacity: 0.45; transform: translateX(calc(var(--plate-shift-x) * 0.6px)); }
   .hero__plate-stack:hover::before { opacity: 1; }
-  .hero__plate-rear { position: absolute; z-index: -1; top: 1.15rem; right: -1.35rem; width: 78%; margin: 0; padding: 0.65rem; background: linear-gradient(145deg, color-mix(in srgb, var(--theme-panel) 90%, transparent), color-mix(in srgb, var(--theme-surface) 92%, transparent)); border: 1px solid rgba(201,180,138,0.22); border-radius: 5px; transform: rotate(-3.2deg); opacity: 0.72; box-shadow: 0 22px 48px -30px rgba(0,0,0,0.9); pointer-events: none; }
-  .hero__plate-rear-image { position: relative; width: 100%; height: clamp(220px, 31svh, 315px); overflow: hidden; border-radius: 2px; background: #25282c; }
-  .hero__plate-rear-img { width: 100%; height: 100%; object-fit: cover; object-position: center; filter: saturate(0.62) contrast(0.94) brightness(0.72); }
-  .hero__plate-rear .hero__plate-mark { top: 0.7rem; right: 0.7rem; opacity: 0.8; }
   .hero__plate { --plate-tilt-x: 0; --plate-tilt-y: 0; position: relative; margin: 0; width: 100%; margin-left: auto; padding: clamp(0.7rem, 1.5vw, 1.05rem); background: linear-gradient(145deg, color-mix(in srgb, var(--theme-panel) 98%, transparent), color-mix(in srgb, var(--theme-surface) 98%, transparent)); border: 1px solid color-mix(in srgb, var(--theme-text) 14%, transparent); border-top-color: rgba(201,180,138,0.52); border-radius: 5px; box-shadow: inset 0 1px 1px color-mix(in srgb, var(--theme-text) 8%, transparent), 0 26px 64px -28px rgba(0,0,0,0.42); transform: perspective(1200px) rotateX(var(--plate-tilt-y)) rotateY(var(--plate-tilt-x)) rotateZ(1.2deg) translate3d(calc(var(--plate-shift-x) * 1px), calc(var(--plate-shift-y) * 1px), 0); transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease; }
   .hero__plate::before { content: ""; position: absolute; top: 0.35rem; left: 12%; right: 12%; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,180,138,0.34), transparent); pointer-events: none; }
   .hero__plate-link:hover .hero__plate, .hero__plate-link:focus-visible .hero__plate { --plate-tilt-x: 1.1deg; --plate-tilt-y: -0.8deg; transform: perspective(1200px) rotateX(var(--plate-tilt-y)) rotateY(var(--plate-tilt-x)) rotateZ(1.8deg) translate3d(calc(var(--plate-shift-x) * 1px), calc(var(--plate-shift-y) * 1px - 4px), 0); border-top-color: var(--beam); box-shadow: inset 0 1px 1px rgba(255,255,255,0.07), 0 32px 76px -30px rgba(0,0,0,0.96); }
   .hero__plate-image { position: relative; overflow: hidden; background: var(--theme-panel); width: 100%; height: clamp(280px, 38svh, 390px); border-radius: 2px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-text) 8%, transparent), inset 0 -28px 36px -34px rgba(0,0,0,0.42); }
-  .hero__plate-image::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(116deg, transparent 25%, rgba(201,180,138,0.2) 46%, transparent 58%); transform: translateX(-135%); opacity: 0; }
-  .hero__plate-link:hover .hero__plate-image::after, .hero__plate-link:focus-visible .hero__plate-image::after { opacity: 1; animation: hero-inspection-sweep 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-  .hero__plate-scan { position: absolute; z-index: 1; inset: 0; pointer-events: none; overflow: hidden; opacity: 0.5; mix-blend-mode: screen; }
-  .hero__plate-scan::before { content: ""; position: absolute; left: 0; right: 0; top: 18%; height: 1px; background: linear-gradient(90deg, transparent, var(--beam), transparent); box-shadow: 0 0 18px 1px color-mix(in srgb, var(--beam) 60%, transparent); animation: hero-scan-line 5.5s ease-in-out infinite; }
-  .hero__plate-corner { position: absolute; z-index: 2; width: 1.4rem; height: 1.4rem; border-color: var(--beam); opacity: 0.8; }
-  .hero__plate-corner--tl { top: 0.8rem; left: 0.8rem; border-top: 1px solid; border-left: 1px solid; }
-  .hero__plate-corner--br { right: 0.8rem; bottom: 0.8rem; border-right: 1px solid; border-bottom: 1px solid; }
-  .hero__plate-status { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.35rem 0.5rem; padding: 0.55rem 0.35rem 0.1rem; border-top: 1px solid color-mix(in srgb, var(--theme-text) 12%, transparent); color: var(--theme-muted); font: 0.56rem/1.2 var(--fm); letter-spacing: 0.08em; }
-  .hero__plate-status span { white-space: nowrap; }
-  .hero__plate-status i { display: inline-block; width: 0.38rem; height: 0.38rem; margin-right: 0.25rem; border-radius: 50%; background: var(--yard-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--yard-accent) 18%, transparent); }
-  @keyframes hero-scan-line { 0%, 14% { top: 18%; opacity: 0; } 24% { top: 22%; opacity: 1; } 75% { top: 78%; opacity: 1; } 86%, 100% { top: 82%; opacity: 0; } }
-  @keyframes hero-inspection-sweep { from { transform: translateX(-135%); } to { transform: translateX(135%); } }
   .hero__plate-img { width: 100%; height: 100%; object-fit: cover; object-position: center center; filter: saturate(0.82) contrast(1.06); }
   :global(html[data-theme="light"]) .hero__plate-img { filter: saturate(0.74) contrast(1.02) brightness(1.04); }
-  :global(html[data-theme="light"]) .hero__plate-mark { background: rgba(23,33,43,0.86); color: #e8d7b2; }
-  .hero__plate-mark { position: absolute; top: 1rem; right: 1rem; padding: 0.35rem 0.55rem; background: rgba(12,13,16,0.78); color: var(--beam); font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.12em; }
   .hero__plate-caption { display: grid; gap: 0.28rem; padding: 0.75rem 0.35rem 0.55rem; }
   .hero__plate-label { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.11em; color: var(--yard-accent); }
   .hero__plate-caption b { color: var(--theme-text); font-family: var(--fd); font-size: clamp(1.3rem, 2.4vw, 1.9rem); line-height: 1; }
@@ -670,23 +578,16 @@ const fmtBlogDate = (date: Date) =>
     .hero__grid { grid-template-columns: 1fr; gap: 3.25rem; }
     .hero__content { max-width: 44rem; }
     .hero__plate-stack { width: min(100%, 680px); margin: 0 auto; }
-    .hero__plate-rear { display: none; }
     .hero__plate { margin: 0 auto; transform: perspective(1200px) rotateZ(0.6deg); }
-    .hero__field-marker--side { display: none; }
-    .hero__field-marker--top { top: 5.75rem; }
-    .hero__field-marker--bottom { bottom: 1rem; }
     .hero__plate-status { font-size: 0.5rem; letter-spacing: 0.04em; }
     .hero__scroll { display: none; }
   }
   .hero__plate-link:focus-visible { outline: 2px solid var(--beam); outline-offset: 6px; }
   .hero-motion-ready .hero [data-reveal] { visibility: hidden; }
   @media (prefers-reduced-motion: reduce) {
-    .hero__plate-scan::before { animation: none; opacity: 0; }
-    .hero__plate-image::after { animation: none; opacity: 0; }
     .hero__plate,
     .hero__plate-link:hover .hero__plate,
     .hero__plate-link:focus-visible .hero__plate { transition: none; transform: rotateZ(0.6deg); }
-    .hero__field-marker { transition: none; }
   }
   @media (max-width: 520px) {
     .hero { padding-inline: 1rem; }
@@ -714,12 +615,11 @@ const fmtBlogDate = (date: Date) =>
   .yard-break__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12,13,16,0.2) 0%, transparent 40%, rgba(12,13,16,0.9) 100%); }
   :global(html[data-theme="light"]) .yard-break__scrim { background: linear-gradient(180deg, rgba(243,239,229,0.08) 0%, transparent 42%, rgba(23,33,43,0.78) 100%); }
   .yard-break__cap { position: relative; z-index: 2; padding: 0 clamp(1rem, 5vw, 4rem) clamp(2rem, 5vh, 3rem); max-width: 44rem; }
-  .yard-break__no { font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.16em; color: var(--yard-accent); display: block; margin-bottom: 0.7rem; }
+  .yard-break__no { display: block; width: fit-content; margin-bottom: 0.7rem; padding: 0.32rem 0.55rem; background: rgba(12,13,16,0.78); border: 1px solid rgba(201,180,138,0.28); color: var(--yard-accent); font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.16em; line-height: 1.2; text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
   .yard-break__cap p { font-size: 1.08rem; color: rgba(245,245,244,0.92); max-width: 42ch; }
   :global(html[data-theme="light"]) .yard-break__cap p { color: #fffaf2; }
   :global(html[data-theme="light"]) .yard-break--proof .yard-break__cap { color: #17212b; }
   :global(html[data-theme="light"]) .yard-break--proof .yard-break__cap p { color: #17212b; }
-  :global(html[data-theme="light"]) .yard-break--proof .yard-break__no { color: #8f2f09; }
   .yard-break__cap--reach { max-width: 50rem; }
   .yard-break--proof { height: auto; min-height: 0; display: block; padding: clamp(3rem, 7vw, 5rem) 0; background: rgba(12, 13, 16, 0.82); backdrop-filter: blur(3px); }
   .yard-break--proof .yard-break__scrim { display: none; }
@@ -748,15 +648,10 @@ const fmtBlogDate = (date: Date) =>
   .stock__yard::-webkit-scrollbar-thumb, .catalog__grid::-webkit-scrollbar-thumb { background: var(--yard-steel); border-radius: 1rem; }
   .carousel__slide { scroll-snap-align: start; }
   .stock-item { flex: 0 0 min(34rem, 78vw); display: flex; flex-direction: column; }
-  .stock-item__photo { position: relative; overflow: hidden; background: var(--yard-mid); border-radius: 4px; aspect-ratio: 1/1; box-shadow: calc((0.5 - var(--mx)) * 16px) calc((0.5 - var(--my)) * 12px) 30px -8px rgba(0,0,0,0.7); transition: box-shadow 0.4s, transform 0.4s; }
-  :global(html[data-theme="light"]) .stock-item__photo { box-shadow: calc((0.5 - var(--mx)) * 16px) calc((0.5 - var(--my)) * 12px) 30px -8px rgba(23,33,43,0.28); }
-  .stock-item__img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
-  /* Cursor-aware warehouse spotlight: a warm pool that follows the cursor over
-     the specimen, so the stock reads as lit by the same light as the air. */
-  .stock-item__spot { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(220px circle at calc(var(--mx) * 100%) calc(var(--my) * 100%), rgba(201,180,138,0.22), transparent 55%); opacity: 0; transition: opacity 0.3s; mix-blend-mode: screen; }
-  .stock-item:hover .stock-item__spot, .stock-item:focus-within .stock-item__spot { opacity: 1; }
-  .stock-item:hover .stock-item__img { transform: scale(1.04); }
-  .stock-item:hover .stock-item__photo, .stock-item:focus-within .stock-item__photo { box-shadow: calc((0.5 - var(--mx)) * 24px) calc((0.5 - var(--my)) * 18px) 44px -10px rgba(0,0,0,0.78); }
+  .stock-item__photo { position: relative; overflow: hidden; background: var(--yard-mid); border-radius: 4px; aspect-ratio: 1/1; box-shadow: 0 14px 28px -18px rgba(0,0,0,0.7); }
+  :global(html[data-theme="light"]) .stock-item__photo { box-shadow: 0 14px 28px -18px rgba(23,33,43,0.22); }
+  .stock-item__img { width: 100%; height: 100%; object-fit: cover; }
+  .stock-item:hover .stock-item__photo, .stock-item:focus-within .stock-item__photo { box-shadow: 0 18px 32px -18px rgba(0,0,0,0.76); }
   .stock-item:focus-visible { outline: 2px solid var(--beam); outline-offset: 4px; }
   .stock-item__meta { padding: 1rem 0.2rem 0; }
   .stock-item__no { font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--yard-steel); }
@@ -776,16 +671,15 @@ const fmtBlogDate = (date: Date) =>
   .catalog__head .rail { display: block; margin-bottom: 0.7rem; }
   .catalog__head h2 { font-family: var(--fd); font-weight: 700; font-stretch: 112%; font-size: clamp(1.7rem, 4vw, 2.8rem); line-height: 1.04; letter-spacing: -0.01em; margin-bottom: 1rem; text-wrap: balance; }
   .catalog__sub { color: var(--theme-muted); max-width: 56ch; }
-  .cat-tile { position: relative; flex: 0 0 min(26rem, 72vw); border-radius: 4px; overflow: hidden; aspect-ratio: 4/3; box-shadow: calc((0.5 - var(--mx)) * 14px) calc((0.5 - var(--my)) * 10px) 26px -10px rgba(0,0,0,0.7); transition: box-shadow 0.4s, transform 0.4s; }
-  .cat-tile__img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
-  .cat-tile:hover .cat-tile__img { transform: scale(1.05); }
-  .cat-tile:hover { box-shadow: calc((0.5 - var(--mx)) * 20px) calc((0.5 - var(--my)) * 14px) 34px -10px rgba(0,0,0,0.78); transform: translateY(-3px); }
+  .cat-tile { position: relative; flex: 0 0 min(26rem, 72vw); border-radius: 4px; overflow: hidden; aspect-ratio: 4/3; box-shadow: 0 14px 28px -18px rgba(0,0,0,0.7); }
+  .cat-tile__img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-tile:hover { box-shadow: 0 18px 32px -18px rgba(0,0,0,0.76); }
   .cat-tile__overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(12,13,16,0.92) 100%); }
   :global(html[data-theme="light"]) .cat-tile__overlay { background: linear-gradient(180deg, transparent 32%, rgba(23,33,43,0.82) 100%); }
-  .cat-tile__body { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.1rem 1.2rem; z-index: 2; }
-  .cat-tile__no { font-family: var(--fm); font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--yard-accent); display: block; margin-bottom: 0.3rem; }
-  .cat-tile__body b { display: block; font-family: var(--fd); font-weight: 600; font-size: 1.1rem; margin-bottom: 0.2rem; color: #fffaf2; text-shadow: 0 1px 12px rgba(0,0,0,0.42); }
-  .cat-tile__count { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.06em; color: rgba(255,250,242,0.78); text-shadow: 0 1px 10px rgba(0,0,0,0.5); }
+  .cat-tile__body { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.1rem 1.2rem; z-index: 2; background: rgba(12,13,16,0.78); border-top: 1px solid rgba(201,180,138,0.24); }
+  .cat-tile__no { display: block; margin-bottom: 0.3rem; color: #fffaf2; font-family: var(--fm); font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .cat-tile__body b { display: block; margin-bottom: 0.2rem; color: #fffaf2; font-family: var(--fd); font-weight: 600; font-size: 1.1rem; }
+  .cat-tile__count { color: #fffaf2; font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.06em; }
 
   /* ===================== FIELD NOTES ===================== */
   .field-notes { padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem); background: var(--theme-surface); border-top: 1px solid rgba(201,180,138,0.16); }
@@ -825,17 +719,16 @@ const fmtBlogDate = (date: Date) =>
   :global(html[data-theme="light"]) .rail,
   :global(html[data-theme="light"]) .field-note__read,
   :global(html[data-theme="light"]) .field-notes__all { color: #694b1f; }
+  :global(html[data-theme="light"]) .hero__eyebrow,
+  :global(html[data-theme="light"]) .hero__proof b { color: #754d13; }
   :global(html[data-theme="light"]) .hero__title-line--accent,
   :global(html[data-theme="light"]) .hero__plate-label,
-  :global(html[data-theme="light"]) .yard-break__no,
   :global(html[data-theme="light"]) .stock-item__wa,
-  :global(html[data-theme="light"]) .cat-tile__no { color: #8f2f09; }
   :global(html[data-theme="light"]) .rail-control { color: var(--theme-text); border-color: rgba(23,33,43,0.34); }
   :global(html[data-theme="light"]) .rail-control:hover:not(:disabled),
   :global(html[data-theme="light"]) .rail-control:focus-visible:not(:disabled) { border-color: var(--yard-beam); background: rgba(150,115,61,0.12); }
   :global(html[data-theme="light"]) .hero__plate-caption > span:last-child,
   :global(html[data-theme="light"]) .hero__intent-label,
-  :global(html[data-theme="light"]) .hero__proof span,
   :global(html[data-theme="light"]) .stock-item__no,
   :global(html[data-theme="light"]) .stock-item__spec dt,
   :global(html[data-theme="light"]) .stock__sub,
@@ -844,10 +737,11 @@ const fmtBlogDate = (date: Date) =>
   :global(html[data-theme="light"]) .close__addr,
   :global(html[data-theme="light"]) .field-note__meta,
   :global(html[data-theme="light"]) .field-note p { color: #4a5964; }
+  :global(html[data-theme="light"]) .hero__proof span { color: #263640; }
   :global(html[data-theme="light"]) .reach-tile__cap { color: #f3efe5; }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .cta, .hero__plate, .stock-item__photo, .stock-item__img, .stock-item__spot, .cat-tile, .cat-tile__img, .field-note, .field-note__img, .field-notes__all { transition: none; }
+    .cta, .hero__plate, .stock-item__photo, .stock-item__img, .cat-tile, .cat-tile__img, .field-note, .field-note__img, .field-notes__all { transition: none; }
     .stock__yard, .catalog__grid { scroll-behavior: auto; }
     .stock-item:hover .stock-item__img, .cat-tile:hover .cat-tile__img, .cta:hover, .nav__wa:hover, .cat-tile:hover { transform: none; }
     .hero__plate-link:hover .hero__plate, .hero__plate-link:focus-visible .hero__plate { transform: none !important; }
