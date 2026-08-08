@@ -392,32 +392,43 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
 
     function readItems() {
       return Array.from(itemsEl.querySelectorAll<HTMLElement>(".rfq__item")).map((item) => {
-        const category = item.querySelector<HTMLSelectElement>('select[name*="[category]"]')!;
-        const product = item.querySelector<HTMLSelectElement>('select[name*="[product]"]')!;
-        const quantity = item.querySelector<HTMLInputElement>('input[name*="[qty]"]')!;
-        const unit = item.querySelector<HTMLSelectElement>('select[name*="[unit]"]')!;
+        // data-role is the stable contract for a dynamic row; names and IDs are
+        // renumbered whenever a material is removed.
+        const category = item.querySelector<HTMLSelectElement>('[data-role="category"]')!;
+        const product = item.querySelector<HTMLSelectElement>('[data-role="product"]')!;
+        const quantity = item.querySelector<HTMLInputElement>('[data-role="quantity"]')!;
+        const unit = item.querySelector<HTMLSelectElement>('[data-role="unit"]')!;
         return { item, category: category.value, product: product.value, qty: quantity.value.trim(), unit: unit.value, productOptions: product.options };
       });
     }
 
+    function hasItemInput(item: ReturnType<typeof readItems>[number]): boolean {
+      return Boolean(item.category || item.product || item.qty);
+    }
+
     function compose(): string {
       const items = readItems();
+      const enteredItems = items.filter(hasItemInput);
       const location = locationEl.value.trim();
       const role = roleEl.value;
       const notes = notesEl.value.trim();
       const intent = selectedIntent();
 
-      if (validationMessage()) return defaultMessage;
+      // Keep the no-calculator path useful: without a material row, open with
+      // the standard inquiry instead of sending a request with no material.
+      if (!enteredItems.length) return defaultMessage;
 
       const lines_: string[] = ["Halo BSM, saya ingin meminta penawaran beberapa material:", ""];
-      items.forEach((entry, index) => {
+      enteredItems.forEach((entry, index) => {
         const specContext = lines[entry.category]?.find((option) => option.name === entry.product)?.specContext;
-        lines_.push(`${index + 1}. ${categoryName(entry.category)} — ${entry.product}`);
-        lines_.push(`   Jumlah: ${entry.qty} ${entry.unit}`);
+        const category = entry.category ? categoryName(entry.category) : "Kategori belum dipilih";
+        const product = entry.product || "Produk belum dipilih";
+        lines_.push(`${index + 1}. ${category} — ${product}`);
+        lines_.push(`   Jumlah: ${entry.qty ? `${entry.qty} ${entry.unit}` : "belum diisi"}`);
         if (specContext) lines_.push(`   Spesifikasi: ${specContext}`);
       });
       if (intent) lines_.push(`• Konteks: ${intent === "project" ? "Untuk proyek / pengadaan" : "Untuk rumah / renovasi"}`);
-      lines_.push(`• Lokasi proyek: ${location}`);
+      if (location) lines_.push(`• Lokasi proyek: ${location}`);
       if (role) lines_.push(`• Profesi: ${role}`);
       if (notes) {
         lines_.push("");
@@ -430,14 +441,16 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
 
     function validationMessage(): string {
       const items = readItems();
-      if (!items.length) return "Tambahkan minimal satu material.";
-      for (const item of items) {
+      const enteredItems = items.filter(hasItemInput);
+      // Empty rows are ignored so adding a future material does not invalidate
+      // the material rows the buyer has already completed.
+      for (const item of enteredItems) {
         if (!item.category) return "Pilih kategori untuk setiap material.";
         if (!item.product || !Array.from(item.productOptions).some((option) => option.value === item.product)) return "Pilih produk untuk setiap material.";
         const quantity = Number.parseFloat(item.qty);
         if (!Number.isFinite(quantity) || quantity < 1 || !Number.isInteger(quantity)) return "Masukkan jumlah minimal 1 dalam angka bulat untuk setiap material.";
       }
-      if (!locationEl.value.trim()) return "Masukkan lokasi proyek atau kota pengiriman.";
+      if (enteredItems.length && !locationEl.value.trim()) return "Masukkan lokasi proyek atau kota pengiriman.";
       return "";
     }
 
@@ -488,11 +501,11 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
 
     const categoryFromUrl = query.get("category");
     if (categoryFromUrl && categoryOptions.some((option) => option.slug === categoryFromUrl)) {
-      const firstCategory = itemsEl.querySelector<HTMLSelectElement>('select[name*="[category]"]');
+      const firstCategory = itemsEl.querySelector<HTMLSelectElement>('[data-role="category"]');
       firstCategory!.value = categoryFromUrl;
       firstCategory!.dispatchEvent(new Event("change"));
       const productFromUrl = query.get("product");
-      const firstProduct = itemsEl.querySelector<HTMLSelectElement>('select[name*="[product]"]');
+      const firstProduct = itemsEl.querySelector<HTMLSelectElement>('[data-role="product"]');
       if (productFromUrl && firstProduct && Array.from(firstProduct.options).some((option) => option.value === productFromUrl)) {
         firstProduct.value = productFromUrl;
         firstProduct.dispatchEvent(new Event("change"));
@@ -505,6 +518,11 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       if (isSubmitting) return;
+      const validationError = validationMessage();
+      if (validationError) {
+        showStatus(validationError, "error");
+        return;
+      }
       const msg = compose();
       isSubmitting = true;
       update();
