@@ -14,7 +14,6 @@ const isActive = (href: string) =>
     <div class="nav__links">
       <a href={u("/")} aria-current={isActive(u("/")) ? "page" : undefined}>Beranda</a>
       <a href={u("/katalog")} aria-current={isActive(u("/katalog")) ? "page" : undefined}>Katalog</a>
-      <a href={u("/pagar-brc")} aria-current={isActive(u("/pagar-brc")) ? "page" : undefined}>Pagar BRC</a>
       <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
     </div>
     <div class="nav__actions">
@@ -36,7 +35,6 @@ const isActive = (href: string) =>
   <div class="nav__mobile" id="mobile-menu" hidden>
     <a href={u("/")} aria-current={isActive(u("/")) ? "page" : undefined}>Beranda</a>
     <a href={u("/katalog")} aria-current={isActive(u("/katalog")) ? "page" : undefined}>Katalog</a>
-    <a href={u("/pagar-brc")} aria-current={isActive(u("/pagar-brc")) ? "page" : undefined}>Pagar BRC</a>
     <a href={u("/blog")} aria-current={isActive(u("/blog")) ? "page" : undefined}>Blog</a>
     <a class="nav__mobile-cta" href={quoteLink()}>Minta Penawaran →</a>
   </div>
