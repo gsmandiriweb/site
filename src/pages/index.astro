@@ -10,11 +10,11 @@
 
   DIRECTION CONTRACT
   THESIS: A real BRC panel is the first thing the visitor can inspect. The
-    product plate carries material truth; controlled dark yard atmosphere gives
+    product deck carries material truth; controlled dark yard atmosphere gives
     it weight without competing with it. Refuses the generic full-bleed stock
     photo, decorative hero machinery, and the "nice photo" read.
   OWN-WORLD: A quiet, high-contrast steel yard: deep charcoal ground, warm
-    galvanized edge light, one authored product plate, direct specs, and a
+    galvanized edge light, a stacked product deck, direct specs, and a
     single orange WhatsApp action. Motion is a restrained enhancement, never
     the proof and never a prerequisite for understanding.
   STORY: A buyer immediately sees what BSM supplies, understands the exact BRC
@@ -39,6 +39,7 @@ import { quoteLink, u } from "../utils/url.ts";
 const quoteBrc = quoteLink({ category: "pagar", product: "Pagar BRC" });
 
 const heroProduct = brcShowcase.items[0];
+const heroDeck = brcShowcase.items.slice(0, 3);
 const yardBreak1 = imageAsset("pagar-brc-tumpukan-stok-gudang-2.jpg");
 const yardBreak2 = imageAsset("pagar-brc-terpasang-outdoor-1.jpg");
 const yardStock = brcShowcase.items;
@@ -79,7 +80,7 @@ const fmtBlogDate = (date: Date) =>
 <body>
   <SiteHeader />
 
-  <!-- ===================== HERO · one product, one action ===================== -->
+  <!-- ===================== HERO · product deck, one action ===================== -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero__ambient" data-hero-shader aria-hidden="true"></div>
     <div class="hero__grid">
@@ -108,7 +109,14 @@ const fmtBlogDate = (date: Date) =>
         </div>
       </div>
 
-      <div class="hero__plate-stack">
+      <div class="hero__plate-stack" data-plate-deck>
+        {heroDeck.slice(1).map((product, i) => (
+          <figure class={`hero__plate hero__plate--rear hero__plate--rear-${i + 1}`} aria-hidden="true">
+            <div class="hero__plate-image">
+              <Image src={imageAsset(product.angles[0])} alt="" width={900} height={1600} loading="lazy" decoding="async" class="hero__plate-img" />
+            </div>
+          </figure>
+        ))}
         <a class="hero__plate-link" href={u("/pagar-brc")} aria-label="Lihat detail Pagar BRC Panel">
           <figure class="hero__plate" data-reveal>
             <div class="hero__plate-image">
@@ -328,8 +336,73 @@ const fmtBlogDate = (date: Date) =>
   const hero = document.querySelector<HTMLElement>(".hero");
   const heroPlateStack = document.querySelector<HTMLElement>(".hero__plate-stack");
   const heroPlateLink = document.querySelector<HTMLElement>(".hero__plate-link");
-  const heroPlate = document.querySelector<HTMLElement>(".hero__plate");
+  const heroPlate = document.querySelector<HTMLElement>(".hero__plate-link .hero__plate");
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  if (heroPlateStack && heroPlateLink && heroPlate) {
+    let deckPointerId: number | null = null;
+    let deckStartX = 0;
+    let deckDragX = 0;
+    let deckMoved = false;
+    let deckClickBlocked = false;
+    const deckRevealDistance = 72;
+    const setDeckDrag = (x: number) => {
+      deckDragX = Math.max(-180, Math.min(180, x));
+      heroPlateLink.style.setProperty("--deck-drag-x", `${deckDragX}px`);
+      heroPlateLink.style.setProperty("--deck-drag-rotate", `${(deckDragX * 0.025).toFixed(2)}deg`);
+    };
+    const settleDeck = () => {
+      const revealed = Math.abs(deckDragX) >= deckRevealDistance;
+      heroPlateStack.classList.toggle("is-revealed", revealed);
+      heroPlateLink.style.setProperty("--deck-swipe-x", revealed ? `${deckDragX > 0 ? 92 : -92}px` : "0px");
+      heroPlateLink.style.setProperty("--deck-drag-x", "0px");
+      heroPlateLink.style.setProperty("--deck-drag-rotate", "0deg");
+      deckDragX = 0;
+      if (revealed && !reduceMotion) window.setTimeout(() => {
+        heroPlateStack.classList.remove("is-revealed");
+        heroPlateLink.style.setProperty("--deck-swipe-x", "0px");
+      }, 900);
+      if (revealed && reduceMotion) {
+        heroPlateStack.classList.remove("is-revealed");
+        heroPlateLink.style.setProperty("--deck-swipe-x", "0px");
+      }
+    };
+    heroPlateLink.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 && event.pointerType === "mouse") return;
+      deckPointerId = event.pointerId;
+      deckStartX = event.clientX;
+      deckMoved = false;
+      deckClickBlocked = false;
+      heroPlateLink.classList.add("is-dragging");
+      heroPlateLink.setPointerCapture?.(event.pointerId);
+    });
+    heroPlateLink.addEventListener("pointermove", (event) => {
+      if (deckPointerId !== event.pointerId) return;
+      const deltaX = event.clientX - deckStartX;
+      if (Math.abs(deltaX) > 8) {
+        deckMoved = true;
+        deckClickBlocked = true;
+        event.preventDefault();
+      }
+      if (deckMoved) setDeckDrag(deltaX);
+    });
+    const finishDeckPointer = (event: PointerEvent) => {
+      if (deckPointerId !== event.pointerId) return;
+      heroPlateLink.classList.remove("is-dragging");
+      heroPlateLink.releasePointerCapture?.(event.pointerId);
+      deckPointerId = null;
+      if (deckMoved) settleDeck();
+      else setDeckDrag(0);
+    };
+    heroPlateLink.addEventListener("pointerup", finishDeckPointer);
+    heroPlateLink.addEventListener("pointercancel", finishDeckPointer);
+    heroPlateLink.addEventListener("click", (event) => {
+      if (deckClickBlocked) {
+        event.preventDefault();
+        event.stopPropagation();
+        deckClickBlocked = false;
+      }
+    });
+  }
   if (!reduceMotion && finePointer && hero && heroPlateStack && heroPlateLink && heroPlate) {
     let plateRaf = 0;
     let plateX = 0;
@@ -489,7 +562,7 @@ const fmtBlogDate = (date: Date) =>
   .cta--ghost:hover { border-color: var(--yard-light); background: rgba(255,255,255,0.04); }
   .cta--lg { font-size: 0.9rem; padding: 18px 38px; }
 
-  /* ===================== HERO · one product, one action ===================== */
+  /* ===================== HERO · product deck, one action ===================== */
   .hero { position: relative; min-height: min(900px, 100svh); display: flex; align-items: center; overflow: hidden; padding: 7rem clamp(1rem, 5vw, 4rem) 4rem; background: var(--theme-page); }
   .hero__ambient { position: absolute; inset: 0; pointer-events: none; overflow: hidden; background: radial-gradient(70% 90% at 78% 50%, rgba(201,180,138,0.14), transparent 52%), linear-gradient(112deg, var(--theme-page) 0%, var(--theme-surface) 48%, var(--theme-panel) 100%); }
   /* Static pattern layer: diagonal machined hatching gives the dark field a
@@ -524,14 +597,22 @@ const fmtBlogDate = (date: Date) =>
   .hero__proof div { display: grid; gap: 0.2rem; }
   .hero__proof b { font-family: var(--fd); font-size: 1.45rem; line-height: 1; color: var(--beam); }
   .hero__proof span { font-family: var(--fm); font-size: 0.62rem; line-height: 1.35; letter-spacing: 0.06em; text-transform: uppercase; color: var(--yard-steel); max-width: 9rem; }
-  .hero__plate-link { display: block; min-width: 0; --plate-shift-x: 0; --plate-shift-y: 0; }
-  .hero__plate-stack { position: relative; width: min(100%, 600px); margin-left: auto; isolation: isolate; }
+  .hero__plate-link { display: block; min-width: 0; --plate-shift-x: 0; --plate-shift-y: 0; --deck-drag-x: 0px; --deck-swipe-x: 0px; --deck-drag-rotate: 0deg; touch-action: pan-y; }
+  .hero__plate-stack { position: relative; width: min(100%, 600px); margin-left: auto; isolation: isolate; min-height: clamp(390px, 45svh, 500px); perspective: 1400px; }
   .hero__plate-stack::before { content: ""; position: absolute; z-index: -2; inset: 7% -8% -5% 8%; border: 1px solid color-mix(in srgb, var(--beam) 24%, transparent); clip-path: polygon(0 0, 76% 0, 76% 12%, 100% 12%, 100% 100%, 24% 100%, 24% 88%, 0 88%); transform: translate(calc(var(--plate-shift-x) * -0.35px), calc(var(--plate-shift-y) * -0.35px)); opacity: 0.72; transition: opacity 0.4s ease; }
   .hero__plate-stack::after { content: ""; position: absolute; z-index: -2; left: 13%; right: -4%; bottom: 4%; height: 1px; background: linear-gradient(90deg, transparent, var(--beam), transparent); opacity: 0.45; transform: translateX(calc(var(--plate-shift-x) * 0.6px)); }
   .hero__plate-stack:hover::before { opacity: 1; }
-  .hero__plate { --plate-tilt-x: 0; --plate-tilt-y: 0; position: relative; margin: 0; width: 100%; margin-left: auto; padding: clamp(0.7rem, 1.5vw, 1.05rem); background: linear-gradient(145deg, color-mix(in srgb, var(--theme-panel) 98%, transparent), color-mix(in srgb, var(--theme-surface) 98%, transparent)); border: 1px solid color-mix(in srgb, var(--theme-text) 14%, transparent); border-top-color: rgba(201,180,138,0.52); border-radius: 5px; box-shadow: inset 0 1px 1px color-mix(in srgb, var(--theme-text) 8%, transparent), 0 26px 64px -28px rgba(0,0,0,0.42); transform: perspective(1200px) rotateX(var(--plate-tilt-y)) rotateY(var(--plate-tilt-x)) rotateZ(1.2deg) translate3d(calc(var(--plate-shift-x) * 1px), calc(var(--plate-shift-y) * 1px), 0); transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease; }
+  .hero__plate { --plate-tilt-x: 0; --plate-tilt-y: 0; position: relative; margin: 0; width: 100%; margin-left: auto; padding: clamp(0.7rem, 1.5vw, 1.05rem); background: linear-gradient(145deg, color-mix(in srgb, var(--theme-panel) 98%, transparent), color-mix(in srgb, var(--theme-surface) 98%, transparent)); border: 1px solid color-mix(in srgb, var(--theme-text) 14%, transparent); border-top-color: rgba(201,180,138,0.52); border-radius: 5px; box-shadow: inset 0 1px 1px color-mix(in srgb, var(--theme-text) 8%, transparent), 0 26px 64px -28px rgba(0,0,0,0.42); transform: perspective(1200px) rotateX(var(--plate-tilt-y)) rotateY(var(--plate-tilt-x)) rotateZ(calc(1.2deg + var(--deck-drag-rotate))) translate3d(calc(var(--plate-shift-x) * 1px + var(--deck-drag-x) + var(--deck-swipe-x)), calc(var(--plate-shift-y) * 1px), 0); transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease; }
+  .hero__plate-link { position: relative; z-index: 3; }
+  .hero__plate--rear { position: absolute; z-index: 1; inset: 0; pointer-events: none; opacity: 0.9; transform: rotateZ(-8deg) translate3d(-4.5rem, 2rem, -120px) scale(0.88); filter: saturate(0.72) brightness(0.72); box-shadow: 0 28px 60px -28px rgba(0,0,0,0.92); }
+  .hero__plate--rear-2 { z-index: 2; transform: rotateZ(8deg) translate3d(4.5rem, 1.25rem, -70px) scale(0.93); opacity: 0.94; filter: saturate(0.78) brightness(0.8); }
+  .hero__plate-stack.is-revealed .hero__plate--rear { transform: rotateZ(-10deg) translate3d(-5.2rem, 2.4rem, -120px) scale(0.9); }
+  .hero__plate-stack.is-revealed .hero__plate--rear-2 { transform: rotateZ(10deg) translate3d(5.2rem, 1.5rem, -70px) scale(0.95); }
+  .hero__plate--rear .hero__plate-image { height: clamp(280px, 38svh, 390px); }
   .hero__plate::before { content: ""; position: absolute; top: 0.35rem; left: 12%; right: 12%; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,180,138,0.34), transparent); pointer-events: none; }
-  .hero__plate-link:hover .hero__plate, .hero__plate-link:focus-visible .hero__plate { --plate-tilt-x: 1.1deg; --plate-tilt-y: -0.8deg; transform: perspective(1200px) rotateX(var(--plate-tilt-y)) rotateY(var(--plate-tilt-x)) rotateZ(1.8deg) translate3d(calc(var(--plate-shift-x) * 1px), calc(var(--plate-shift-y) * 1px - 4px), 0); border-top-color: var(--beam); box-shadow: inset 0 1px 1px rgba(255,255,255,0.07), 0 32px 76px -30px rgba(0,0,0,0.96); }
+  .hero__plate-link:hover .hero__plate, .hero__plate-link:focus-visible .hero__plate { --plate-tilt-x: 1.1deg; --plate-tilt-y: -0.8deg; transform: perspective(1200px) rotateX(var(--plate-tilt-y)) rotateY(var(--plate-tilt-x)) rotateZ(calc(1.8deg + var(--deck-drag-rotate))) translate3d(calc(var(--plate-shift-x) * 1px + var(--deck-drag-x) + var(--deck-swipe-x)), calc(var(--plate-shift-y) * 1px - 4px), 0); border-top-color: var(--beam); box-shadow: inset 0 1px 1px rgba(255,255,255,0.07), 0 32px 76px -30px rgba(0,0,0,0.96); }
+  .hero__plate-link.is-dragging .hero__plate { transition: none; }
+  .hero__plate-link.is-dragging { cursor: grabbing; }
   .hero__plate-image { position: relative; overflow: hidden; background: var(--theme-panel); width: 100%; height: clamp(280px, 38svh, 390px); border-radius: 2px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-text) 8%, transparent), inset 0 -28px 36px -34px rgba(0,0,0,0.42); }
   .hero__plate-img { width: 100%; height: 100%; object-fit: cover; object-position: center center; filter: saturate(0.82) contrast(1.06); }
   :global(html[data-theme="light"]) .hero__plate-img { filter: saturate(0.74) contrast(1.02) brightness(1.04); }
@@ -551,6 +632,7 @@ const fmtBlogDate = (date: Date) =>
   @media (min-width: 861px) {
     .hero { height: auto; min-height: 0; padding: calc(64px + clamp(1rem, 3svh, 2rem)) clamp(1rem, 5vw, 4rem) clamp(1rem, 2svh, 1.5rem); }
     .hero__grid { gap: clamp(1.75rem, 4vw, 4rem); }
+    .hero__plate-stack { min-height: clamp(390px, 45svh, 500px); }
     .hero__plate-image { height: clamp(260px, 40svh, 390px); }
     .hero__scroll { display: none; }
   }
@@ -577,8 +659,10 @@ const fmtBlogDate = (date: Date) =>
     .hero { min-height: auto; padding-top: 7rem; padding-bottom: 5rem; }
     .hero__grid { grid-template-columns: 1fr; gap: 3.25rem; }
     .hero__content { max-width: 44rem; }
-    .hero__plate-stack { width: min(100%, 680px); margin: 0 auto; }
+    .hero__plate-stack { width: min(100%, 680px); min-height: clamp(320px, 58vw, 450px); margin: 0 auto; }
     .hero__plate { margin: 0 auto; transform: perspective(1200px) rotateZ(0.6deg); }
+    .hero__plate--rear { transform: rotateZ(-5deg) translate3d(-2.4rem, 1.2rem, -50px) scale(0.93); }
+    .hero__plate--rear-2 { transform: rotateZ(5deg) translate3d(2.4rem, 0.7rem, -25px) scale(0.97); }
     .hero__plate-status { font-size: 0.5rem; letter-spacing: 0.04em; }
     .hero__scroll { display: none; }
   }
@@ -588,6 +672,9 @@ const fmtBlogDate = (date: Date) =>
     .hero__plate,
     .hero__plate-link:hover .hero__plate,
     .hero__plate-link:focus-visible .hero__plate { transition: none; transform: rotateZ(0.6deg); }
+    .hero__plate--rear, .hero__plate--rear-2 { transition: none; }
+    .hero__plate-stack.is-revealed .hero__plate--rear { transform: rotateZ(-4deg) translate3d(-1.25rem, 0.7rem, -32px) scale(0.95); }
+    .hero__plate-stack.is-revealed .hero__plate--rear-2 { transform: rotateZ(4deg) translate3d(1.25rem, 0.35rem, -18px) scale(0.98); }
   }
   @media (max-width: 520px) {
     .hero { padding-inline: 1rem; }
@@ -601,7 +688,11 @@ const fmtBlogDate = (date: Date) =>
     .hero__proof { gap: 0.8rem; margin-top: 1.65rem; }
     .hero__proof span { font-size: 0.58rem; }
     .hero__plate { padding: 0.55rem; }
+    .hero__plate-stack { min-height: min(48vh, 390px); }
+    .hero__plate--rear { opacity: 0.78; transform: rotateZ(-4deg) translate3d(-1.25rem, 0.7rem, -32px) scale(0.95); }
+    .hero__plate--rear-2 { opacity: 0.84; transform: rotateZ(4deg) translate3d(1.25rem, 0.35rem, -18px) scale(0.98); }
     .hero__plate-image { height: min(48vh, 390px); }
+    .hero__plate--rear .hero__plate-image { height: min(48vh, 390px); }
     .hero__plate-specs { grid-template-columns: repeat(2, 1fr); }
     .hero__plate-specs div:nth-child(2) { border-right: 0; }
     .hero__plate-specs div:nth-child(-n + 2) { border-bottom: 1px solid rgba(130,138,147,0.18); }
