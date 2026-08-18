@@ -94,15 +94,5 @@ const isActive = (href: string) =>
       }
     })
   );
-  applyTheme(themeRoot.dataset.theme === "light" ? "light" : "dark");
-  const systemTheme = window.matchMedia("(prefers-color-scheme: light)");
-  systemTheme.addEventListener("change", (event) => {
-    try {
-      if (!window.localStorage.getItem("bsm-theme")) {
-        applyTheme(event.matches ? "light" : "dark");
-      }
-    } catch {
-      applyTheme(event.matches ? "light" : "dark");
-    }
-  });
+  applyTheme(themeRoot.dataset.theme === "dark" ? "dark" : "light");
 </script>

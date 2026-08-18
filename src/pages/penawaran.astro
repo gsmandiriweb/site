@@ -76,7 +76,12 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
       <template id="rfq-item-template">
         <article class="rfq__item">
           <div class="rfq__item-head">
-            <span class="rfq__item-title">Material 1</span>
+            <span class="rfq__item-title">
+              <svg class="rfq__check" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3.5 8.5 L6.75 11.75 L12.5 4.5" />
+              </svg>
+              <span class="rfq__item-title-text">Material 1</span>
+            </span>
             <button class="rfq__remove-item" type="button">Hapus</button>
           </div>
           <div class="rfq__item-grid">
@@ -138,10 +143,16 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
         </div>
       </div>
 
-      {/* Live preview of the composed message */}
+      {/* Live preview of the composed message — the RFQ sheet that writes itself */}
       <div class="rfq__preview" aria-live="polite">
-        <span class="label">Pratinjau pesan WhatsApp</span>
-        <pre class="rfq__message" id="rfq-message"></pre>
+        <div class="rfq__sheet">
+          <div class="rfq__sheet-head">
+            <span class="label">Pratinjau pesan WhatsApp</span>
+            <span class="rfq__sheet-no" aria-hidden="true">SHEET 1 / 1</span>
+          </div>
+          <pre class="rfq__message" id="rfq-message"></pre>
+          <span class="rfq__stamp" id="rfq-stamp" aria-hidden="true">RFQ<br />SIAP<br />KIRIM</span>
+        </div>
       </div>
 
       <div class="rfq__actions">
@@ -178,7 +189,19 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
   .rfq__items { display: grid; gap: 1rem; }
   .rfq__item { padding: 1rem; border: 1px solid var(--steel); border-radius: var(--r-md); background: var(--paper-deep); }
   .rfq__item-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.8rem; }
-  .rfq__item-title { color: var(--ink); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .rfq__item-title { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ink); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .rfq__check { width: 0.95rem; height: 0.95rem; flex: 0 0 auto; opacity: 0; }
+  .rfq__check path {
+    fill: none;
+    stroke: var(--blueprint);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 16;
+    stroke-dashoffset: 16;
+  }
+  .rfq__item.is-complete .rfq__check { opacity: 1; }
+  .rfq__item.is-complete .rfq__check path { stroke-dashoffset: 0; transition: stroke-dashoffset 0.35s var(--ease) 0.06s; }
   .rfq__remove-item { border: 0; background: transparent; color: var(--ink-muted); cursor: pointer; font: inherit; font-size: 0.78rem; }
   .rfq__remove-item:hover { color: #c84b40; }
   .rfq__item-grid, .rfq__meta-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem 1.5rem; }
@@ -202,17 +225,22 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
   .rfq__item-hint { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.06em; color: var(--blueprint); }
   .rfq__item-hint:empty { display: none; }
 
-  /* Preview */
+  /* Preview — the RFQ sheet that writes itself */
   .rfq__preview {
     margin-top: 1.6rem;
     padding-top: 1.4rem;
     border-top: 1px solid var(--steel);
   }
-  .rfq__preview .label {
-    color: var(--ink-muted);
-    display: block;
+  .rfq__sheet { position: relative; }
+  .rfq__sheet-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
     margin-bottom: 0.6rem;
   }
+  .rfq__sheet-head .label { color: var(--ink-muted); display: block; margin-bottom: 0; }
+  .rfq__sheet-no { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.14em; color: var(--ink-muted); }
   .rfq__message {
     margin: 0;
     padding: 1rem 1.2rem;
@@ -226,11 +254,74 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
     white-space: pre-wrap;
     word-break: break-word;
     min-height: 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
   .rfq__message:empty::before {
     content: "Lengkapi formulir — pratinjau pesan akan muncul di sini.";
     color: var(--ink-muted);
     font-style: italic;
+  }
+  /* The message lines and caret are created at runtime by the RFQ script, so
+     they carry no scoped attribute — these styles are global on purpose. */
+  :global(.rfq__line) { display: block; white-space: pre-wrap; word-break: break-word; }
+  :global(.rfq__caret) {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 2px;
+    height: 1.05em;
+    margin-top: 0.28em;
+    background: var(--blueprint);
+    align-self: flex-start;
+  }
+  .rfq__stamp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 6.6rem;
+    height: 6.6rem;
+    border: 3px double var(--signal);
+    border-radius: 50%;
+    color: var(--signal-deep);
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    line-height: 1.45;
+    text-align: center;
+    text-transform: uppercase;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(2) rotate(-10deg);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.rfq__line.is-new) { animation: rfq-line-in 0.26s var(--ease) both; }
+    :global(.rfq__caret) { animation: rfq-blink 1.1s steps(2, jump-none) infinite; }
+    .rfq__stamp.is-stamped { animation: rfq-stamp 1.5s var(--ease) forwards; }
+    @keyframes rfq-line-in {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes rfq-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.12; }
+    }
+    @keyframes rfq-stamp {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(2) rotate(-10deg); }
+      15% { opacity: 0; }
+      38% { opacity: 1; transform: translate(-50%, -50%) scale(0.92) rotate(-6deg); }
+      54% { opacity: 1; transform: translate(-50%, -50%) scale(1.05) rotate(-6deg); }
+      72% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-6deg); }
+      100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1) rotate(-6deg); }
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.rfq__caret) { display: none; }
+    .rfq__item.is-complete .rfq__check path { transition: none; }
   }
 
   /* Actions */
@@ -273,9 +364,16 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
     border-color: #ef6a61;
     color: #ffb8b1;
   }
+  :global(html[data-theme="light"]) .rfq__status[data-tone="error"] {
+    border-color: var(--signal);
+    color: var(--signal-darker);
+  }
   .rfq__status[data-tone="success"] {
     border-color: var(--blueprint);
     color: var(--yard-light);
+  }
+  :global(html[data-theme="light"]) .rfq__status[data-tone="success"] {
+    color: var(--blueprint-deep);
   }
   .rfq__status a {
     color: var(--blueprint);
@@ -310,6 +408,7 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
     const messageEl = document.getElementById("rfq-message");
     const submitEl = document.getElementById("rfq-submit") as HTMLButtonElement;
     const statusEl = document.getElementById("rfq-status");
+    const stampEl = document.getElementById("rfq-stamp");
     let isSubmitting = false;
     const defaultMessage = "Halo BSM, saya ingin meminta penawaran material. Mohon bantu info produk yang sesuai, harga pabrik, ketersediaan stok, dan pengiriman. Terima kasih.";
     let itemCount = 0;
@@ -338,6 +437,15 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
         const specContext = lines[category.value]?.find((option) => option.name === product.value)?.specContext;
         hint.textContent = specContext ? `Spesifikasi terlampir: ${specContext}` : "";
       };
+      // A completed material row earns its blueprint check — category chosen,
+      // product picked, quantity a positive whole number.
+      const updateRowCheck = () => {
+        const qty = Number.parseFloat(quantity.value);
+        const complete = Boolean(
+          category.value && product.value && Number.isFinite(qty) && qty >= 1 && Number.isInteger(qty)
+        );
+        item.classList.toggle("is-complete", complete);
+      };
       category.id = `rfq-category-${number}`;
       product.id = `rfq-product-${number}`;
       quantity.id = `rfq-qty-${number}`;
@@ -362,13 +470,14 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
         options.forEach((option) => product.add(new Option(option.name, option.name)));
         product.disabled = options.length === 0;
         updateHint();
+        updateRowCheck();
         clearStatus();
         update();
       });
-      product.addEventListener("change", () => { updateHint(); clearStatus(); update(); });
+      product.addEventListener("change", () => { updateHint(); updateRowCheck(); clearStatus(); update(); });
       [quantity, unit].forEach((element) => {
-        element.addEventListener("input", () => { clearStatus(); update(); });
-        element.addEventListener("change", () => { clearStatus(); update(); });
+        element.addEventListener("input", () => { updateRowCheck(); clearStatus(); update(); });
+        element.addEventListener("change", () => { updateRowCheck(); clearStatus(); update(); });
       });
     }
 
@@ -377,7 +486,7 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
         const item = element as HTMLElement;
         const itemNumber = index + 1;
         item.dataset.item = String(itemNumber);
-        item.querySelector<HTMLElement>(".rfq__item-title")!.textContent = `Material ${itemNumber}`;
+        item.querySelector<HTMLElement>(".rfq__item-title-text")!.textContent = `Material ${itemNumber}`;
         item.dataset.item = String(itemNumber);
         const category = item.querySelector<HTMLSelectElement>('[data-role="category"]');
         const product = item.querySelector<HTMLSelectElement>('[data-role="product"]');
@@ -493,6 +602,9 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
       statusEl.hidden = true;
       statusEl.textContent = "";
       statusEl.removeAttribute("data-tone");
+      // The sheet is being revised — the approval stamp lifts until the next
+      // successful submit.
+      stampEl?.classList.remove("is-stamped");
     }
 
     function showStatus(message: string, tone: "error" | "success" | "info", fallbackUrl?: string) {
@@ -511,9 +623,47 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
       statusEl.hidden = false;
     }
 
+    // Render the composed message as a work-order sheet that writes itself:
+    // existing lines stay put, only newly added lines draw in, and a blinking
+    // caret marks the writing position. Reduced-motion users get the same text
+    // instantly — no hidden content, ever.
+    function renderMessage(msg: string) {
+      if (!messageEl) return;
+      const lines = msg.split("\n");
+      const existing = Array.from(messageEl.querySelectorAll<HTMLElement>("[data-line]"));
+      lines.forEach((text, index) => {
+        const line = existing[index];
+        if (line) {
+          if (line.textContent !== text) line.textContent = text;
+        } else {
+          const span = document.createElement("span");
+          span.className = "rfq__line is-new";
+          span.setAttribute("data-line", "1");
+          span.textContent = text;
+          messageEl.appendChild(span);
+        }
+      });
+      for (let index = lines.length; index < existing.length; index += 1) existing[index].remove();
+      let caret = messageEl.querySelector<HTMLElement>("[data-caret]");
+      if (lines.some((line) => line.trim())) {
+        if (!caret) {
+          caret = document.createElement("span");
+          caret.className = "rfq__caret";
+          caret.setAttribute("data-caret", "1");
+          caret.setAttribute("aria-hidden", "true");
+          messageEl.appendChild(caret);
+        }
+      } else {
+        caret?.remove();
+      }
+      messageEl.querySelectorAll<HTMLElement>(".rfq__line.is-new").forEach((el) => {
+        window.setTimeout(() => el.classList.remove("is-new"), 320);
+      });
+    }
+
     function update() {
       const msg = compose();
-      if (messageEl) messageEl.textContent = msg;
+      renderMessage(msg);
       // WhatsApp is always available. Complete details produce the tailored
       // RFQ; otherwise compose() supplies a standard inquiry message.
       submitEl.disabled = isSubmitting;
@@ -569,6 +719,13 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
         return;
       }
       showStatus("Rincian siap. WhatsApp dibuka di tab baru untuk Anda tinjau dan kirim.", "success");
+      // The approval stamp presses onto the sheet while WhatsApp opens — the
+      // popup never waits for the animation.
+      if (stampEl) {
+        stampEl.classList.remove("is-stamped");
+        void stampEl.offsetWidth;
+        stampEl.classList.add("is-stamped");
+      }
       window.setTimeout(() => {
         isSubmitting = false;
         update();

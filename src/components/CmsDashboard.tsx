@@ -386,13 +386,7 @@ export default function CmsDashboard({
     } catch {
       // Restricted storage should not prevent the dashboard from rendering.
     }
-    applyTheme(
-      stored === "light" || stored === "dark"
-        ? stored
-        : root.dataset.theme === "light"
-          ? "light"
-          : "dark",
-    );
+    applyTheme(stored === "light" || stored === "dark" ? stored : "light");
     const onClick = () => {
       const next = root.dataset.theme === "light" ? "dark" : "light";
       applyTheme(next);
@@ -402,19 +396,9 @@ export default function CmsDashboard({
         // Restricted storage should not prevent switching.
       }
     };
-    const onSystemThemeChange = (event: MediaQueryListEvent) => {
-      try {
-        if (!window.localStorage.getItem("bsm-theme")) applyTheme(event.matches ? "light" : "dark");
-      } catch {
-        applyTheme(event.matches ? "light" : "dark");
-      }
-    };
-    const systemTheme = window.matchMedia("(prefers-color-scheme: light)");
     button?.addEventListener("click", onClick);
-    systemTheme.addEventListener("change", onSystemThemeChange);
     return () => {
       button?.removeEventListener("click", onClick);
-      systemTheme.removeEventListener("change", onSystemThemeChange);
     };
   }, []);
 

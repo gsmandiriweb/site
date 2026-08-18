@@ -40,6 +40,8 @@ const quoteBrc = quoteLink({ category: "pagar", product: "Pagar BRC" });
 
 const heroProduct = brcShowcase.items[0];
 const heroDeck = brcShowcase.items.slice(0, 3);
+const heroCallouts = heroProduct.callouts ?? [];
+const specValue = (key: string) => heroProduct.specs.find((s) => s.k === key)?.v ?? "";
 const yardBreak1 = imageAsset("pagar-brc-tumpukan-stok-gudang-2.jpg");
 const yardBreak2 = imageAsset("pagar-brc-terpasang-outdoor-1.jpg");
 const yardStock = brcShowcase.items;
@@ -64,10 +66,10 @@ const fmtBlogDate = (date: Date) =>
         var stored = window.localStorage.getItem("bsm-theme");
         var theme = stored === "light" || stored === "dark"
           ? stored
-          : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          : "light";
         document.documentElement.dataset.theme = theme;
       } catch {
-        document.documentElement.dataset.theme = "dark";
+        document.documentElement.dataset.theme = "light";
       }
     })();
 
@@ -121,6 +123,46 @@ const fmtBlogDate = (date: Date) =>
           <figure class="hero__plate" data-reveal>
             <div class="hero__plate-image">
               <Image src={imageAsset(heroProduct.angles[0])} alt="Pagar BRC Panel, tampak perspektif" width={900} height={1600} loading="eager" fetchpriority="high" decoding="async" class="hero__plate-img" />
+              <span class="hero__plate-sweep" aria-hidden="true"></span>
+              <svg class="dim hero__plate-dim" viewBox="0 0 400 400" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                  <marker id="yard-dim-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" class="yard-dim-head">
+                    <path d="M0,0 L6,3 L0,6 Z" />
+                  </marker>
+                </defs>
+                {
+                  heroCallouts.map((c, i) => {
+                    const v = specValue(c.specKey);
+                    const cls = i % 2 === 0 ? "draw" : "draw-2";
+                    if (c.type === "dimension" && c.x2 != null && c.y2 != null) {
+                      return (
+                        <g>
+                          <line
+                            class={cls}
+                            x1={c.x}
+                            y1={c.y}
+                            x2={c.x2}
+                            y2={c.y2}
+                            marker-start="url(#yard-dim-arrow)"
+                            marker-end="url(#yard-dim-arrow)"
+                          />
+                          <text class="pop" x={(c.x + c.x2) / 2} y={c.y - 8} text-anchor="middle">{v}</text>
+                        </g>
+                      );
+                    }
+                    const lx = c.lx ?? c.x + 80;
+                    const ly = c.ly ?? c.y + 40;
+                    const midX = c.x + (lx - c.x) * 0.5;
+                    return (
+                      <g>
+                        <polyline class={`callout ${cls}`} points={`${c.x},${c.y} ${midX},${c.y} ${lx},${ly}`} fill="none" />
+                        <circle cx={c.x} cy={c.y} r="2.5" />
+                        <text class="pop" x={lx} y={ly - 4} text-anchor={lx > 330 ? "end" : lx > c.x ? "start" : "end"}>{v}</text>
+                      </g>
+                    );
+                  })
+                }
+              </svg>
             </div>
             <figcaption class="hero__plate-caption">
               <span class="hero__plate-label">PAGAR BRC PANEL · PRODUK UNGGULAN</span>
@@ -513,7 +555,38 @@ const fmtBlogDate = (date: Date) =>
       const heroReveals = gsap.utils.toArray<HTMLElement>(".hero [data-reveal]");
       gsap.set(heroReveals, { autoAlpha: 0, y: 30 });
       document.documentElement.classList.remove("hero-motion-ready");
-      gsap.to(heroReveals, { autoAlpha: 1, y: 0, duration: 1.0, ease: "power3.out", stagger: 0.12, delay: 0.2 });
+      document.documentElement.classList.add("gsap");
+      const heroTl = gsap.timeline({ delay: 0.2, defaults: { ease: "power3.out" } });
+      heroTl.to(heroReveals, { autoAlpha: 1, y: 0, duration: 1.0, stagger: 0.12 });
+
+      // The dimensioned inspection sheet: one weld-beam pass over the panel,
+      // then the measure lines and leader callouts draw themselves in. Pure
+      // enhancement — the static overlay remains the floor if this fails.
+      const heroSweep = document.querySelector<HTMLElement>(".hero__plate-sweep");
+      const heroDimEls = gsap.utils.toArray<SVGPathElement | SVGPolylineElement>(
+        ".hero__plate-dim .draw, .hero__plate-dim .draw-2, .hero__plate-dim .callout"
+      );
+      heroDimEls.forEach((el) => {
+        const len = el.getTotalLength?.() || 600;
+        gsap.set(el, { strokeDasharray: len, strokeDashoffset: len });
+      });
+      if (heroSweep) {
+        heroTl
+          .fromTo(
+            heroSweep,
+            { yPercent: 160, autoAlpha: 0 },
+            { yPercent: -160, autoAlpha: 0.9, duration: 1.4, ease: "power2.inOut" },
+            "+=0.15"
+          )
+          .to(heroSweep, { autoAlpha: 0, duration: 0.4, ease: "power2.out" });
+      }
+      heroTl.to(heroDimEls, { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut", stagger: 0.14 }, "-=0.5");
+      heroTl.fromTo(
+        ".hero__plate-dim .pop",
+        { autoAlpha: 0, y: 5 },
+        { autoAlpha: 1, y: 0, duration: 0.45, stagger: 0.12, ease: "power2.out" },
+        "-=0.25"
+      );
     }
 
     // Keep the product rails static while scrolling. The carousel itself is
@@ -616,6 +689,45 @@ const fmtBlogDate = (date: Date) =>
   .hero__plate-image { position: relative; overflow: hidden; background: var(--theme-panel); width: 100%; height: clamp(280px, 38svh, 390px); border-radius: 2px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-text) 8%, transparent), inset 0 -28px 36px -34px rgba(0,0,0,0.42); }
   .hero__plate-img { width: 100%; height: 100%; object-fit: cover; object-position: center center; filter: saturate(0.82) contrast(1.06); }
   :global(html[data-theme="light"]) .hero__plate-img { filter: saturate(0.74) contrast(1.02) brightness(1.04); }
+  /* ---- The dimensioned inspection sheet · weld-beam pass + measure callouts ----
+     The real BRC photo stays the evidence; this overlay measures it. One authored
+     motion moment: a warm weld-beam sweeps the panel, then the dimension lines
+     and leader callouts draw in. Static by default, animated only when motion is
+     welcome, fully readable without JS. */
+  .hero__plate-sweep {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(103deg, transparent 41%, rgba(201,180,138,0.22) 46%, rgba(245,240,226,0.5) 50%, rgba(201,180,138,0.22) 54%, transparent 59%);
+    mix-blend-mode: screen; opacity: 0;
+    will-change: transform, opacity;
+  }
+  :global(html[data-theme="light"]) .hero__plate-sweep {
+    background: linear-gradient(103deg, transparent 41%, rgba(122,92,46,0.14) 46%, rgba(122,92,46,0.32) 50%, rgba(122,92,46,0.14) 54%, transparent 59%);
+    mix-blend-mode: multiply;
+  }
+  .hero__plate-dim { position: absolute; inset: 0; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(8, 10, 13, 0.85)); }
+  :global(html[data-theme="light"]) .hero__plate-dim { filter: drop-shadow(0 1px 2px rgba(250, 247, 238, 0.9)); }
+  .hero__plate-dim line,
+  .hero__plate-dim polyline { stroke: var(--beam); stroke-width: 1.5; fill: none; opacity: 0.92; }
+  .hero__plate-dim .yard-dim-head path { fill: var(--beam); }
+  .hero__plate-dim .callout { stroke: var(--yard-accent); stroke-width: 1.25; opacity: 0.95; }
+  /* The leader dot and label sit beside the `.callout` polyline (siblings in
+     the group), so target them by sibling relationship. */
+  .hero__plate-dim .callout + circle { fill: var(--yard-accent); }
+  .hero__plate-dim .callout + circle + text,
+  .hero__plate-dim .callout ~ text { fill: var(--yard-accent); }
+  .hero__plate-dim text {
+    font-family: var(--fm); font-size: 12px; letter-spacing: 0.05em;
+    fill: var(--beam); paint-order: stroke;
+    stroke: rgba(10, 11, 14, 0.62); stroke-width: 3px; stroke-linejoin: round;
+  }
+  :global(html[data-theme="light"]) .hero__plate-dim line,
+  :global(html[data-theme="light"]) .hero__plate-dim polyline { stroke: #7a5c2e; }
+  :global(html[data-theme="light"]) .hero__plate-dim .yard-dim-head path { fill: #7a5c2e; }
+  :global(html[data-theme="light"]) .hero__plate-dim text { fill: #5c451f; stroke: rgba(245, 242, 231, 0.9); }
+  :global(html[data-theme="light"]) .hero__plate-dim .callout { stroke: var(--yard-accent-darker); }
+  :global(html[data-theme="light"]) .hero__plate-dim .callout + circle { fill: var(--yard-accent-darker); }
+  :global(html[data-theme="light"]) .hero__plate-dim .callout + circle + text,
+  :global(html[data-theme="light"]) .hero__plate-dim .callout ~ text { fill: var(--yard-accent-darker); }
   .hero__plate-caption { display: grid; gap: 0.28rem; padding: 0.75rem 0.35rem 0.55rem; }
   .hero__plate-label { font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.11em; color: var(--yard-accent); }
   .hero__plate-caption b { color: var(--theme-text); font-family: var(--fd); font-size: clamp(1.3rem, 2.4vw, 1.9rem); line-height: 1; }
@@ -668,6 +780,26 @@ const fmtBlogDate = (date: Date) =>
   }
   .hero__plate-link:focus-visible { outline: 2px solid var(--beam); outline-offset: 6px; }
   .hero-motion-ready .hero [data-reveal] { visibility: hidden; }
+  /* Motion floor for the inspection sheet: the sweep sweeps, the measure lines
+     draw themselves. GSAP takes over when active (html.gsap disables the CSS
+     version); reduced-motion and no-JS keep the fully drawn overlay static. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__plate-sweep { animation: yard-sweep 1.5s ease-in-out 1.35s both; }
+    @keyframes yard-sweep {
+      0% { transform: translateY(150%); opacity: 0; }
+      40% { opacity: 0.85; }
+      100% { transform: translateY(-150%); opacity: 0; }
+    }
+    .hero__plate-dim .draw { stroke-dasharray: 600; stroke-dashoffset: 600; animation: yard-draw 0.9s ease-out 1.5s forwards; }
+    .hero__plate-dim .draw-2 { stroke-dasharray: 600; stroke-dashoffset: 600; animation: yard-draw 0.9s ease-out 1.65s forwards; }
+    .hero__plate-dim .pop { opacity: 0; animation: yard-pop 0.45s ease-out 1.75s forwards; }
+    @keyframes yard-draw { to { stroke-dashoffset: 0; } }
+    @keyframes yard-pop { to { opacity: 1; } }
+    html.gsap .hero__plate-sweep,
+    html.gsap .hero__plate-dim .draw,
+    html.gsap .hero__plate-dim .draw-2,
+    html.gsap .hero__plate-dim .pop { animation: none; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .hero__plate,
     .hero__plate-link:hover .hero__plate,

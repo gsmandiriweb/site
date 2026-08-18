@@ -11,10 +11,10 @@ const safeNext = "/admin";
           var stored = window.localStorage.getItem("bsm-theme");
           var theme = stored === "light" || stored === "dark"
             ? stored
-            : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+            : "light";
           document.documentElement.dataset.theme = theme;
         } catch {
-          document.documentElement.dataset.theme = "dark";
+          document.documentElement.dataset.theme = "light";
         }
       })();
     </script>
@@ -93,15 +93,7 @@ const safeNext = "/admin";
           try { window.localStorage.setItem("bsm-theme", next); } catch (_) {}
         });
       });
-      var systemTheme = window.matchMedia("(prefers-color-scheme: light)");
-      systemTheme.addEventListener("change", function (event) {
-        try {
-          if (!window.localStorage.getItem("bsm-theme")) applyTheme(event.matches ? "light" : "dark");
-        } catch (_) {
-          applyTheme(event.matches ? "light" : "dark");
-        }
-      });
-      applyTheme(root.dataset.theme === "light" ? "light" : "dark");
+      applyTheme(root.dataset.theme === "dark" ? "dark" : "light");
     })();
   </script>
 </html>
