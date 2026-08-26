@@ -206,16 +206,23 @@ const total = catalogLines.length;
     margin-left: auto;
   }
 
-  /* ---------- Results grid (mixed density) ---------- */
+  /* ---------- Masonry (Pinterest-style) ---------- */
+  /* Fixed 3-col grid cropped portrait/landscape mixes (Tiang Y landscape 1.78, portraits 0.56/0.75)
+     into the same 4/3 box. Columns masonry lets each specimen keep its intrinsic ratio, so
+     tall tiang/panel stay tall and the single landscape proof stays wide — no center-crop.
+     Filter fade stays intact: display:none removes the brick from flow after the leave transition. */
   .catalog__grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.2rem;
-    align-items: start;
+    column-count: 3;
+    column-gap: 1.2rem;
+    column-fill: balance;
   }
   .catalog__item {
+    break-inside: avoid;
+    margin-bottom: 1.2rem;
     /* Filter transition: fade rather than snap (Q6). */
-    transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+    transition:
+      opacity 0.25s var(--ease),
+      transform 0.25s var(--ease);
   }
   .catalog__item.is-hidden {
     display: none;
@@ -226,7 +233,7 @@ const total = catalogLines.length;
     pointer-events: none;
   }
 
-  /* Rich card */
+  /* Rich card — masonry brick */
   .catalog__card {
     display: flex;
     flex-direction: column;
@@ -235,8 +242,18 @@ const total = catalogLines.length;
     color: inherit;
   }
   .catalog__specimen {
-    aspect-ratio: 4 / 3;
-    transition: box-shadow 0.3s var(--ease);
+    aspect-ratio: auto;
+    height: auto;
+    transition:
+      box-shadow 0.3s var(--ease),
+      border-color 0.3s var(--ease);
+  }
+  .catalog__specimen img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: auto;
+    object-fit: cover;
+    display: block;
   }
   .catalog__card:hover .catalog__specimen {
     box-shadow: var(--lift);
@@ -263,10 +280,9 @@ const total = catalogLines.length;
     margin-top: 0.2rem;
   }
 
-  /* Line row (thin category) */
+  /* Line row — compact brick inside the same masonry flow */
   .catalog__item--row {
-    /* Rows span a single column but read as a compact list item. */
-    grid-column: span 1;
+    /* no grid-column in masonry; rows are just short bricks */
   }
   .catalog__row {
     display: flex;
@@ -334,12 +350,12 @@ const total = catalogLines.length;
   /* ---------- Responsive ---------- */
   @media (max-width: 860px) {
     .catalog__grid {
-      grid-template-columns: repeat(2, 1fr);
+      column-count: 2;
     }
   }
   @media (max-width: 560px) {
     .catalog__grid {
-      grid-template-columns: 1fr;
+      column-count: 1;
     }
     .catalog__count {
       margin-left: 0;
