@@ -299,26 +299,62 @@ export interface CatalogLine {
   detailHref?: string;
 }
 
-export const catalogLines: CatalogLine[] = categories.flatMap((c) => {
-  const showcase = showcasesByCategory[c.slug];
-  // Index rich lines by name so a category line matches its showcase item.
-  const richByName = new Map((showcase?.items ?? []).map((i) => [i.name, i]));
-  const detailHref = showcase ? `/pagar-brc` : undefined; // per-showcase when more land
-  return c.lines.map((line, i) => {
-    const item = richByName.get(line);
-    const rich = !!item;
-    return {
-      id: `${c.slug}--${i}`,
-      name: line,
-      categorySlug: c.slug,
-      categoryName: c.name,
-      rich,
-      image: rich ? item!.angles[0] : undefined,
-      spec: rich ? item!.specs.map((s) => s.v).join(" · ") : undefined,
-      detailHref: rich ? detailHref : undefined,
-    } satisfies CatalogLine;
+const promotedLines = new Set([
+  "Pagar BRC",
+  "Pagar Kawat Harmonika",
+  "Kawat Harmonika",
+  "Kawat Silet",
+  "Kawat Duri",
+  "Kawat Loket",
+  "Guardrail",
+]);
+
+const catalogPriority = [
+  "Pagar BRC Panel",
+  "Pagar Kawat Harmonika",
+  "Kawat Harmonika",
+  "Tiang BRC",
+  "Tiang Y BRC",
+  "Pintu Pagar BRC",
+  "Kawat Silet",
+  "Kawat Duri",
+  "Kawat Loket",
+  "Guardrail",
+  "Aksesoris Baut & Klem",
+  "Set Tiang Rebah",
+];
+
+export const catalogLines: CatalogLine[] = categories
+  .flatMap((c) => {
+    const showcase = showcasesByCategory[c.slug];
+    // Index rich lines by name so a category line matches its showcase item.
+    const richByName = new Map((showcase?.items ?? []).map((i) => [i.name, i]));
+    const detailHref = showcase ? `/pagar-brc` : undefined;
+    return c.lines
+      .map((line, i) => {
+        const item = richByName.get(line);
+        const rich = !!item;
+        return {
+          id: `${c.slug}--${i}`,
+          name: line,
+          categorySlug: c.slug,
+          categoryName: c.name,
+          rich,
+          image: rich ? item!.angles[0] : undefined,
+          spec: rich ? item!.specs.map((s) => s.v).join(" · ") : undefined,
+          detailHref: rich ? detailHref : undefined,
+        } satisfies CatalogLine;
+      })
+      .filter((line) => line.rich || promotedLines.has(line.name));
+  })
+  .sort((a, b) => {
+    const aPriority = catalogPriority.indexOf(a.name);
+    const bPriority = catalogPriority.indexOf(b.name);
+    if (aPriority === -1 && bPriority === -1) return a.name.localeCompare(b.name);
+    if (aPriority === -1) return 1;
+    if (bPriority === -1) return -1;
+    return aPriority - bPriority;
   });
-});
 
 // ---- Quote configurator: category -> lines lookup ----
 // The /penawaran configurator (ADR-0003) collects buyer intent and composes a
@@ -331,12 +367,16 @@ export interface ConfiguratorOption {
   // lines carry this; thin lines inject nothing (honest about the data gap).
   specContext?: string;
 }
-export const configuratorLines: Record<string, ConfiguratorOption[]> = Object.fromEntries(
-  categories.map((c) => [
-    c.slug,
-    c.lines.map((line) => {
-      const rich = catalogLines.find((l) => l.categorySlug === c.slug && l.name === line && l.rich);
-      return { name: line, specContext: rich?.spec } satisfies ConfiguratorOption;
-    }),
-  ]),
+// The configurator offers only the focused catalog: categories and lines that
+// appear in `catalogLines` (image-backed + promoted), in the same order.
+export const configuratorLines: Record<string, ConfiguratorOption[]> = catalogLines.reduce<
+  Record<string, ConfiguratorOption[]>
+>((acc, line) => {
+  (acc[line.categorySlug] ??= []).push({ name: line.name, specContext: line.spec });
+  return acc;
+}, {});
+
+// Categories that actually appear in the focused catalog, in catalog order.
+export const catalogCategories: Category[] = categories.filter((c) =>
+  catalogLines.some((line) => line.categorySlug === c.slug),
 );

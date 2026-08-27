@@ -1,9 +1,9 @@
 ---
 // /katalog — the unified catalog browser.
-// Every product line across all six categories, searchable + filterable by
-// category, in one view. Mixed density (CONTEXT.md): lines projected from a
-// Showcase render as rich specimen cards; the rest render as compact line rows
-// (name + category tag + WhatsApp RFQ). The row itself is the CTA (Q4b).
+// Focused catalog: image-backed lines plus the explicitly promoted fencing
+// products, searchable + filterable by category. Mixed density (CONTEXT.md):
+// rich lines render as specimen cards; promoted lines without images render as
+// compact line rows (name + category tag + WhatsApp RFQ).
 //
 // All lines render server-side; the client only filters/searches what's already
 // in the DOM — no runtime fetching, no un-optimized fallbacks. Filter results
@@ -30,8 +30,8 @@ const total = catalogLines.length;
       </div>
       <h1 class="display" id="kat-title">Satu katalog.<br />Seluruh proyek.</h1>
       <p class="lede">
-        Cari dan filter {total} lini material dari enam kelompok konstruksi. Produk unggulan
-        ditampilkan lengkap dengan spesifikasi; sisanya siap Anda minta penawaran langsung via WhatsApp.
+        Cari dan filter {total} lini material yang sedang dipromosikan BSM. Produk dengan foto
+        ditampilkan sebagai specimen; lini promosi lainnya tetap siap dimintakan penawaran via WhatsApp.
       </p>
     </div>
   </section>
@@ -52,18 +52,6 @@ const total = catalogLines.length;
           autocomplete="off"
           aria-describedby="catalog-count"
         />
-      </div>
-      <div class="catalog__filters" role="group" aria-label="Filter berdasarkan kategori">
-        <button type="button" class="catalog__chip is-active" data-filter="all" aria-pressed="true">
-          Semua
-        </button>
-        {
-          categories.map((c) => (
-            <button type="button" class="catalog__chip" data-filter={c.slug} aria-pressed="false">
-              {c.name}
-            </button>
-          ))
-        }
       </div>
       <span class="catalog__count label" id="catalog-count" aria-live="polite"></span>
     </div>
@@ -171,35 +159,6 @@ const total = catalogLines.length;
     border-color: var(--blueprint);
     box-shadow: 0 0 0 2px rgba(201, 180, 138, 0.2);
   }
-  .catalog__filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    flex: 1 1 auto;
-  }
-  .catalog__chip {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 9px 14px;
-    border: 1px solid var(--steel);
-    border-radius: var(--r-sm);
-    background: var(--paper);
-    color: var(--ink-muted);
-    cursor: pointer;
-    transition: border-color 0.18s var(--ease), color 0.18s var(--ease), background 0.18s var(--ease);
-  }
-  .catalog__chip:hover {
-    border-color: var(--ink);
-    color: var(--ink);
-  }
-  .catalog__chip.is-active {
-    border-color: var(--blueprint);
-    border-bottom: 2px solid var(--blueprint);
-    color: var(--ink);
-    background: var(--paper-deep);
-  }
   .catalog__count {
     color: var(--ink-muted);
     white-space: nowrap;
@@ -213,8 +172,15 @@ const total = catalogLines.length;
      Filter fade stays intact: display:none removes the brick from flow after the leave transition. */
   .catalog__grid {
     column-count: 3;
-    column-gap: 1.2rem;
+    column-gap: clamp(1rem, 2vw, 1.5rem);
     column-fill: balance;
+  }
+  .catalog__item--rich:nth-child(3n + 2) {
+    transform: translateY(1.4rem);
+  }
+  .catalog__item--rich:nth-child(3n + 2):hover,
+  .catalog__item--rich:nth-child(3n + 2):focus-within {
+    transform: translateY(1rem);
   }
   .catalog__item {
     break-inside: avoid;
@@ -352,6 +318,9 @@ const total = catalogLines.length;
     .catalog__grid {
       column-count: 2;
     }
+    .catalog__item--rich:nth-child(3n + 2) {
+      transform: none;
+    }
   }
   @media (max-width: 560px) {
     .catalog__grid {
@@ -369,8 +338,6 @@ const total = catalogLines.length;
   const count = document.getElementById("catalog-count");
   const empty = document.getElementById("catalog-empty");
   const reset = document.getElementById("catalog-reset");
-  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>(".catalog__chip"));
-
   if (grid && input) {
     const items = Array.from(grid.querySelectorAll<HTMLElement>(".catalog__item"));
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -379,13 +346,10 @@ const total = catalogLines.length;
     const norm = (s: string) =>
       s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    let activeCategory = "all";
-
     const matches = (el: HTMLElement, q: string) => {
       const hay = norm(el.dataset.line || el.textContent || "");
-      const catOk = activeCategory === "all" || el.dataset.category === activeCategory;
       const qOk = !q || hay.includes(q);
-      return catOk && qOk;
+      return qOk;
     };
 
     const apply = () => {
@@ -437,26 +401,8 @@ const total = catalogLines.length;
 
     input.addEventListener("input", apply);
 
-    chips.forEach((chip) => {
-      chip.addEventListener("click", () => {
-        activeCategory = chip.dataset.filter || "all";
-        chips.forEach((c) => {
-          const on = c === chip;
-          c.classList.toggle("is-active", on);
-          c.setAttribute("aria-pressed", String(on));
-        });
-        apply();
-      });
-    });
-
     reset?.addEventListener("click", () => {
       input.value = "";
-      activeCategory = "all";
-      chips.forEach((c) => {
-        const on = c.dataset.filter === "all";
-        c.classList.toggle("is-active", on);
-        c.setAttribute("aria-pressed", String(on));
-      });
       apply();
       input.focus();
     });

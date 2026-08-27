@@ -208,9 +208,9 @@ const fmtBlogDate = (date: Date) =>
 
     <div class="stock__yard" data-carousel-track="stock" role="region" aria-roledescription="carousel" aria-label="Produk BRC dari stok gudang" tabindex="0">
       {yardStock.map((s, i) => (
-        <article class={`stock-item carousel__slide`} role="group" aria-label={`Produk ${i + 1} dari ${yardStock.length}`}>
+        <article class="stock-item carousel__slide" role="group" aria-label={`Produk ${i + 1} dari ${yardStock.length}`}>
           <div class="stock-item__photo">
-            <Image src={imageAsset(s.angles[0])} alt={s.name} width={720} height={720} loading="lazy" class="stock-item__img" />
+            <Image src={imageAsset(s.angles[0])} alt={s.name} width={720} height={1280} loading="lazy" decoding="async" class="stock-item__img" />
           </div>
           <div class="stock-item__meta">
             <span class="stock-item__no">UNIT {String(i + 1).padStart(2, "0")} · BRC</span>
@@ -866,17 +866,25 @@ const fmtBlogDate = (date: Date) =>
   .rail-control:hover:not(:disabled), .rail-control:focus-visible:not(:disabled) { border-color: var(--beam); background: rgba(201,180,138,0.12); }
   .rail-control:disabled { opacity: 0.3; cursor: not-allowed; }
   .rail-progress { color: var(--beam); min-width: 4.5rem; text-align: center; }
-  .stock__yard, .catalog__grid { display: flex; gap: clamp(1rem, 2vw, 1.5rem); overflow-x: auto; padding: 0.5rem 0.25rem 1.5rem; scroll-snap-type: x mandatory; scroll-padding-inline: 0.25rem; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--yard-steel) transparent; }
-  .stock__yard::-webkit-scrollbar, .catalog__grid::-webkit-scrollbar { height: 0.35rem; }
-  .stock__yard::-webkit-scrollbar-thumb, .catalog__grid::-webkit-scrollbar-thumb { background: var(--yard-steel); border-radius: 1rem; }
+  .stock__yard { display: flex; gap: 0; overflow-x: auto; padding: 0.5rem 0.25rem 1.5rem; scroll-snap-type: x mandatory; scroll-padding-inline: 0.25rem; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--yard-steel) transparent; contain: layout paint; }
+  .stock__yard::-webkit-scrollbar { height: 0.35rem; }
+  .stock__yard::-webkit-scrollbar-thumb { background: var(--yard-steel); border-radius: 1rem; }
+  .catalog__grid { display: flex; gap: clamp(1rem, 2vw, 1.5rem); overflow-x: auto; padding: 0.5rem 0.25rem 1.5rem; scroll-snap-type: x mandatory; scroll-padding-inline: 0.25rem; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--yard-steel) transparent; }
+  .catalog__grid::-webkit-scrollbar { height: 0.35rem; }
+  .catalog__grid::-webkit-scrollbar-thumb { background: var(--yard-steel); border-radius: 1rem; }
   .carousel__slide { scroll-snap-align: start; }
-  .stock-item { flex: 0 0 min(34rem, 78vw); display: flex; flex-direction: column; }
-  .stock-item__photo { position: relative; overflow: hidden; background: var(--yard-mid); border-radius: 4px; aspect-ratio: 1/1; box-shadow: 0 14px 28px -18px rgba(0,0,0,0.7); }
+  .stock-item { flex: 0 0 clamp(13rem, 17vw, 16rem); min-width: 0; display: flex; flex-direction: column; scroll-snap-align: start; }
+  .stock-item__photo { position: relative; overflow: hidden; background: #25282c; border-block: 1px solid rgba(201,180,138,0.28); border-radius: 0; aspect-ratio: 3/4; box-shadow: 0 14px 28px -18px rgba(0,0,0,0.7); }
+  .stock-item__photo::before { content: ""; position: absolute; inset: 0; border-inline: 1px solid rgba(201,180,138,0.42); transform: skewY(-1.5deg); transform-origin: center; pointer-events: none; z-index: 2; }
+  .stock-item__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 62%, rgba(201,180,138,0.11)); pointer-events: none; z-index: 2; }
   :global(html[data-theme="light"]) .stock-item__photo { box-shadow: 0 14px 28px -18px rgba(23,33,43,0.22); }
-  .stock-item__img { width: 100%; height: 100%; object-fit: cover; }
+  .stock-item__img { width: 100%; height: 100%; object-fit: contain; object-position: center; padding: 0.08rem; transform: translateZ(0) scale(1.04); transition: transform 0.25s var(--ease); }
+
   .stock-item:hover .stock-item__photo, .stock-item:focus-within .stock-item__photo { box-shadow: 0 18px 32px -18px rgba(0,0,0,0.76); }
+  .stock-item:hover .stock-item__img { transform: translateZ(0) scale(1.06); }
   .stock-item:focus-visible { outline: 2px solid var(--beam); outline-offset: 4px; }
-  .stock-item__meta { padding: 1rem 0.2rem 0; }
+  .stock-item__meta { display: flex; flex: 1; flex-direction: column; padding: 0.85rem 0.2rem 0; }
+  .stock-item__wa { margin-top: auto; }
   .stock-item__no { font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--yard-steel); }
   .stock-item__name { font-family: var(--fd); font-weight: 700; font-stretch: 108%; font-size: 1.2rem; letter-spacing: -0.01em; margin: 0.3rem 0 0.7rem; }
   .stock-item__specs { display: flex; flex-direction: column; }
@@ -884,6 +892,9 @@ const fmtBlogDate = (date: Date) =>
   .stock-item__spec dt { flex: 0 0 7.5rem; font-family: var(--fm); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yard-steel); padding-top: 0.1rem; }
   .stock-item__spec dd { color: var(--yard-light); }
   :global(html[data-theme="light"]) .stock-item__spec dd { color: var(--yard-light); }
+  @media (max-width: 700px) {
+    .stock-item { flex-basis: min(17rem, 72vw); }
+  }
   .stock-item__wa { display: inline-block; margin-top: 0.8rem; font-family: var(--fm); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yard-accent); font-weight: 600; border-bottom: 1px solid rgba(232,85,30,0.4); padding-bottom: 1px; }
   .stock-item__wa:hover { color: var(--yard-accent-darker); border-bottom-color: var(--yard-accent-darker); }
   .stock__order { margin-top: clamp(2.5rem, 5vw, 3.5rem); text-align: center; }

@@ -11,7 +11,7 @@
 // empty fields; the buyer adds anything else in Notes.
 import Base from "../layouts/Base.astro";
 import { WA_NUMBER } from "../utils/url.ts";
-import { categories, configuratorLines } from "../data/catalog.ts";
+import { catalogCategories, configuratorLines } from "../data/catalog.ts";
 import Input from "../components/starwind/Input.astro";
 import NativeSelect from "../components/starwind/NativeSelect.astro";
 import Textarea from "../components/starwind/Textarea.astro";
@@ -27,7 +27,7 @@ const roles = [
   "Pribadi / Renovasi",
 ];
 const units = ["lembar", "batang", "m²", "m", "unit", "set"];
-const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug, name })));
+const categoriesJson = JSON.stringify(catalogCategories.map(({ slug, name }) => ({ slug, name })));
 ---
 
 <Base
@@ -89,7 +89,7 @@ const categoriesJson = JSON.stringify(categories.map(({ slug, name }) => ({ slug
               <label class="label" for="rfq-category-template">Kategori material</label>
               <NativeSelect id="rfq-category-template" data-role="category" name="items[0][category]" required size="md">
                 <option value="">— Pilih kategori —</option>
-                {categories.map((c) => (
+                {catalogCategories.map((c) => (
                   <option value={c.slug}>{c.name}</option>
                 ))}
               </NativeSelect>
