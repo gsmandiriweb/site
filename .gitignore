@@ -44,3 +44,6 @@ test_conversion_flow.js
 
 # impeccable design-tool state (generated surface briefs)
 .impeccable/
+
+# device photos - not committed (not web-servable)
+raw/

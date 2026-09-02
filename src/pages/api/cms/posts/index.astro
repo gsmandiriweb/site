@@ -1,0 +1,23 @@
+---
+import { jsonResponse } from "../../../../utils/cms-drafts.ts";
+import { readAdminSession } from "../../../../utils/admin-session.ts";
+import { listBlogPostSlugs } from "../../../../utils/draft-publish.ts";
+
+// Lists the repository's actual blog posts (ADR 0013) so the dashboard can show
+// every post — not just the seeded demo set — and flag files whose names are not
+// valid storage slugs.
+export const prerender = false;
+
+if (Astro.request.method !== "GET") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "GET", "Cache-Control": "no-store" },
+  });
+}
+
+if (!(await readAdminSession(Astro.request))) {
+  return jsonResponse({ error: "Authentication required" }, 401);
+}
+
+return jsonResponse({ posts: await listBlogPostSlugs() });
+---

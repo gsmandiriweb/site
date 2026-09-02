@@ -260,6 +260,25 @@ export async function readMainPostSource(
   return decodeBase64(file.content);
 }
 
+// Lists every Markdown post file in `src/content/blog/` on the default branch
+// so the dashboard can surface the repository's actual posts (ADR 0013). The
+// filename minus `.md` is the storage slug; files whose names are not valid
+// slugs (e.g. legacy "Test Blog.md") are excluded and surfaced separately so
+// the editor never mutates a file it could not round-trip.
+export async function listBlogPostSlugs(): Promise<
+  Array<{ storageSlug: string; needsRename: boolean }>
+> {
+  const pat = await configuredGitHubPat();
+  if (!pat) return [];
+  const env = await runtimeEnv();
+  const apiUrl = apiUrlFor(env);
+  const entries = await listRepoFolder(apiUrl, pat, "src/content/blog", DEFAULT_BRANCH);
+  return entries
+    .filter((entry) => entry.name.endsWith(".md"))
+    .map((entry) => entry.name.replace(/\.md$/, ""))
+    .map((storageSlug) => ({ storageSlug, needsRename: !isSafeStorageSlug(storageSlug) }));
+}
+
 export type MediaAssetEntry = {
   path: string; // repo-relative to src/images: blog/<slug>/cover.jpg
   filename: string;

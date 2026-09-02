@@ -4,6 +4,8 @@ import {
   BlockTypeSelect,
   CreateLink,
   headingsPlugin,
+  imagePlugin,
+  InsertImage,
   linkDialogPlugin,
   listsPlugin,
   ListsToggle,
@@ -37,6 +39,7 @@ export default function MarkdownWysiwyg({ markdown, onChange }: MarkdownWysiwygP
           quotePlugin(),
           thematicBreakPlugin(),
           linkDialogPlugin(),
+          imagePlugin(),
           markdownShortcutPlugin(),
           toolbarPlugin({
             toolbarContents: () => (
@@ -46,6 +49,7 @@ export default function MarkdownWysiwyg({ markdown, onChange }: MarkdownWysiwygP
                 <BoldItalicUnderlineToggles />
                 <ListsToggle />
                 <CreateLink />
+                <InsertImage />
               </>
             ),
           }),

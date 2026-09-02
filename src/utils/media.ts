@@ -180,13 +180,15 @@ export function sanitizeMediaBaseName(raw: string): string {
 
 // Maps a frontmatter/body reference to a path relative to `src/images/`
 // (`blog/<slug>/cover.jpg`). Accepts explicit paths with or without the
-// `src/images/` or `/src/images/` prefix. Returns null for external URLs and
-// data URIs, which are not repo-bound and are not gated.
+// `src/images/` or `/src/images/` prefix, and the `../../images/…` form used
+// for body images (relative to `src/content/blog/<slug>.md`). Returns null for
+// external URLs and data URIs, which are not repo-bound and are not gated.
 export function normalizeMediaReference(reference: string): string | null {
   const trimmed = reference.trim();
   if (!trimmed || /^(?:https?:|data:|mailto:|#)/i.test(trimmed)) return null;
   const withoutPrefix = trimmed
     .replace(/^\/?src\/images\//, "")
+    .replace(/^(?:\.\.\/)+(?:images\/)?/, "")
     .replace(/^\/+/, "")
     .replace(/^\.\//, "");
   return withoutPrefix || null;

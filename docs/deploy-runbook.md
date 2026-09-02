@@ -98,9 +98,10 @@ max-age=0, must-revalidate`); re-request or add a query param to bypass.
 
 ### 3.3 After pushing to main
 
-- Watch the `Deploy BSM site` Actions run: build → deploy → callback step.
-- The GitHub Pages fallback workflow (`deploy-gh-pages.yml`, static-only, CMS routes
-  excluded) also runs on push — it is a fallback, not the canonical deploy.
+- Watch the `Deploy BSM site` Actions run: build → deploy → callback step. It is the
+  **only** deploy workflow: the GitHub Pages fallback (`deploy-gh-pages.yml`) was removed
+  when Cloudflare became the single deploy path. If the Cloudflare deploy fails, fix it
+  (see Troubleshooting) rather than re-adding the Pages fallback.
 
 ---
 

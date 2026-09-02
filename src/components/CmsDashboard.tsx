@@ -29,7 +29,9 @@ import MarkdownWysiwyg from "./MarkdownWysiwyg";
 
 type Role = "owner" | "editor";
 type Workspace = "posts" | "media" | "deploys";
-type PostKey = "brc" | "atap" | "bondek";
+// Posts are keyed by storage slug (the filename without .md), seeded from the
+// demo set and grown with the repository listing and locally created articles.
+type PostKey = string;
 type ContentStatus = "draft" | "ready" | "published" | "archived";
 type DeployInfo = { commitSha?: string; deployedAt?: string };
 
@@ -136,64 +138,71 @@ const initialPosts: Record<PostKey, Post> = {
   },
 };
 
-const STORAGE_KEY = "bsm-cms-prototype-v3";
-const LEGACY_STORAGE_KEY = "bsm-cms-prototype-v2";
+// v4: posts are keyed by storage slug (v3 stored them under fixed editor keys).
+const STORAGE_KEY = "bsm-cms-prototype-v4";
+const LEGACY_STORAGE_KEY = "bsm-cms-prototype-v3";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isPostKey(value: string): value is PostKey {
-  return value === "brc" || value === "atap" || value === "bondek";
+function isSlugLike(value: string): boolean {
+  return value.length > 0 && value.length <= 80 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 }
 
 function isContentStatus(value: unknown): value is ContentStatus {
   return value === "draft" || value === "ready" || value === "published" || value === "archived";
 }
 
+// Blank post template keyed by its storage slug (matches the frontmatter contract
+// in src/content.config.ts).
+function emptyPost(storageSlug: string): Post {
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    id: crypto.randomUUID(),
+    title: "",
+    kicker: "",
+    excerpt: "",
+    body: "",
+    date: today,
+    publishedAt: today,
+    slug: storageSlug,
+    aliases: [],
+    image: "",
+    imageAlt: "",
+    storageSlug,
+    status: "draft",
+    draft: true,
+  };
+}
+
+function isPostRecord(value: unknown): value is Post {
+  if (!isRecord(value)) return false;
+  const candidate = value as unknown as Post;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.title === "string" &&
+    typeof candidate.kicker === "string" &&
+    typeof candidate.excerpt === "string" &&
+    typeof candidate.body === "string" &&
+    typeof candidate.date === "string" &&
+    typeof candidate.publishedAt === "string" &&
+    typeof candidate.slug === "string" &&
+    typeof candidate.image === "string" &&
+    typeof candidate.imageAlt === "string" &&
+    typeof candidate.storageSlug === "string" &&
+    isContentStatus(candidate.status) &&
+    (candidate.draft === undefined || typeof candidate.draft === "boolean") &&
+    Array.isArray(candidate.aliases) &&
+    (candidate.aliases as unknown[]).every((alias) => typeof alias === "string")
+  );
+}
+
+// Restores a persisted post. Persisted posts are complete Post objects keyed by
+// their storage slug, so the stored value is validated directly.
 function normalizeStoredPost(key: string, value: unknown): [PostKey, Post] | null {
-  if (!isPostKey(key) || !isRecord(value)) return null;
-
-  const candidate = { ...initialPosts[key], ...value };
-  if (
-    typeof candidate.id !== "string" ||
-    typeof candidate.title !== "string" ||
-    typeof candidate.kicker !== "string" ||
-    typeof candidate.excerpt !== "string" ||
-    typeof candidate.body !== "string" ||
-    typeof candidate.date !== "string" ||
-    typeof candidate.publishedAt !== "string" ||
-    typeof candidate.slug !== "string" ||
-    !Array.isArray(candidate.aliases) ||
-    candidate.aliases.some((alias) => typeof alias !== "string") ||
-    typeof candidate.image !== "string" ||
-    typeof candidate.imageAlt !== "string" ||
-    typeof candidate.storageSlug !== "string" ||
-    !isContentStatus(candidate.status) ||
-    (candidate.draft !== undefined && typeof candidate.draft !== "boolean")
-  ) {
-    return null;
-  }
-
-  return [
-    key,
-    {
-      id: candidate.id,
-      title: candidate.title,
-      kicker: candidate.kicker,
-      excerpt: candidate.excerpt,
-      body: candidate.body,
-      date: candidate.date,
-      publishedAt: candidate.publishedAt,
-      slug: candidate.slug,
-      aliases: candidate.aliases,
-      image: candidate.image,
-      imageAlt: candidate.imageAlt,
-      storageSlug: candidate.storageSlug,
-      status: candidate.status,
-      draft: candidate.draft,
-    },
-  ];
+  if (!isSlugLike(key) || !isPostRecord(value) || value.storageSlug !== key) return null;
+  return [key, { ...emptyPost(key), ...value }];
 }
 
 const workspaceContent: Record<Workspace, { title: string; description: string; rows: string[] }> =
@@ -356,7 +365,11 @@ export default function CmsDashboard({
   const [pendingRevision, setPendingRevision] = useState<number | null>(null);
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [bodyUploadBusy, setBodyUploadBusy] = useState(false);
+  const [showNewPostForm, setShowNewPostForm] = useState(false);
+  const [newPostSlug, setNewPostSlug] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const bodyFileInputRef = useRef<HTMLInputElement | null>(null);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const statusMenuItemsRef = useRef<HTMLDivElement | null>(null);
   const statusTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -366,7 +379,7 @@ export default function CmsDashboard({
   const mediaDialogRef = useRef<HTMLElement | null>(null);
   const tabsRef = useRef<HTMLDivElement | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-  const selectedStorageSlugRef = useRef(initialPosts[selectedPost].storageSlug);
+  const selectedStorageSlugRef = useRef(initialPosts[selectedPost]?.storageSlug ?? selectedPost);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -502,6 +515,7 @@ export default function CmsDashboard({
         sourceMarkdown?: string | null;
         live?: boolean;
         deployed?: DeployInfo | null;
+        posts?: Array<{ storageSlug: string; needsRename?: boolean }>;
         error?: string;
       };
     },
@@ -546,14 +560,10 @@ export default function CmsDashboard({
         try {
           const saved: unknown = JSON.parse(storedValue);
           if (!isRecord(saved)) throw new Error("Stored CMS state is not an object.");
-          const safeSaved = Object.fromEntries(
-            Object.entries(saved)
-              .map(([key, value]) => {
-                const normalized = normalizeStoredPost(key, value);
-                return normalized;
-              })
-              .filter((entry): entry is [PostKey, Post] => entry !== null),
-          ) as Partial<typeof initialPosts>;
+          const normalizedEntries = Object.entries(saved)
+            .map(([key, value]) => normalizeStoredPost(key, value))
+            .filter((entry): entry is [PostKey, Post] => entry !== null);
+          const safeSaved: Record<string, Post> = Object.fromEntries(normalizedEntries);
           setPosts((current) => ({ ...current, ...safeSaved }));
           const savedActivePost = safeSaved[selectedPost];
           setHasLocalEdits(
@@ -582,15 +592,22 @@ export default function CmsDashboard({
       }
       setPersistenceMode("connecting");
       try {
-        for (const key of Object.keys(initialPosts) as PostKey[]) {
-          const storageSlug = initialPosts[key].storageSlug;
+        // The repo's actual posts (ADR 0013) plus the seeded demo posts; locally
+        // created drafts live in browser storage and are merged above.
+        const listed = isAuthenticated ? await request("/api/cms/posts", "GET") : null;
+        const repoSlugs = (listed?.posts ?? []).map((entry) => entry.storageSlug);
+        const knownKeys = Array.from(
+          new Set<string>([...(Object.keys(posts) as PostKey[]), ...repoSlugs]),
+        );
+        for (const key of knownKeys) {
+          const persistentSlug = initialPosts[key]?.storageSlug ?? key;
           const result = await request(
-            `/api/cms/drafts/pr?storageSlug=${encodeURIComponent(storageSlug)}`,
+            `/api/cms/drafts/pr?storageSlug=${encodeURIComponent(persistentSlug)}`,
             "GET",
           );
           setGithubStates((current) => ({
             ...current,
-            [storageSlug]: {
+            [persistentSlug]: {
               pullRequest: result.pullRequest ?? null,
               live: Boolean(result.live),
             },
@@ -602,9 +619,22 @@ export default function CmsDashboard({
               setPosts((current) => {
                 // Only overlay the repository source when the post is untouched
                 // (no browser edits), so local work is never clobbered.
+                if (
+                  !initialPosts[key] &&
+                  current[key]?.storageSlug === persistentSlug &&
+                  current[key]?.title === "" &&
+                  current[key]?.body === ""
+                )
+                  return {
+                    ...current,
+                    [key]: { ...current[key], ...parsed, storageSlug: persistentSlug },
+                  };
                 if (JSON.stringify(current[key]) !== JSON.stringify(initialPosts[key]))
                   return current;
-                return { ...current, [key]: { ...current[key], ...parsed, storageSlug } };
+                return {
+                  ...current,
+                  [key]: { ...current[key], ...parsed, storageSlug: persistentSlug },
+                };
               });
             }
           }
@@ -690,13 +720,38 @@ export default function CmsDashboard({
       return;
     }
     setSelectedPost(key);
-    selectedStorageSlugRef.current = initialPosts[key].storageSlug;
+    selectedStorageSlugRef.current = posts[key]?.storageSlug ?? key;
     setIsMarkdown(false);
     setMarkdownDraft("");
     setMarkdownBaseline("");
     setHasLocalEdits(false);
     setActionError(null);
     setNotice(null);
+  };
+
+  const createNewPost = () => {
+    const slug = newPostSlug.trim().toLowerCase();
+    if (!isSlugLike(slug)) {
+      setActionError(
+        "The slug must use lowercase letters, numbers, and single hyphens (e.g. panduan-atap-upvc).",
+      );
+      return;
+    }
+    if (posts[slug]) {
+      setActionError(`An article with the slug "${slug}" already exists.`);
+      return;
+    }
+    const post = emptyPost(slug);
+    setPosts((current) => ({ ...current, [slug]: post }));
+    setSelectedPost(slug);
+    selectedStorageSlugRef.current = slug;
+    setShowNewPostForm(false);
+    setNewPostSlug("");
+    setHasLocalEdits(false);
+    setActionError(null);
+    setNotice(
+      `Draft "${slug}" created. Write the article, then save a revision to open a GitHub pull request.`,
+    );
   };
 
   const titleForPreview = post.title;
@@ -815,6 +870,54 @@ export default function CmsDashboard({
     setNotice(
       `Cover changed to ${asset.path}. It is committed to the repository only when you save a GitHub revision.`,
     );
+  };
+
+  // Appends `![alt](path)` to the article body. `path` is repo-relative to
+  // src/images (ADR 0011); the stored Markdown uses the `../../images/…` form
+  // (relative to src/content/blog/<slug>.md) so Astro 7 resolves and optimizes
+  // it natively. Editors can move or re-alt the image in Markdown source.
+  const appendBodyImage = (path: string, label: string) => {
+    const alt = (label || path.split("/").pop() || "image")
+      .replace(/\.[a-z0-9]+$/i, "")
+      .replace(/[-_]+/g, " ");
+    const snippet = `![${alt}](../../images/${path})`;
+    const body = post.body.trim();
+    updatePost({ body: body ? `${body}\n\n${snippet}` : snippet });
+    setNotice(
+      `Image inserted at the end of the article (${path}). Use Markdown source to reposition it, and edit the alt text there.`,
+    );
+  };
+
+  const uploadBody = async (file: File) => {
+    if (!isAuthenticated) return;
+    setBodyUploadBusy(true);
+    setUploadError(null);
+    try {
+      const form = new FormData();
+      form.append("storageSlug", post.storageSlug);
+      form.append("kind", "body");
+      form.append("name", file.name);
+      form.append("file", file);
+      const response = await fetch("/api/cms/media", {
+        method: "POST",
+        credentials: "same-origin",
+        body: form,
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error ?? "Upload failed.");
+      const asset = payload.asset as UploadedMediaEntry | undefined;
+      if (asset) {
+        setUploadedAssets((current) =>
+          current.some((entry) => entry.path === asset.path) ? current : [...current, asset],
+        );
+        appendBodyImage(asset.path, asset.filename);
+      }
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setBodyUploadBusy(false);
+      if (bodyFileInputRef.current) bodyFileInputRef.current.value = "";
+    }
   };
 
   const openMarkdown = () => {
@@ -1023,7 +1126,7 @@ export default function CmsDashboard({
             aria-pressed={workspace === "posts"}
             onClick={() => setWorkspace("posts")}
           >
-            <FileText /> Posts <span>03</span>
+            <FileText /> Posts <span>{String(Object.keys(posts).length).padStart(2, "0")}</span>
           </button>
           <button
             className={workspace === "media" ? "is-active" : ""}
@@ -1060,13 +1163,44 @@ export default function CmsDashboard({
                 aria-hidden="true"
               />
               <span>
-                <strong>{posts[key].title}</strong>
+                <strong>{posts[key].title || `(${key})`}</strong>
                 <small>
                   {statusCopy[posts[key].status].label} · {posts[key].date}
                 </small>
               </span>
             </button>
           ))}
+        </div>
+        <div className="cms-new-post">
+          {!showNewPostForm ? (
+            <button
+              type="button"
+              className="cms-new-post__toggle"
+              onClick={() => setShowNewPostForm(true)}
+            >
+              ＋ New article
+            </button>
+          ) : (
+            <div className="cms-new-post__form">
+              <label htmlFor="new-post-slug">Slug (URL)</label>
+              <div className="cms-new-post__row">
+                <Input
+                  id="new-post-slug"
+                  value={newPostSlug}
+                  placeholder="judul-artikel-baru"
+                  aria-label="New article slug"
+                  onChange={(event) => setNewPostSlug(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") createNewPost();
+                  }}
+                />
+                <Button variant="default" onClick={createNewPost} disabled={!newPostSlug.trim()}>
+                  Create
+                </Button>
+              </div>
+              <small>Lowercase letters, numbers, hyphens only.</small>
+            </div>
+          )}
         </div>
         <div className="cms-sidebar__footer">
           <div className="cms-sidebar__eyebrow">ENVIRONMENT</div>
@@ -1092,20 +1226,55 @@ export default function CmsDashboard({
             </select>
           </label>
           {workspace === "posts" && (
-            <label>
-              <span>ARTICLE</span>
-              <select
-                value={selectedPost}
-                onChange={(event) => selectPost(event.target.value as PostKey)}
-                aria-label="Choose article"
-              >
-                {(Object.keys(posts) as PostKey[]).map((key) => (
-                  <option key={key} value={key}>
-                    {posts[key].title}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <>
+              <label>
+                <span>ARTICLE</span>
+                <select
+                  value={selectedPost}
+                  onChange={(event) => selectPost(event.target.value as PostKey)}
+                  aria-label="Choose article"
+                >
+                  {(Object.keys(posts) as PostKey[]).map((key) => (
+                    <option key={key} value={key}>
+                      {posts[key].title || `(${key})`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {!showNewPostForm ? (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowNewPostForm(true)}
+                  aria-label="Create a new article"
+                >
+                  ＋ New article
+                </Button>
+              ) : (
+                <div className="cms-new-post__form">
+                  <label htmlFor="new-post-slug-mobile">Slug (URL)</label>
+                  <div className="cms-new-post__row">
+                    <Input
+                      id="new-post-slug-mobile"
+                      value={newPostSlug}
+                      placeholder="judul-artikel-baru"
+                      aria-label="New article slug"
+                      onChange={(event) => setNewPostSlug(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") createNewPost();
+                      }}
+                    />
+                    <Button
+                      variant="default"
+                      onClick={createNewPost}
+                      disabled={!newPostSlug.trim()}
+                    >
+                      Create
+                    </Button>
+                  </div>
+                  <small>Lowercase letters, numbers, hyphens only.</small>
+                </div>
+              )}
+            </>
           )}
         </div>
         <div className="cms-heading">
@@ -1559,42 +1728,70 @@ export default function CmsDashboard({
               </Button>
             </header>
             <div className="cms-modal__body">
-              <h2 id="media-title">Choose a cover.</h2>
+              <h2 id="media-title">Media library</h2>
               <p id="media-description" className="cms-media-modal__intro">
-                Pick a repo-backed image or upload a new one (JPEG, PNG, WebP · ≤ 5 MB · ≤ 8000 px).
-                Uploads land in <code>src/images/blog/{post.storageSlug}/</code> and are committed
-                only when you save a GitHub revision.
+                Pick a repo-backed cover, upload new images (JPEG, PNG, WebP · ≤ 5 MB · ≤ 8000 px),
+                and insert uploaded images into the article body. Uploads land in{" "}
+                <code>src/images/blog/{post.storageSlug}/</code> and are committed only when you
+                save a GitHub revision.
               </p>
               {isAuthenticated ? (
-                <div className="cms-upload-zone">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    aria-label="Choose an image file to upload as the cover"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file) void uploadCover(file);
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadBusy}
-                  >
-                    {uploadBusy ? (
-                      <LoaderCircle className="cms-spin" data-icon="inline-start" />
-                    ) : (
-                      <Upload data-icon="inline-start" />
-                    )}
-                    {uploadBusy ? "Uploading…" : "Upload cover image"}
-                  </Button>
+                <>
+                  <div className="cms-upload-zone">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      aria-label="Choose an image file to upload as the cover"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void uploadCover(file);
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadBusy}
+                    >
+                      {uploadBusy ? (
+                        <LoaderCircle className="cms-spin" data-icon="inline-start" />
+                      ) : (
+                        <Upload data-icon="inline-start" />
+                      )}
+                      {uploadBusy ? "Uploading…" : "Upload cover image"}
+                    </Button>
+                  </div>
+                  <div className="cms-upload-zone cms-upload-zone--body">
+                    <input
+                      ref={bodyFileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      aria-label="Choose an image file to upload into the article body"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void uploadBody(file);
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => bodyFileInputRef.current?.click()}
+                      disabled={bodyUploadBusy}
+                    >
+                      {bodyUploadBusy ? (
+                        <LoaderCircle className="cms-spin" data-icon="inline-start" />
+                      ) : (
+                        <Upload data-icon="inline-start" />
+                      )}
+                      {bodyUploadBusy ? "Uploading…" : "Upload image to article body"}
+                    </Button>
+                    <small>Appended as Markdown at the end of your article.</small>
+                  </div>
                   {uploadError && (
                     <p className="cms-field-error" role="alert">
                       {uploadError}
                     </p>
                   )}
-                </div>
+                </>
               ) : (
                 <p className="cms-media-empty">Sign in to upload media to the repository.</p>
               )}
@@ -1653,6 +1850,38 @@ export default function CmsDashboard({
                 <p className="cms-media-empty">
                   No repo-backed images are available for selection.
                 </p>
+              )}
+              {(uploadedAssets.length > 0 || mainAssets.length > 0) && (
+                <div className="cms-media-uploads">
+                  <h3>Insert images in the article body</h3>
+                  <ul className="cms-body-insert-list">
+                    {[
+                      ...uploadedAssets,
+                      ...mainAssets.filter(
+                        (entry) => !uploadedAssets.some((uploaded) => uploaded.path === entry.path),
+                      ),
+                    ].map((asset) => (
+                      <li key={`insert-${asset.path}`}>
+                        <span>
+                          <strong>{asset.filename}</strong>
+                          <small>{asset.path}</small>
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => appendBodyImage(asset.path, asset.filename)}
+                        >
+                          <FileText data-icon="inline-start" />
+                          Append
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                  <small className="cms-media-note">
+                    Inserts <code>![alt](path)</code> at the end of the article; reposition or edit
+                    the alt text in Markdown source.
+                  </small>
+                </div>
               )}
             </div>
           </section>

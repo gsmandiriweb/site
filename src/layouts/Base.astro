@@ -103,7 +103,7 @@ const desc =
           .from(".wa-float", { autoAlpha: 0, y: 24, duration: 0.6 }, 1.0);
 
         // Dimension lines draw themselves in (sample real length, animate offset).
-        const dimEls = gsap.utils.toArray(
+        const dimEls = gsap.utils.toArray<SVGPathElement>(
           ".hero__sheet .dim .draw, .hero__sheet .dim .draw-2, .hero__sheet .dim .callout"
         );
         dimEls.forEach((el) => {
@@ -116,7 +116,7 @@ const desc =
 
         // ---------- CALM SCROLL REVEALS (everything else stays quiet) ----------
         gsap.utils
-          .toArray(".section-head, .cat-hero, .article-head, .article-figure, .cta-close, .catalog__controls, .catalog__grid, .rfq")
+          .toArray<Element>(".section-head, .cat-hero, .article-head, .article-figure, .cta-close, .catalog__controls, .catalog__grid, .rfq")
           .forEach((el) => {
             gsap.from(el, {
               autoAlpha: 0,
@@ -130,7 +130,7 @@ const desc =
         // The BRC helper is conditionally revealed by the RFQ script. Keep it
         // outside the shared batch so toggling `hidden` cannot leave it at
         // GSAP's initial autoAlpha: 0 state.
-        const grids = gsap.utils.toArray(".cat, .prod, .post, .trust__cell, .bom__row, .showcase__proof-tile, .rfq__field:not(.rfq__helper), .rfq__preview");
+        const grids = gsap.utils.toArray<Element>(".cat, .prod, .post, .trust__cell, .bom__row, .showcase__proof-tile, .rfq__field:not(.rfq__helper), .rfq__preview");
         gsap.set(grids, { autoAlpha: 0, y: 24 });
         ScrollTrigger.batch(grids, {
           start: "top 88%",

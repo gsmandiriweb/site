@@ -17,13 +17,13 @@ export type DraftPost = {
   draft?: boolean;
 };
 
-// The allowlist remains the interim identity guard until the CMS derives valid
-// storage slugs from the repository's actual `src/content/blog/*` files.
-const ALLOWED_STORAGE_SLUGS = new Set([
-  "cara-memilih-pagar-brc",
-  "atap-upvc-vs-alderon",
-  "bondek-vs-wiremesh",
-]);
+// Storage slugs are validated by shape (ADR 0013: derive from the repository's
+// actual blog files rather than a hard-coded allowlist). The slug character set
+// doubles as the path-traversal guard: storageSlug is interpolated into
+// `src/content/blog/<slug>.md`, branch names, and media folder paths, and
+// `[a-z0-9-]` cannot escape those paths.
+const STORAGE_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const MAX_STORAGE_SLUG_LENGTH = 80;
 const MAX_TEXT_LENGTH = 200_000;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -35,7 +35,12 @@ function isStatus(value: unknown): value is DraftStatus {
 }
 
 export function isSafeStorageSlug(value: unknown): value is string {
-  return typeof value === "string" && ALLOWED_STORAGE_SLUGS.has(value);
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    value.length <= MAX_STORAGE_SLUG_LENGTH &&
+    STORAGE_SLUG_PATTERN.test(value)
+  );
 }
 
 export function validateMutationOrigin(request: Request): void {

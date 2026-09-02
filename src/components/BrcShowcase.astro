@@ -464,7 +464,7 @@ const itemJson = showcase.items.map((i) => ({
     function initEmbla(item: Item) {
       if (!viewport) return;
       loadSlides(item);
-      embla = EmblaCarousel(viewport, { loop: false, speed: reduceMotion ? 0 : 8 });
+      embla = EmblaCarousel(viewport, { loop: false });
       embla.on("select", syncThumbs);
       if (anglebar) anglebar.hidden = item.angleCount <= 1;
       syncThumbs();
@@ -590,11 +590,11 @@ const itemJson = showcase.items.map((i) => ({
 
     function animateCallouts() {
       if (reduceMotion) return;
-      const els = gsap.utils.toArray<SVGElement>(
+      const els = gsap.utils.toArray<SVGPathElement>(
         ".showcase__specimen .dim .draw, .showcase__specimen .dim .draw-2, .showcase__specimen .dim .callout"
       );
       els.forEach((el) => {
-        const len = (el as SVGGraphicsElement).getTotalLength ? (el as SVGGraphicsElement).getTotalLength() : 600;
+        const len = el.getTotalLength ? el.getTotalLength() : 600;
         gsap.set(el, { strokeDasharray: len, strokeDashoffset: len });
       });
       gsap.to(els, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut", stagger: 0.1 });
@@ -683,7 +683,7 @@ const itemJson = showcase.items.map((i) => ({
 
     // Initial render.
     loadSlides(items[0]);
-    embla = EmblaCarousel(viewport!, { loop: false, speed: reduceMotion ? 0 : 8 });
+    embla = EmblaCarousel(viewport!, { loop: false });
     embla.on("select", syncThumbs);
     buildThumbs(items[0]);
     syncThumbs();

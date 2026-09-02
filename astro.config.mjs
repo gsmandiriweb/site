@@ -23,6 +23,13 @@ const argv = /** @type {any} */ (globalThis).process?.argv ?? [];
 const cmd = typeof argv[2] === "string" ? argv[2] : "";
 const skipAdapter = cmd === "dev" || cmd === "check" || cmd === "sync";
 
+// Body-image references in blog Markdown use the `../../images/<slug>/…` form
+// (relative to `src/content/blog/<file>.md`, i.e. resolving to `src/images/`),
+// which Astro 7's Markdown processor resolves natively: it imports the image
+// with astro:assets, emits optimized `/_astro/*` + `/_image` URLs, and fails
+// the build on unresolvable references — the ADR 0011 dangling-reference
+// backstop for hand-authored posts. No custom Markdown plugins needed.
+
 export default defineConfig({
   site: "https://site.gsmandiri-web.workers.dev",
   integrations: [react()],
