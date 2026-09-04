@@ -1,6 +1,16 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
 
+// CMS-generated frontmatter serializes optional text fields as `""` (never as
+// bare YAML null), but hand-edited files may still contain `image:` with no
+// value, which YAML parses as null. Normalize it to `""` so the falsy check in
+// the superRefine below — and every `post.data.image ? …` consumer — treats it
+// as "no image" instead of failing the schema with "received object".
+const optionalText = z.preprocess(
+  (value) => (value === null || value === undefined ? "" : value),
+  z.string(),
+);
+
 const blog = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/blog" }),
   schema: z
@@ -20,9 +30,9 @@ const blog = defineCollection({
       date: z.coerce.date().optional(),
       status: z.enum(["draft", "published", "archived"]).optional(),
       aliases: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)).optional(),
-      image: z.string().optional(),
+      image: optionalText,
       // ADR 0011: alt text is required whenever a featured image is set.
-      imageAlt: z.string().optional(),
+      imageAlt: optionalText,
       // `draft` remains readable as a compatibility alias for status: draft.
       draft: z.boolean().optional(),
     })

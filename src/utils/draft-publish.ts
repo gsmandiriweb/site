@@ -2,9 +2,9 @@ import { configuredGitHubPat, readAdminSession, runtimeEnv } from "./admin-sessi
 import {
   DraftActionError,
   isSafeStorageSlug,
+  serializeDraftMarkdown,
   validateDraftPost,
   validateMutationOrigin,
-  type DraftPost,
 } from "./cms-drafts.ts";
 import { imageAsset } from "./images.ts";
 import {
@@ -72,27 +72,6 @@ function decodeBase64(value: string): string {
   const binary = atob(value.replace(/\s/g, ""));
   const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
   return new TextDecoder().decode(bytes);
-}
-
-export function serializeDraftMarkdown(post: DraftPost): string {
-  const status = post.status === "ready" ? "draft" : post.status;
-  return `---
-id: ${post.id}
-slug: ${post.slug}
-title: ${JSON.stringify(post.title)}
-kicker: ${JSON.stringify(post.kicker)}
-excerpt: ${JSON.stringify(post.excerpt)}
-publishedAt: ${post.publishedAt}
-status: ${status}
-aliases: ${JSON.stringify(post.aliases)}
-image: ${post.image}
-imageAlt: ${JSON.stringify(post.imageAlt)}
-date: ${post.date}
-draft: ${post.draft ? "true" : "false"}
----
-
-${post.body.trim()}
-`;
 }
 
 export function prMetadataBlock(

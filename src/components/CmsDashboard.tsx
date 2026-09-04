@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Badge, Button, Card, Input } from "./ui";
 import MarkdownWysiwyg from "./MarkdownWysiwyg";
+import { serializeDraftMarkdown } from "../utils/cms-drafts.ts";
 
 // Posts are keyed by storage slug (the filename without .md), seeded from the
 // demo set and grown with the repository listing and locally created articles.
@@ -423,12 +424,7 @@ export default function CmsDashboard({
   }, [isPreviewOpen, isHelpOpen, isMediaOpen]);
 
   const post = posts[selectedPost];
-  const serializedStatus = post.status === "ready" ? "draft" : post.status;
-  const currentMarkdown = useMemo(
-    () =>
-      `---\nid: ${post.id}\nslug: ${post.slug}\ntitle: ${JSON.stringify(post.title)}\nkicker: ${JSON.stringify(post.kicker)}\nexcerpt: ${JSON.stringify(post.excerpt)}\npublishedAt: ${post.publishedAt}\nstatus: ${serializedStatus}\naliases: ${JSON.stringify(post.aliases)}\nimage: ${post.image}\nimageAlt: ${JSON.stringify(post.imageAlt)}\ndate: ${post.date}\ndraft: ${post.draft ? "true" : "false"}\n---\n\n${post.body}`,
-    [post, serializedStatus],
-  );
+  const currentMarkdown = useMemo(() => serializeDraftMarkdown(post), [post]);
   const hasUncommittedMarkdown = isMarkdown && markdownDraft !== markdownBaseline;
   const githubState = githubStates[post.storageSlug];
   const draftPullRequest = githubState?.pullRequest ?? null;

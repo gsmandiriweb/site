@@ -7,7 +7,7 @@ excerpt: "test"
 publishedAt: 2026-09-04
 status: draft
 aliases: []
-image: 
+image: ""
 imageAlt: ""
 date: 2026-09-04
 draft: true

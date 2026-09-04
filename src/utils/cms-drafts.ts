@@ -114,6 +114,46 @@ export class DraftActionError extends Error {
   }
 }
 
+/**
+ * Emits a YAML scalar: JSON-quoted when it contains quotes, backslashes, or
+ * control characters; bare otherwise. An empty value becomes `""` — a bare
+ * `image: ` would parse as YAML null, which the blog schema rejects.
+ */
+function yamlScalar(value: string): string {
+  const needsQuotes = value === "" || /["\\]/.test(value) || /\p{C}/u.test(value);
+  return needsQuotes ? JSON.stringify(value) : value;
+}
+
+/**
+ * `image`/`imageAlt` are optional strings. Empty values serialize as `""`
+ * rather than being dropped or left bare, so every CMS-written file has a
+ * stable, round-trippable frontmatter shape.
+ */
+function yamlOptionalText(value: string | undefined): string {
+  return yamlScalar(value?.trim() ? value : "");
+}
+
+export function serializeDraftMarkdown(post: DraftPost): string {
+  const status = post.status === "ready" ? "draft" : post.status;
+  return `---
+id: ${yamlScalar(post.id)}
+slug: ${yamlScalar(post.slug)}
+title: ${JSON.stringify(post.title)}
+kicker: ${JSON.stringify(post.kicker)}
+excerpt: ${JSON.stringify(post.excerpt)}
+publishedAt: ${post.publishedAt}
+status: ${status}
+aliases: ${JSON.stringify(post.aliases)}
+image: ${yamlOptionalText(post.image)}
+imageAlt: ${JSON.stringify(post.imageAlt)}
+date: ${post.date}
+draft: ${post.draft ? "true" : "false"}
+---
+
+${post.body.trim()}
+`;
+}
+
 export function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
