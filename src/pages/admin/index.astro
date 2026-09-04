@@ -9,6 +9,11 @@ import "../../styles/cms-dashboard.css";
 export const prerender = false;
 
 const isAuthenticated = Boolean(await readAdminSession(Astro.request));
+
+// No demo-mode render: an unauthenticated visitor is sent to the login page.
+if (!isAuthenticated) {
+  return Astro.redirect("/admin/login");
+}
 ---
 
 <html lang="id">

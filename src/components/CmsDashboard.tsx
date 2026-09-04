@@ -5,6 +5,7 @@ import {
   FileText,
   HelpCircle,
   LoaderCircle,
+  LogOut,
   Moon,
   ShieldCheck,
   Sun,
@@ -150,12 +151,31 @@ function isContentStatus(value: unknown): value is ContentStatus {
   return value === "draft" || value === "ready" || value === "published" || value === "archived";
 }
 
+// crypto.randomUUID only exists in secure contexts (https / localhost), but the
+// dashboard is also reachable over plain http on a LAN — so build a v4 UUID from
+// crypto.getRandomValues (available on any origin). The shape matches the id
+// schema in src/content.config.ts.
+function createPostId(): string {
+  const bytes = new Uint8Array(16);
+  try {
+    crypto.getRandomValues(bytes);
+  } catch {
+    // No Web Crypto available: degrade to a random v4-shaped UUID.
+    for (let index = 0; index < bytes.length; index += 1)
+      bytes[index] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // RFC 4122 variant (10xx)
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 // Blank post template keyed by its storage slug (matches the frontmatter contract
 // in src/content.config.ts).
 function emptyPost(storageSlug: string): Post {
   const today = new Date().toISOString().slice(0, 10);
   return {
-    id: crypto.randomUUID(),
+    id: createPostId(),
     title: "",
     kicker: "",
     excerpt: "",
@@ -208,7 +228,7 @@ const statusCopy: Record<
   draft: { label: "Draf", detail: "Draf lokal · belum di GitHub", variant: "secondary" },
   ready: {
     label: "Siap rilis",
-    detail: "Menunggu review owner di GitHub",
+    detail: "Menunggu persetujuan owner · terbit lewat dasbor ini",
     variant: "warning",
   },
   published: {
@@ -437,11 +457,11 @@ export default function CmsDashboard({
       ? "ready"
       : post.status;
   const contentDetail = isLive
-    ? "Merged revision · live on the deployed site"
+    ? "Revisi ter-merge · live di situs"
     : isPendingDeploy
-      ? "Merged on GitHub · auto-deploy in progress"
+      ? "Revisi ter-merge · auto-deploy sedang berjalan"
       : draftPullRequest?.status === "open"
-        ? `Revision r${draftPullRequest.revision} awaits review · PR #${draftPullRequest.prNumber}`
+        ? `Revisi r${draftPullRequest.revision} menunggu persetujuan owner · PR #${draftPullRequest.prNumber}`
         : hasLocalEdits
           ? "Local edits · not committed to GitHub yet"
           : statusCopy[contentStatus].detail;
@@ -468,6 +488,13 @@ export default function CmsDashboard({
         body: method === "POST" || method === "PUT" ? JSON.stringify(body ?? {}) : undefined,
       });
       const payload = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        // A 401 from any CMS API means the admin session lapsed (cookie
+        // expired server-side or revoked). Send the owner back to login;
+        // every other failure keeps the existing local-fallback behavior.
+        window.location.assign("/admin/login");
+        throw new Error("Sesi kedaluwarsa. Masuk kembali untuk melanjutkan.");
+      }
       if (!response.ok)
         throw new Error(payload.error ?? `Request failed with HTTP ${response.status}.`);
       return payload as {
@@ -652,7 +679,7 @@ export default function CmsDashboard({
       }));
       setHasLocalEdits(false);
       setNotice(
-        `Revisi r${result.pullRequest.revision} dikirim sebagai PR #${result.pullRequest.prNumber}. Review dan merge di GitHub untuk menerbitkan.`,
+        `Revisi r${result.pullRequest.revision} dikirim sebagai PR #${result.pullRequest.prNumber}. Setujui & gabungkan dari dasbor ini untuk menerbitkan (opsional: via GitHub).`,
       );
     } catch (error) {
       setActionError(
@@ -663,9 +690,39 @@ export default function CmsDashboard({
     }
   };
 
-  const markReady = () => {
-    updatePost({ status: "ready" });
-    setNotice("Ditandai siap rilis. Simpan revisi ke GitHub agar owner bisa review dan merge.");
+  // ADR 0009/0012 owner merge: approving a revision merges its open PR to `main`
+  // straight from the dashboard (GitHub stays optional). Auto-deploy then flips
+  // the revision to Terbit via the deploy-confirmation poll — no GitHub visit.
+  const mergeRevision = async () => {
+    if (!draftPullRequest) return;
+    if (
+      !window.confirm(
+        `Setujui dan gabungkan revisi r${draftPullRequest.revision} ke main? Artikel akan auto-deploy ke situs.`,
+      )
+    )
+      return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const result = await request("/api/cms/drafts/pr/merge", "POST", {
+        storageSlug: post.storageSlug,
+      });
+      if (!result.pullRequest) throw new Error("GitHub returned no pull request.");
+      setGithubStates((current) => ({
+        ...current,
+        [post.storageSlug]: { pullRequest: result.pullRequest!, live: false },
+      }));
+      setHasLocalEdits(false);
+      setNotice(
+        `Revisi r${result.pullRequest.revision} disetujui & digabungkan ke main (PR #${result.pullRequest.prNumber}). Auto-deploy berjalan — artikel berubah menjadi Terbit begitu situs live.`,
+      );
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Tidak dapat menggabungkan revisi GitHub.",
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   const selectPost = (key: PostKey) => {
@@ -956,9 +1013,10 @@ export default function CmsDashboard({
     ? null
     : draftPullRequest?.status === "open"
       ? {
-          label: "Buka PR GitHub",
-          variant: "outline",
-          onClick: () => window.open(draftPullRequest.prUrl, "_blank", "noopener,noreferrer"),
+          label: "Setujui & gabungkan",
+          variant: "default",
+          disabled: isBusy || hasUncommittedMarkdown,
+          onClick: () => void mergeRevision(),
         }
       : isMerged
         ? null
@@ -969,9 +1027,7 @@ export default function CmsDashboard({
               disabled: isBusy || hasUncommittedMarkdown,
               onClick: () => void createPullRequest(),
             }
-          : post.status === "draft"
-            ? { label: "Tandai siap rilis", variant: "default", onClick: markReady }
-            : null;
+          : null;
 
   const deployedShort = deployed?.commitSha ? deployed.commitSha.slice(0, 7) : null;
   const deployedDate = deployed?.deployedAt ? new Date(deployed.deployedAt).toLocaleString() : null;
@@ -1008,6 +1064,24 @@ export default function CmsDashboard({
           {saveLabel}
         </div>
         <div className="cms-topbar__actions">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              // POST /api/auth/logout invalidates the KV session and clears
+              // the cookie, then 303s to /admin/login — land there explicitly
+              // so the navigation happens even if the request fails.
+              void fetch("/api/auth/logout", {
+                method: "POST",
+                credentials: "same-origin",
+              }).finally(() => {
+                window.location.assign("/admin/login");
+              });
+            }}
+          >
+            <LogOut data-icon="inline-start" />
+            Keluar
+          </Button>
           <button
             type="button"
             className="cms-theme-toggle"
@@ -1127,15 +1201,6 @@ export default function CmsDashboard({
             </div>
           )}
         </div>
-        {!isAuthenticated && (
-          <div className="cms-notice cms-demo-notice">
-            <ShieldCheck />
-            <span>
-              Mode demo · status GitHub dan deploy tidak tersedia sampai Anda masuk. Draf Anda
-              tersimpan di browser ini.
-            </span>
-          </div>
-        )}
         {notice && (
           <div className="cms-notice">
             <Check />
@@ -1176,6 +1241,14 @@ export default function CmsDashboard({
             <Button variant="outline" onClick={() => setPreviewOpen(true)}>
               Pratinjau <ArrowUpRight data-icon="inline-end" />
             </Button>
+            {draftPullRequest?.status === "open" && (
+              <Button
+                variant="ghost"
+                onClick={() => window.open(draftPullRequest.prUrl, "_blank", "noopener,noreferrer")}
+              >
+                Lihat PR di GitHub <ArrowUpRight data-icon="inline-end" />
+              </Button>
+            )}
             {nextAction && (
               <Button
                 variant={nextAction.variant}
@@ -1341,16 +1414,13 @@ export default function CmsDashboard({
                         <button
                           type="button"
                           onClick={() => setMediaOpen(true)}
-                          disabled={!mediaAssets.length && !isAuthenticated}
                           aria-haspopup="dialog"
                           aria-label={`Ganti gambar sampul${currentMedia ? `, pilihan saat ini ${currentMedia.label}` : ""}`}
                         >
                           Ganti gambar
                         </button>
                         <small id="media-picker-note">
-                          {isAuthenticated
-                            ? "Unggah atau pilih dari gambar yang didukung repo."
-                            : "Masuk untuk mengunggah; gambar repo selalu bisa dipilih."}
+                          Unggah atau pilih dari gambar yang didukung repo.
                         </small>
                       </span>
                     </figcaption>
@@ -1486,66 +1556,62 @@ export default function CmsDashboard({
                 <code>src/images/blog/{post.storageSlug}/</code> dan hanya dikomit saat Anda
                 menyimpan revisi GitHub.
               </p>
-              {isAuthenticated ? (
-                <>
-                  <div className="cms-upload-zone">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      aria-label="Pilih file gambar untuk diunggah sebagai sampul"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) void uploadCover(file);
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadBusy}
-                    >
-                      {uploadBusy ? (
-                        <LoaderCircle className="cms-spin" data-icon="inline-start" />
-                      ) : (
-                        <Upload data-icon="inline-start" />
-                      )}
-                      {uploadBusy ? "Mengunggah…" : "Unggah gambar sampul"}
-                    </Button>
-                  </div>
-                  <div className="cms-upload-zone cms-upload-zone--body">
-                    <input
-                      ref={bodyFileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      aria-label="Pilih file gambar untuk diunggah ke isi artikel"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) void uploadBody(file);
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => bodyFileInputRef.current?.click()}
-                      disabled={bodyUploadBusy}
-                    >
-                      {bodyUploadBusy ? (
-                        <LoaderCircle className="cms-spin" data-icon="inline-start" />
-                      ) : (
-                        <Upload data-icon="inline-start" />
-                      )}
-                      {bodyUploadBusy ? "Mengunggah…" : "Unggah gambar ke isi artikel"}
-                    </Button>
-                    <small>Disisipkan sebagai Markdown di akhir artikel Anda.</small>
-                  </div>
-                  {uploadError && (
-                    <p className="cms-field-error" role="alert">
-                      {uploadError}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="cms-media-empty">Masuk untuk mengunggah media ke repo.</p>
-              )}
+              <>
+                <div className="cms-upload-zone">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-label="Pilih file gambar untuk diunggah sebagai sampul"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void uploadCover(file);
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadBusy}
+                  >
+                    {uploadBusy ? (
+                      <LoaderCircle className="cms-spin" data-icon="inline-start" />
+                    ) : (
+                      <Upload data-icon="inline-start" />
+                    )}
+                    {uploadBusy ? "Mengunggah…" : "Unggah gambar sampul"}
+                  </Button>
+                </div>
+                <div className="cms-upload-zone cms-upload-zone--body">
+                  <input
+                    ref={bodyFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-label="Pilih file gambar untuk diunggah ke isi artikel"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void uploadBody(file);
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => bodyFileInputRef.current?.click()}
+                    disabled={bodyUploadBusy}
+                  >
+                    {bodyUploadBusy ? (
+                      <LoaderCircle className="cms-spin" data-icon="inline-start" />
+                    ) : (
+                      <Upload data-icon="inline-start" />
+                    )}
+                    {bodyUploadBusy ? "Mengunggah…" : "Unggah gambar ke isi artikel"}
+                  </Button>
+                  <small>Disisipkan sebagai Markdown di akhir artikel Anda.</small>
+                </div>
+                {uploadError && (
+                  <p className="cms-field-error" role="alert">
+                    {uploadError}
+                  </p>
+                )}
+              </>
               {(uploadedAssets.length > 0 || mainAssets.length > 0) && (
                 <div className="cms-media-uploads">
                   <h3>
@@ -1673,8 +1739,8 @@ export default function CmsDashboard({
                 <small>Prototipe saja · bukan rute pratinjau produksi</small>
               </div>
               <p>
-                Konten draf tetap pribadi sampai owner me-merge revisi GitHub-nya, yang otomatis
-                menerbitkan situs.
+                Konten draf tetap pribadi sampai owner menyetujui revisinya dari dasbor ini —
+                mergenya otomatis menerbitkan situs.
               </p>
             </div>
           </section>
@@ -1707,15 +1773,19 @@ export default function CmsDashboard({
             </Button>
             <h2 id="help-title">Satu permukaan. Tanpa ujung longgar.</h2>
             <p id="help-description">
-              Dasbor ini menjaga jalur konten tetap eksplisit: draf lokal → PR revisi GitHub →
-              review &amp; merge owner → deploy otomatis.
+              Dasbor ini menjaga jalur konten tetap eksplisit: draf lokal → revisi (PR GitHub) →
+              persetujuan &amp; merge owner → deploy otomatis. Semua langkah bisa dilakukan di sini;
+              GitHub tidak wajib dibuka.
             </p>
             <ul>
               <li>
                 Draf tersimpan otomatis di browser ini; revisi GitHub dibuat hanya saat Anda
                 menyimpannya secara eksplisit.
               </li>
-              <li>Owner me-review dan me-merge pull request revisi di GitHub.</li>
+              <li>
+                Owner menyetujui &amp; menggabungkan revisi langsung dari dasbor ini (GitHub
+                opsional).
+              </li>
               <li>
                 Merge ke main otomatis mendeploy; kredensial deploy tidak pernah sampai ke browser.
               </li>

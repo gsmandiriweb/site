@@ -690,3 +690,99 @@ export async function createDraftPullRequest(
 
   return toDraftPullRequest(storageSlug, revision, created, fingerprint);
 }
+
+async function readFileAtRef(
+  apiUrl: string,
+  pat: string,
+  path: string,
+  ref: string,
+): Promise<string | null> {
+  const response = await githubRequest(
+    apiUrl,
+    pat,
+    `/contents/${path}?ref=${encodeURIComponent(ref)}`,
+  );
+  if (!response.ok) return null;
+  const file = (await response.json().catch(() => null)) as {
+    content?: unknown;
+    encoding?: unknown;
+  } | null;
+  if (!file || file.encoding !== "base64" || typeof file.content !== "string") return null;
+  return decodeBase64(file.content);
+}
+
+// ADR 0009/0012 owner merge: the dashboard owner approves and merges the open
+// revision PR through the CMS, so publishing never requires opening GitHub. The
+// merge creates a merge commit (never a squash) so the PR head SHA becomes an
+// ancestor of `main` — the ancestry check in isCommitDeployed keeps working and
+// the dashboard can flip the revision to Published on its own after deploy.
+export async function mergeDraftPullRequest(
+  request: Request,
+  storageSlug: string,
+): Promise<DraftPullRequest> {
+  if (!(await readAdminSession(request)))
+    throw new DraftActionError("Authentication required.", 401);
+  validateMutationOrigin(request);
+  if (!isSafeStorageSlug(storageSlug))
+    throw new DraftActionError("The draft identity is invalid.", 400);
+  const pat = await configuredGitHubPat();
+  if (!pat) throw new DraftActionError("CMS GitHub access is not configured.", 503);
+  const env = await runtimeEnv();
+  const apiUrl = apiUrlFor(env);
+
+  const pull = await currentDraftPullRequest(request, storageSlug);
+  if (!pull) throw new DraftActionError("No revision PR is open for this article.", 409);
+  if (pull.status !== "open") {
+    throw new DraftActionError(
+      pull.status === "merged"
+        ? `Revision r${pull.revision} is already merged.`
+        : `Revision r${pull.revision} is closed; save a new revision to publish.`,
+      409,
+    );
+  }
+
+  // Merge-time guard (ADR 0009): refuse a PR whose branch content drifted from
+  // the revision that was actually reviewed. The PR body carries the SHA-256 of
+  // the exact serialized markdown created at save time; compare it against the
+  // current file on the revision branch.
+  if (pull.contentFingerprint) {
+    const content = await readFileAtRef(apiUrl, pat, storagePath(storageSlug), pull.branch);
+    if (content === null) {
+      throw new DraftActionError(
+        `Revision content is missing on branch ${pull.branch}; refusing to merge.`,
+        409,
+      );
+    }
+    const fingerprint = await computeContentFingerprint(content);
+    if (fingerprint !== pull.contentFingerprint) {
+      throw new DraftActionError(
+        "This revision changed since it was reviewed; refusing to merge. Save a new revision instead.",
+        409,
+      );
+    }
+  }
+
+  const mergeResponse = await githubRequest(apiUrl, pat, `/pulls/${pull.prNumber}/merge`, {
+    method: "PUT",
+    body: JSON.stringify({
+      merge_method: "merge",
+      commit_title: `cms: publish ${storageSlug} revision r${pull.revision}`,
+      commit_message: `Publish revision r${pull.revision} of ${storageSlug} from the BSM editorial CMS.`,
+    }),
+  });
+  if (!mergeResponse.ok) {
+    const payload = (await mergeResponse.json().catch(() => null)) as {
+      message?: unknown;
+    } | null;
+    const message =
+      payload && typeof payload.message === "string" && payload.message
+        ? payload.message
+        : `GitHub returned HTTP ${mergeResponse.status}.`;
+    throw new DraftActionError(`GitHub cannot merge this revision: ${message}`, 409);
+  }
+
+  const merged = await githubJson<GitHubPull>(
+    await githubRequest(apiUrl, pat, `/pulls/${pull.prNumber}`),
+  );
+  return toDraftPullRequest(storageSlug, pull.revision, merged, pull.contentFingerprint);
+}

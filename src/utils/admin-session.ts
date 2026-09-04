@@ -10,6 +10,8 @@ type SessionStore = {
 export type RuntimeEnv = {
   SESSION?: SessionStore;
   CMS_GITHUB_PAT?: string;
+  CMS_OWNER_USERNAME?: string;
+  CMS_OWNER_PASSWORD?: string;
   CMS_OWNER_SECRET?: string;
   CMS_DEPLOY_CALLBACK_URL?: string;
   CMS_DEPLOY_CALLBACK_SECRET?: string;
@@ -38,6 +40,8 @@ export async function runtimeEnv(): Promise<RuntimeEnv> {
   return {
     ...workerEnv,
     CMS_GITHUB_PAT: workerEnv.CMS_GITHUB_PAT ?? developmentEnv("CMS_GITHUB_PAT"),
+    CMS_OWNER_USERNAME: workerEnv.CMS_OWNER_USERNAME ?? developmentEnv("CMS_OWNER_USERNAME"),
+    CMS_OWNER_PASSWORD: workerEnv.CMS_OWNER_PASSWORD ?? developmentEnv("CMS_OWNER_PASSWORD"),
     CMS_OWNER_SECRET: workerEnv.CMS_OWNER_SECRET ?? developmentEnv("CMS_OWNER_SECRET"),
     CMS_DEPLOY_CALLBACK_URL:
       workerEnv.CMS_DEPLOY_CALLBACK_URL ?? developmentEnv("CMS_DEPLOY_CALLBACK_URL"),
@@ -135,6 +139,20 @@ export async function secretsMatch(left: string, right: string): Promise<boolean
     difference |= (a[index] ?? 0) ^ (b[index] ?? 0);
   }
   return difference === 0;
+}
+
+export type OwnerCredentials = { username: string; password: string };
+
+// The owner signs in with a plain username + password stored in the
+// environment (CMS_OWNER_USERNAME / CMS_OWNER_PASSWORD). Returns null when the
+// pair is not configured, in which case callers may fall back to the legacy
+// single-secret scheme (CMS_OWNER_SECRET).
+export async function configuredOwnerCredentials(): Promise<OwnerCredentials | null> {
+  const env = await runtimeEnv();
+  const username = env.CMS_OWNER_USERNAME ?? developmentEnv("CMS_OWNER_USERNAME");
+  const password = env.CMS_OWNER_PASSWORD ?? developmentEnv("CMS_OWNER_PASSWORD");
+  if (!username || !password) return null;
+  return { username, password };
 }
 
 export async function configuredOwnerSecret(): Promise<string | null> {

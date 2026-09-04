@@ -569,12 +569,16 @@
               <div class="flow-step">
                 <b>03 · REVIEW</b
                 ><span
-                  >The PR diff is the review surface. A new revision supersedes the older PR.</span
+                  >Preview in the dashboard (diff link optional). A new revision supersedes the
+                  older PR.</span
                 >
               </div>
               <div class="flow-step">
                 <b>04 · MERGE</b
-                ><span>The owner merges to <code>main</code>. Merged PRs are immutable.</span>
+                ><span
+                  >Owner approves in the dashboard — “Setujui &amp; gabungkan” — or merges on
+                  GitHub. Merged PRs are immutable.</span
+                >
               </div>
               <div class="flow-step">
                 <b>05 · DEPLOY</b
@@ -609,7 +613,8 @@
                   <td><strong>Editor browser</strong></td>
                   <td>Dashboard authoring, local autosave, media upload, PR lifecycle status.</td>
                   <td>
-                    GitHub PATs, Cloudflare API tokens, callback secrets, or the owner secret.
+                    GitHub PATs, Cloudflare API tokens, callback secrets, or the owner
+                    username/password.
                   </td>
                 </tr>
                 <tr>
@@ -684,8 +689,8 @@
             <p>
               The dashboard may display editor/owner distinctions, but the role switch is only a
               client-side demonstration until server-enforced roles are implemented (the GitHub App
-              hardening step). Today all CMS API guards check for a valid admin session, and the
-              owner-secret session is the only production credential. Treat the owner access key
+              hardening step). Today all CMS API guards check for a valid admin session, and owner
+              sign-in is the only production credential gate. Treat the owner username and password
               accordingly.
             </p>
             <h3>Editor</h3>
@@ -696,12 +701,15 @@
             </p>
             <h3>Owner</h3>
             <p>
-              The owner supplies the access key at <code>/admin/login</code>. The server compares it
-              against <code>CMS_OWNER_SECRET</code>, creates a random session ID, and stores the
-              GitHub credential behind that session in the <code>SESSION</code> KV namespace. The
-              browser receives only the <code>HttpOnly</code> <code>bsm-cms-session</code> cookie.
-              The owner reviews PRs on GitHub and merges them — merging is the approval that
-              triggers deployment.
+              The owner signs in at <code>/admin/login</code> with the username and password
+              configured in <code>CMS_OWNER_USERNAME</code> / <code>CMS_OWNER_PASSWORD</code> (or,
+              until those are set, the legacy single <code>CMS_OWNER_SECRET</code> key in the
+              password field). The server compares them in constant time, creates a random session
+              ID, and stores the GitHub credential behind that session in the
+              <code>SESSION</code> KV namespace. The browser receives only the <code>HttpOnly</code>
+              <code>bsm-cms-session</code> cookie. The owner approves revisions from the dashboard —
+              preview the article, then “Setujui &amp; gabungkan” — or optionally reviews the PR
+              diff and merges on GitHub. Merging is the approval that triggers deployment.
             </p>
             <div class="callout note">
               <div class="label">Operational rule</div>
@@ -717,8 +725,8 @@
             <h2>3. The authoring and publishing flow</h2>
             <ol class="numbered">
               <li>
-                <strong>Sign in.</strong> Visit <code>/admin/login</code> and enter the owner access
-                key. You land on the <code>/admin</code> dashboard.
+                <strong>Sign in.</strong> Visit <code>/admin/login</code> and enter the owner
+                username and password. You land on the <code>/admin</code> dashboard.
               </li>
               <li>
                 <strong>Write in the dashboard.</strong> The editor is a markdown-first WYSIWYG
@@ -745,14 +753,17 @@
                 serialized Markdown, opens a draft pull request, and supersedes older open PRs.
               </li>
               <li>
-                <strong>Review on GitHub.</strong> The PR diff is the review surface. If a new
-                revision is saved while an older PR is still open, the older PR is closed as
+                <strong>Review &amp; approve.</strong> Preview the article in the dashboard; a diff
+                link to the PR on GitHub stays available but is optional. If a new revision is saved
+                while an older PR is still open, the older PR is closed as
                 <strong>superseded</strong> with a comment linking the new one. Closed-unmerged PRs
                 are never reopened; merged PRs are immutable.
               </li>
               <li>
-                <strong>Owner merges.</strong> Merging to <code>main</code> is the approval. GitHub
-                Actions auto-builds and deploys the static site.
+                <strong>Owner merges from the dashboard.</strong> “Setujui &amp; gabungkan” merges
+                the open revision PR to <code>main</code> (a merge commit, so the revision stays
+                traceable to the deployed SHA). Merging is the approval — GitHub Actions auto-builds
+                and deploys the static site.
               </li>
               <li>
                 <strong>Published.</strong> The deploy workflow posts a signed callback with the
@@ -763,10 +774,11 @@
             <div class="callout">
               <div class="label">Provenance, not trust</div>
               <p>
-                After a merge, the CMS recomputes the SHA-256 of the merged file and compares it
-                with the fingerprint recorded in the PR metadata block at PR-creation time. Any
-                drift is flagged <strong>“changed since review”</strong> and is never presented as
-                published.
+                At merge time the CMS recomputes the SHA-256 of the revision file on its branch and
+                compares it with the fingerprint recorded in the PR metadata block at PR-creation
+                time. A revision whose content drifted after review is refused — save a new revision
+                instead. Content is only presented as published once the deploy callback confirms
+                the merge commit is live.
               </p>
             </div>
           </section>
@@ -800,7 +812,7 @@ contentFingerprint: sha256:&lt;64-character-hex&gt;
 media: [blog/cara-memilih-pagar-brc/cover.jpg]</code></pre>
             <p>
               The block is written at PR creation and parsed for status reconciliation and the
-              post-merge exact-match check. If it is ever absent, the CMS falls back to branch-name
+              merge-time drift guard. If it is ever absent, the CMS falls back to branch-name
               parsing.
             </p>
             <h3>Lifecycle states</h3>
@@ -821,7 +833,9 @@ media: [blog/cara-memilih-pagar-brc/cover.jpg]</code></pre>
                 <tr>
                   <td>In review</td>
                   <td>A PR is open for the latest revision</td>
-                  <td>Review the PR diff on GitHub; merge when ready.</td>
+                  <td>
+                    Preview, then “Setujui &amp; gabungkan” in the dashboard (or merge on GitHub).
+                  </td>
                 </tr>
                 <tr>
                   <td>Merged</td>
@@ -982,8 +996,8 @@ x-bsm-deploy-signature: sha256=&lt;64-character-hex-hmac&gt;</code></pre>
                 environment. Confirm the Worker URL and the callback route exist.
               </li>
               <li>
-                <strong>Log in.</strong> Visit <code>/admin/login</code>, enter the owner access
-                key, and confirm the redirect to <code>/admin</code>.
+                <strong>Log in.</strong> Visit <code>/admin/login</code>, sign in with the owner
+                username and password, and confirm the redirect to <code>/admin</code>.
               </li>
               <li>
                 <strong>Run a small real smoke test.</strong> Make a harmless revision PR, merge it,
@@ -992,10 +1006,12 @@ x-bsm-deploy-signature: sha256=&lt;64-character-hex-hmac&gt;</code></pre>
             </ol>
             <h3>Worker secrets</h3>
             <pre><button class="copy" type="button">Copy</button><code># From the repository root, authenticated to the target Cloudflare account
+wrangler secret put CMS_OWNER_USERNAME
+wrangler secret put CMS_OWNER_PASSWORD
 wrangler secret put CMS_GITHUB_PAT
-wrangler secret put CMS_OWNER_SECRET
 wrangler secret put CMS_DEPLOY_CALLBACK_URL
-wrangler secret put CMS_DEPLOY_CALLBACK_SECRET</code></pre>
+wrangler secret put CMS_DEPLOY_CALLBACK_SECRET
+# Legacy: wrangler secret put CMS_OWNER_SECRET (pre-username/password logins)</code></pre>
             <h3>GitHub repository Actions secrets</h3>
             <table>
               <thead>
@@ -1056,7 +1072,8 @@ wrangler secret put CMS_DEPLOY_CALLBACK_SECRET</code></pre>
                 loaded.
               </p>
             </div>
-            <pre><button class="copy" type="button">Copy</button><code>CMS_OWNER_SECRET='local-owner-secret' \
+            <pre><button class="copy" type="button">Copy</button><code>CMS_OWNER_USERNAME='owner' \
+CMS_OWNER_PASSWORD='local-owner-password' \
 CMS_GITHUB_PAT='local-github-token' \
 CMS_DEPLOY_CALLBACK_URL='https://example.test/api/cms/deploy/callback' \
 CMS_DEPLOY_CALLBACK_SECRET='local-callback-secret' \
@@ -1091,10 +1108,10 @@ bunx astro check</code></pre>
               <tbody>
                 <tr>
                   <td><code>CMS authentication is not configured</code></td>
-                  <td>Worker lacks the owner secret or the GitHub PAT.</td>
+                  <td>Worker lacks the owner credentials or the GitHub PAT.</td>
                   <td>
-                    Check <code>CMS_OWNER_SECRET</code> and <code>CMS_GITHUB_PAT</code>, then
-                    redeploy.
+                    Check <code>CMS_OWNER_USERNAME</code> / <code>CMS_OWNER_PASSWORD</code> and
+                    <code>CMS_GITHUB_PAT</code>, then redeploy.
                   </td>
                 </tr>
                 <tr>

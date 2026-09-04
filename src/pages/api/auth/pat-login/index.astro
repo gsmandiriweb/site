@@ -1,6 +1,7 @@
 ---
 import {
   configuredGitHubPat,
+  configuredOwnerCredentials,
   configuredOwnerSecret,
   createAdminSession,
   secretsMatch,
@@ -20,9 +21,10 @@ if (requestMethod !== "POST") {
   });
 }
 
-const ownerSecret = await configuredOwnerSecret();
+const ownerCredentials = await configuredOwnerCredentials();
+const legacyOwnerSecret = await configuredOwnerSecret();
 const pat = await configuredGitHubPat();
-if (!ownerSecret || !pat) {
+if ((!ownerCredentials && !legacyOwnerSecret) || !pat) {
   return new Response("CMS authentication is not configured.", {
     status: 503,
     headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
@@ -30,8 +32,24 @@ if (!ownerSecret || !pat) {
 }
 
 const form = await Astro.request.formData().catch(() => null);
-const submittedSecret = form?.get("secret");
-if (typeof submittedSecret !== "string" || !(await secretsMatch(submittedSecret, ownerSecret))) {
+const submittedUsername =
+  typeof form?.get("username") === "string" ? (form.get("username") as string) : null;
+const submittedPassword =
+  typeof form?.get("password") === "string" ? (form.get("password") as string) : null;
+
+let authenticated = false;
+if (ownerCredentials && submittedUsername && submittedPassword) {
+  authenticated =
+    (await secretsMatch(submittedUsername, ownerCredentials.username)) &&
+    (await secretsMatch(submittedPassword, ownerCredentials.password));
+} else if (legacyOwnerSecret && submittedPassword) {
+  // Legacy single-secret scheme (CMS_OWNER_SECRET): the username is ignored and
+  // the password field carries the owner access key. Kept so existing Worker
+  // deployments keep working until CMS_OWNER_USERNAME/PASSWORD are set.
+  authenticated = await secretsMatch(submittedPassword, legacyOwnerSecret);
+}
+
+if (!authenticated) {
   return new Response("Invalid credentials.", {
     status: 401,
     headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },

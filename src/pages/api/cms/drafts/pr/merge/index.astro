@@ -1,0 +1,30 @@
+---
+import { DraftActionError, jsonResponse } from "../../../../../../utils/cms-drafts.ts";
+import { mergeDraftPullRequest } from "../../../../../../utils/draft-publish.ts";
+
+// Owner merge (ADR 0009/0012): approves the article's open revision PR and
+// merges it to `main` from the dashboard, so publishing never requires opening
+// GitHub. Auto-deploy + deploy confirmation turn the revision into Published.
+export const prerender = false;
+
+if (Astro.request.method !== "POST") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "POST", "Cache-Control": "no-store" },
+  });
+}
+
+const body = await Astro.request.json().catch(() => null);
+const storageSlug = body && typeof body.storageSlug === "string" ? body.storageSlug : "";
+
+try {
+  return jsonResponse({
+    pullRequest: await mergeDraftPullRequest(Astro.request, storageSlug),
+  });
+} catch (error) {
+  const message =
+    error instanceof Error ? error.message : "Unable to merge the GitHub pull request.";
+  const status = error instanceof DraftActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---

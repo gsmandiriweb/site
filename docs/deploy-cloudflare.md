@@ -52,8 +52,11 @@ npx wrangler kv namespace create SESSION
 Set these as encrypted Worker secrets. Never commit values to `wrangler.toml`.
 
 ```bash
-wrangler secret put CMS_OWNER_SECRET
-# The owner access key entered at /admin/login. Long random value:
+wrangler secret put CMS_OWNER_USERNAME
+# The owner username entered at /admin/login (e.g. "owner")
+
+wrangler secret put CMS_OWNER_PASSWORD
+# The owner password entered at /admin/login. Long random value:
 openssl rand -hex 32
 
 wrangler secret put CMS_GITHUB_PAT
@@ -106,14 +109,16 @@ For a local smoke test before pushing: `bun run build && bunx wrangler dev`.
    - **Root directory:** `/` (repo root)
 3. The `SESSION` KV binding is wired via `wrangler.toml` and baked into the
    generated `dist/server/wrangler.json`.
-4. Add `CMS_OWNER_SECRET`, `CMS_GITHUB_PAT`, `CMS_DEPLOY_CALLBACK_URL`, and
-   `CMS_DEPLOY_CALLBACK_SECRET` as encrypted Worker secrets.
+4. Add `CMS_OWNER_USERNAME`, `CMS_OWNER_PASSWORD`, `CMS_GITHUB_PAT`,
+   `CMS_DEPLOY_CALLBACK_URL`, and `CMS_DEPLOY_CALLBACK_SECRET` as encrypted
+   Worker secrets.
 5. **Save and Deploy.** Preview at `*.workers.dev`, then add a custom domain
    under **Settings → Domains** if desired.
 
 ## 5. Verify the CMS
 
-1. Visit `/admin/login`, enter `CMS_OWNER_SECRET`; you land on `/admin`.
+1. Visit `/admin/login`, sign in with the owner username and password
+   (`CMS_OWNER_USERNAME` / `CMS_OWNER_PASSWORD`); you land on `/admin`.
 2. Edit a post and choose **Save revision & open PR** — a `cms/<slug>/r<N>`
    branch + draft PR appears on GitHub.
 3. Review and merge the PR on GitHub. Actions auto-deploys and the callback
@@ -124,8 +129,8 @@ For a local smoke test before pushing: `bun run build && bunx wrangler dev`.
 - **`The provided Wrangler config main field (.../dist/server/entry.mjs)`
   doesn't point to an existing file** → `wrangler.toml` still declares
   `main`/`assets`. Remove them; the adapter supplies them.
-- **`CMS authentication is not configured`** → add `CMS_OWNER_SECRET` and
-  `CMS_GITHUB_PAT` Worker secrets, then redeploy.
+- **`CMS authentication is not configured`** → add `CMS_OWNER_USERNAME`,
+  `CMS_OWNER_PASSWORD`, and `CMS_GITHUB_PAT` Worker secrets, then redeploy.
 - **`CMS session storage is unavailable`** → check that the `SESSION` KV id in
   `wrangler.toml` matches a real namespace and that the Worker has access to it.
 - **`kv namespace SESSION ... has no id`** → paste the KV id into `wrangler.toml`.

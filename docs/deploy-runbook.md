@@ -27,13 +27,17 @@ Set with `wrangler secret put <NAME> --name site` (value via stdin). Never commi
 
 | Secret                       | Purpose                                                                       |
 | ---------------------------- | ----------------------------------------------------------------------------- |
-| `CMS_OWNER_SECRET`           | Owner key for `/admin/login` (64-char hex)                                    |
+| `CMS_OWNER_USERNAME`         | Owner username for `/admin/login` (e.g. `owner`)                              |
+| `CMS_OWNER_PASSWORD`         | Owner password for `/admin/login` (long random value)                         |
 | `CMS_GITHUB_PAT`             | GitHub PAT, repo **Contents r/w + Pull requests r/w** (server-side mutations) |
 | `CMS_DEPLOY_CALLBACK_URL`    | `https://site.gsmandiri-web.workers.dev/api/cms/deploy/callback`              |
 | `CMS_DEPLOY_CALLBACK_SECRET` | HMAC key — **must match** the GitHub Actions secret byte-for-byte             |
 
 The generated values are saved locally in the gitignored `.env`
-(`CMS_OWNER_SECRET`, `CMS_DEPLOY_CALLBACK_SECRET`, `CMS_GITHUB_PAT`).
+(`CMS_OWNER_USERNAME`, `CMS_OWNER_PASSWORD`, `CMS_DEPLOY_CALLBACK_SECRET`,
+`CMS_GITHUB_PAT`). The legacy single-key secret (`CMS_OWNER_SECRET`) is still
+honored until `CMS_OWNER_USERNAME`/`CMS_OWNER_PASSWORD` are set on the Worker,
+but new installs should set the username/password pair.
 
 ### 1.2 GitHub Actions secrets — ⚠️ pending (set in the UI)
 
@@ -92,7 +96,7 @@ max-age=0, must-revalidate`); re-request or add a query param to bypass.
 
 ### 3.2 CMS end-to-end (do after every secrets change)
 
-1. Open `/admin/login`, enter `CMS_OWNER_SECRET` → lands on `/admin`.
+1. Open `/admin/login`, sign in with the owner username + password → lands on `/admin`.
 2. Edit a post → **Save revision & open PR** → a `cms/<slug>/r<N>` branch + draft PR appears on GitHub.
 3. Merge the PR → Actions deploys → callback records the SHA → revision flips to **Published**.
 
@@ -107,13 +111,13 @@ max-age=0, must-revalidate`); re-request or add a query param to bypass.
 
 ## 4. Troubleshooting (quick)
 
-| Symptom                                 | Fix                                                                |
-| --------------------------------------- | ------------------------------------------------------------------ |
-| `CMS authentication is not configured`  | Add `CMS_OWNER_SECRET` + `CMS_GITHUB_PAT` Worker secrets, redeploy |
-| Merged but not Published                | Callback secrets differ — compare Worker vs GitHub value           |
-| Callback 401                            | HMAC/timestamp mismatch; callback must be freshly signed           |
-| Every route 500 `Buffer is not defined` | `nodejs_compat` missing from `wrangler.toml`                       |
-| `main` field error at deploy            | `main`/`assets` present in `wrangler.toml` — remove them           |
+| Symptom                                 | Fix                                                                                         |
+| --------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `CMS authentication is not configured`  | Add `CMS_OWNER_USERNAME` + `CMS_OWNER_PASSWORD` + `CMS_GITHUB_PAT` Worker secrets, redeploy |
+| Merged but not Published                | Callback secrets differ — compare Worker vs GitHub value                                    |
+| Callback 401                            | HMAC/timestamp mismatch; callback must be freshly signed                                    |
+| Every route 500 `Buffer is not defined` | `nodejs_compat` missing from `wrangler.toml`                                                |
+| `main` field error at deploy            | `main`/`assets` present in `wrangler.toml` — remove them                                    |
 
 Full troubleshooting and the optional Cloudflare dashboard (Workers Builds) setup:
 see [`docs/deploy-cloudflare.md`](./deploy-cloudflare.md).
