@@ -12,7 +12,7 @@ if (Astro.request.method !== "GET") {
 }
 
 if (!(await readAdminSession(Astro.request))) {
-  return jsonResponse({ error: "Authentication required" }, 401);
+  return jsonResponse({ error: "Autentikasi diperlukan" }, 401);
 }
 
 try {

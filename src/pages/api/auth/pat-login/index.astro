@@ -25,7 +25,7 @@ const ownerCredentials = await configuredOwnerCredentials();
 const legacyOwnerSecret = await configuredOwnerSecret();
 const pat = await configuredGitHubPat();
 if ((!ownerCredentials && !legacyOwnerSecret) || !pat) {
-  return new Response("CMS authentication is not configured.", {
+  return new Response("Autentikasi CMS belum dikonfigurasi. Hubungi pengelola situs.", {
     status: 503,
     headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
   });
@@ -50,7 +50,7 @@ if (ownerCredentials && submittedUsername && submittedPassword) {
 }
 
 if (!authenticated) {
-  return new Response("Invalid credentials.", {
+  return new Response("Username atau password salah. Coba lagi.", {
     status: 401,
     headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
   });
@@ -58,7 +58,7 @@ if (!authenticated) {
 
 const sessionId = await createAdminSession(pat);
 if (!sessionId) {
-  return new Response("CMS session storage is unavailable.", {
+  return new Response("Penyimpanan sesi CMS tidak tersedia. Coba lagi sebentar.", {
     status: 503,
     headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
   });

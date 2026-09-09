@@ -146,23 +146,23 @@ export function validateMediaBytes(bytes: Uint8Array):
       height: number;
     }
   | { ok: false; reason: string } {
-  if (bytes.length === 0) return { ok: false, reason: "The uploaded file is empty." };
+  if (bytes.length === 0) return { ok: false, reason: "File yang diunggah kosong." };
   if (bytes.length > MEDIA_MAX_BYTES) {
-    return { ok: false, reason: "Files must be 5 MB or smaller." };
+    return { ok: false, reason: "Ukuran gambar maksimal 5 MB." };
   }
   const type = detectMediaType(bytes);
   if (!type) {
     return {
       ok: false,
-      reason: "Only JPEG, PNG, or WebP images are allowed (checked by content, not extension).",
+      reason: "Hanya gambar JPEG, PNG, atau WebP yang diizinkan.",
     };
   }
   const dimensions = readMediaDimensions(bytes, type);
   if (!dimensions) {
-    return { ok: false, reason: "The image header could not be read — the file may be corrupt." };
+    return { ok: false, reason: "Header gambar tidak dapat dibaca — file mungkin rusak." };
   }
   if (Math.max(dimensions.width, dimensions.height) > MEDIA_MAX_EDGE_PX) {
-    return { ok: false, reason: "Images must be 8000 px or smaller on their longest edge." };
+    return { ok: false, reason: "Dimensi gambar maksimal 8000 px pada sisi terpanjang." };
   }
   return { ok: true, type, width: dimensions.width, height: dimensions.height };
 }

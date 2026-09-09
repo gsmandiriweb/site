@@ -45,14 +45,14 @@ export function isSafeStorageSlug(value: unknown): value is string {
 
 export function validateMutationOrigin(request: Request): void {
   const origin = request.headers.get("origin");
-  if (!origin) throw new DraftActionError("A same-origin CMS mutation is required.", 403);
+  if (!origin) throw new DraftActionError("Mutasi CMS wajib berasal dari origin yang sama.", 403);
   try {
     if (new URL(origin).origin !== new URL(request.url).origin) {
-      throw new DraftActionError("Cross-origin CMS mutations are not allowed.", 403);
+      throw new DraftActionError("Mutasi CMS lintas origin tidak diizinkan.", 403);
     }
   } catch (error) {
     if (error instanceof DraftActionError) throw error;
-    throw new DraftActionError("The CMS mutation origin is invalid.", 403);
+    throw new DraftActionError("Origin mutasi CMS tidak valid.", 403);
   }
 }
 

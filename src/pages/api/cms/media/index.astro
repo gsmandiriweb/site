@@ -26,7 +26,7 @@ try {
       : form?.get("storageSlug");
 
   if (typeof storageSlug !== "string") {
-    return jsonResponse({ error: "A storageSlug is required." }, 400);
+    return jsonResponse({ error: "storageSlug wajib diisi." }, 400);
   }
 
   if (Astro.request.method === "GET") {
@@ -41,21 +41,21 @@ try {
   }
 
   if (!form) {
-    return jsonResponse({ error: "Expected a multipart/form-data body." }, 400);
+    return jsonResponse({ error: "Body harus berformat multipart/form-data." }, 400);
   }
   const kind = form.get("kind");
   const rawName = form.get("name");
   const file = form.get("file");
   if (kind !== "cover" && kind !== "body") {
-    return jsonResponse({ error: "kind must be \"cover\" or \"body\"." }, 400);
+    return jsonResponse({ error: "kind harus \"cover\" atau \"body\"." }, 400);
   }
   if (!file || typeof file !== "object" || !("arrayBuffer" in file)) {
-    return jsonResponse({ error: "A file is required." }, 400);
+    return jsonResponse({ error: "File gambar wajib diunggah." }, 400);
   }
   // Reject oversized uploads before buffering so a huge body can never pin
   // memory (validateMediaBytes re-checks the same limit on the bytes).
   if ("size" in file && typeof file.size === "number" && file.size > MEDIA_MAX_BYTES) {
-    return jsonResponse({ error: "Files must be 5 MB or smaller." }, 400);
+    return jsonResponse({ error: "Ukuran gambar maksimal 5 MB." }, 400);
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -72,7 +72,7 @@ try {
   });
   return jsonResponse({ asset }, 201);
 } catch (error) {
-  const message = error instanceof Error ? error.message : "Unable to process the media upload.";
+  const message = error instanceof Error ? error.message : "Tidak dapat memproses unggahan media.";
   const status = error instanceof DraftActionError ? error.status : 500;
   return jsonResponse({ error: message }, status);
 }

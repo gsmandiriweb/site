@@ -1,0 +1,42 @@
+---
+import { DraftActionError, jsonResponse } from "../../../../../utils/cms-drafts.ts";
+import { readAdminSession } from "../../../../../utils/admin-session.ts";
+import { renameLegacyPost } from "../../../../../utils/draft-publish.ts";
+
+// POST /api/cms/posts/rename — renames a legacy blog file whose name is not a
+// valid storage slug (e.g. "Test Blog.md" → "test-blog.md") directly on main.
+// Closes the locked-post dead end: the dashboard can now offer the fix inline
+// instead of sending the editor to GitHub.
+export const prerender = false;
+
+if (Astro.request.method !== "POST") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "POST", "Cache-Control": "no-store" },
+  });
+}
+
+try {
+  const payload = (await Astro.request.json().catch(() => null)) as {
+    currentName?: unknown;
+    nextName?: unknown;
+  } | null;
+  if (
+    !payload ||
+    typeof payload.currentName !== "string" ||
+    typeof payload.nextName !== "string" ||
+    !payload.currentName ||
+    !payload.nextName
+  ) {
+    return jsonResponse({ error: "currentName dan nextName wajib diisi." }, 400);
+  }
+
+  return jsonResponse(
+    await renameLegacyPost(Astro.request, payload.currentName, payload.nextName),
+  );
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Tidak dapat mengganti nama file.";
+  const status = error instanceof DraftActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---

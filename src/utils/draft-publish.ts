@@ -164,7 +164,7 @@ async function githubJson<T>(response: Response): Promise<T> {
       "message" in payload &&
       typeof payload.message === "string"
         ? payload.message
-        : `GitHub returned HTTP ${response.status}.`;
+        : `GitHub mengembalikan HTTP ${response.status}.`;
     throw new DraftActionError(message, response.status === 422 ? 409 : 502);
   }
   return payload as T;
@@ -310,7 +310,7 @@ async function ensureRevisionBranch(apiUrl: string, pat: string, branch: string)
     await githubRequest(apiUrl, pat, `/git/ref/heads/${DEFAULT_BRANCH}`),
   );
   const baseSha = baseRef && typeof baseRef.object?.sha === "string" ? baseRef.object.sha : null;
-  if (!baseSha) throw new DraftActionError("GitHub returned no base branch SHA.", 502);
+  if (!baseSha) throw new DraftActionError("GitHub tidak mengembalikan SHA cabang utama.", 502);
   const response = await githubRequest(apiUrl, pat, "/git/refs", {
     method: "POST",
     body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: baseSha }),
@@ -362,9 +362,9 @@ export async function listMediaAssets(
   storageSlug: string,
 ): Promise<MediaListing> {
   if (!(await readAdminSession(request)))
-    throw new DraftActionError("Authentication required.", 401);
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
   if (!isSafeStorageSlug(storageSlug))
-    throw new DraftActionError("The draft identity is invalid.", 400);
+    throw new DraftActionError("Identitas draf tidak valid.", 400);
   const pat = await configuredGitHubPat();
   const env = await runtimeEnv();
   const apiUrl = apiUrlFor(env);
@@ -401,13 +401,13 @@ export async function uploadMediaFile(
   input: UploadMediaInput,
 ): Promise<UploadedMediaAsset> {
   if (!(await readAdminSession(request)))
-    throw new DraftActionError("Authentication required.", 401);
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
   validateMutationOrigin(request);
   if (!isSafeStorageSlug(storageSlug))
-    throw new DraftActionError("The draft identity is invalid.", 400);
+    throw new DraftActionError("Identitas draf tidak valid.", 400);
 
   const pat = await configuredGitHubPat();
-  if (!pat) throw new DraftActionError("CMS GitHub access is not configured.", 503);
+  if (!pat) throw new DraftActionError("Akses GitHub CMS belum dikonfigurasi.", 503);
   const env = await runtimeEnv();
   const apiUrl = apiUrlFor(env);
 
@@ -494,9 +494,9 @@ export async function currentDraftPullRequest(
   revision?: number,
 ): Promise<DraftPullRequest | null> {
   if (!(await readAdminSession(request)))
-    throw new DraftActionError("Authentication required.", 401);
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
   if (!isSafeStorageSlug(storageSlug))
-    throw new DraftActionError("The draft identity is invalid.", 400);
+    throw new DraftActionError("Identitas draf tidak valid.", 400);
   const pat = await configuredGitHubPat();
   if (!pat) return null;
   const env = await runtimeEnv();
@@ -577,7 +577,7 @@ export async function createDraftPullRequest(
   value: unknown,
 ): Promise<DraftPullRequest> {
   if (!(await readAdminSession(request)))
-    throw new DraftActionError("Authentication required.", 401);
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
   validateMutationOrigin(request);
   // ADR 0011: alt text is required whenever a featured image is set. Checked
   // against the raw payload so the friendly message wins over the generic
@@ -592,15 +592,15 @@ export async function createDraftPullRequest(
     typeof rawPayload.imageAlt !== "string"
   ) {
     throw new DraftActionError(
-      "A featured image requires alt text (imageAlt) before a revision can be saved.",
+      "Gambar sampul butuh teks alt (imageAlt) sebelum revisi bisa dikirim.",
       400,
     );
   }
   const post = validateDraftPost(value, storageSlug);
-  if (!post) throw new DraftActionError("The draft payload is invalid.", 400);
+  if (!post) throw new DraftActionError("Data artikel tidak valid.", 400);
 
   const pat = await configuredGitHubPat();
-  if (!pat) throw new DraftActionError("CMS GitHub access is not configured.", 503);
+  if (!pat) throw new DraftActionError("Akses GitHub CMS belum dikonfigurasi.", 503);
   const env = await runtimeEnv();
   const apiUrl = apiUrlFor(env);
 
@@ -624,7 +624,7 @@ export async function createDraftPullRequest(
   const unresolved = await verifyImageReferences(apiUrl, pat, branch, references);
   if (unresolved.length > 0) {
     throw new DraftActionError(
-      `Cannot open the PR: unresolvable image reference${unresolved.length === 1 ? "" : "s"} on revision branch ${branch}: ${unresolved.join(", ")}. Upload the image in the Media workspace first.`,
+      `Tidak bisa membuka PR: referensi gambar tidak ditemukan di cabang revisi ${branch}: ${unresolved.join(", ")}. Unggah gambarnya dulu di Perpustakaan media.`,
       409,
     );
   }
@@ -633,7 +633,7 @@ export async function createDraftPullRequest(
     await githubRequest(apiUrl, pat, `/git/ref/heads/${DEFAULT_BRANCH}`),
   );
   const baseSha = baseRef && typeof baseRef.object?.sha === "string" ? baseRef.object.sha : null;
-  if (!baseSha) throw new DraftActionError("GitHub returned no base branch SHA.", 502);
+  if (!baseSha) throw new DraftActionError("GitHub tidak mengembalikan SHA cabang utama.", 502);
 
   const branchResponse = await githubRequest(apiUrl, pat, "/git/refs", {
     method: "POST",
@@ -667,7 +667,7 @@ export async function createDraftPullRequest(
   });
   const commit = await githubJson<{ commit?: { sha?: unknown } }>(commitResponse);
   const headSha = typeof commit.commit?.sha === "string" ? commit.commit.sha : null;
-  if (!headSha) throw new DraftActionError("GitHub returned no draft commit SHA.", 502);
+  if (!headSha) throw new DraftActionError("GitHub tidak mengembalikan SHA komit draf.", 502);
 
   const metadata = prMetadataBlock(storageSlug, revision, fingerprint, media);
   const created = await githubJson<GitHubPull>(
@@ -683,7 +683,7 @@ export async function createDraftPullRequest(
     }),
   );
   if (typeof created.number !== "number" || typeof created.html_url !== "string") {
-    throw new DraftActionError("GitHub returned an incomplete pull request.", 502);
+    throw new DraftActionError("GitHub mengembalikan data pull request tidak lengkap.", 502);
   }
 
   await supersedeOlderPullRequests(apiUrl, pat, storageSlug, created.number, created.html_url);
@@ -721,22 +721,22 @@ export async function mergeDraftPullRequest(
   storageSlug: string,
 ): Promise<DraftPullRequest> {
   if (!(await readAdminSession(request)))
-    throw new DraftActionError("Authentication required.", 401);
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
   validateMutationOrigin(request);
   if (!isSafeStorageSlug(storageSlug))
-    throw new DraftActionError("The draft identity is invalid.", 400);
+    throw new DraftActionError("Identitas draf tidak valid.", 400);
   const pat = await configuredGitHubPat();
-  if (!pat) throw new DraftActionError("CMS GitHub access is not configured.", 503);
+  if (!pat) throw new DraftActionError("Akses GitHub CMS belum dikonfigurasi.", 503);
   const env = await runtimeEnv();
   const apiUrl = apiUrlFor(env);
 
   const pull = await currentDraftPullRequest(request, storageSlug);
-  if (!pull) throw new DraftActionError("No revision PR is open for this article.", 409);
+  if (!pull) throw new DraftActionError("Tidak ada revisi PR terbuka untuk artikel ini.", 409);
   if (pull.status !== "open") {
     throw new DraftActionError(
       pull.status === "merged"
-        ? `Revision r${pull.revision} is already merged.`
-        : `Revision r${pull.revision} is closed; save a new revision to publish.`,
+        ? `Revisi r${pull.revision} sudah digabungkan.`
+        : `Revisi r${pull.revision} ditutup; kirim revisi baru untuk menerbitkan.`,
       409,
     );
   }
@@ -749,14 +749,14 @@ export async function mergeDraftPullRequest(
     const content = await readFileAtRef(apiUrl, pat, storagePath(storageSlug), pull.branch);
     if (content === null) {
       throw new DraftActionError(
-        `Revision content is missing on branch ${pull.branch}; refusing to merge.`,
+        `Konten revisi tidak ditemukan di cabang ${pull.branch}; merge ditolak.`,
         409,
       );
     }
     const fingerprint = await computeContentFingerprint(content);
     if (fingerprint !== pull.contentFingerprint) {
       throw new DraftActionError(
-        "This revision changed since it was reviewed; refusing to merge. Save a new revision instead.",
+        "Isi revisi berubah setelah direview; merge ditolak. Kirim revisi baru sebagai gantinya.",
         409,
       );
     }
@@ -777,12 +777,110 @@ export async function mergeDraftPullRequest(
     const message =
       payload && typeof payload.message === "string" && payload.message
         ? payload.message
-        : `GitHub returned HTTP ${mergeResponse.status}.`;
-    throw new DraftActionError(`GitHub cannot merge this revision: ${message}`, 409);
+        : `GitHub mengembalikan HTTP ${mergeResponse.status}.`;
+    throw new DraftActionError(`GitHub tidak bisa menggabungkan revisi ini: ${message}`, 409);
   }
 
   const merged = await githubJson<GitHubPull>(
     await githubRequest(apiUrl, pat, `/pulls/${pull.prNumber}`),
   );
   return toDraftPullRequest(storageSlug, pull.revision, merged, pull.contentFingerprint);
+}
+
+// Renames a legacy blog file whose name is not a valid storage slug (e.g.
+// "Test Blog.md"). The rename is a GitHub file move: read the file at the old
+// path, delete it, and create it at the new path in one changeset. The
+// frontmatter `slug` field is left as-is — the canonical slug is serialized in
+// frontmatter (blog.ts); the filename is only the storage identity.
+export async function renameLegacyPost(
+  request: Request,
+  currentName: string,
+  nextName: string,
+): Promise<{ storageSlug: string }> {
+  validateMutationOrigin(request);
+  if (!(await readAdminSession(request)))
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
+  if (!isSafeStorageSlug(nextName))
+    throw new DraftActionError(
+      "Nama baru harus berupa slug yang valid: huruf kecil, angka, dan tanda hubung tunggal.",
+      400,
+    );
+  if (currentName === nextName)
+    throw new DraftActionError("Nama file sudah sama dengan nama baru.", 400);
+
+  const pat = await configuredGitHubPat();
+  if (!pat) throw new DraftActionError("Akses GitHub CMS belum dikonfigurasi.", 503);
+  const env = await runtimeEnv();
+  const apiUrl = apiUrlFor(env);
+
+  const oldPath = `src/content/blog/${currentName}.md`;
+  const newPath = `src/content/blog/${nextName}.md`;
+
+  // Collision check: refuse to overwrite an existing post at the destination.
+  const existing = await readFileAtRef(apiUrl, pat, newPath, DEFAULT_BRANCH);
+  if (existing !== null)
+    throw new DraftActionError(`File "${nextName}.md" sudah ada di repositori.`, 409);
+
+  const source = await readFileAtRef(apiUrl, pat, oldPath, DEFAULT_BRANCH);
+  if (source === null)
+    throw new DraftActionError(`File "${currentName}.md" tidak ditemukan di repositori.`, 404);
+
+  // One commit: delete the old path, add the new one (the contents API's
+  // delete-then-create in a tree commit). Encode the source back to base64 for
+  // the create call.
+  const encoded = encodeBase64(source);
+
+  // Build a single tree commit: base tree = main, one deletion + one addition.
+  const baseRef = await githubJson<{ object?: { sha?: unknown } }>(
+    await githubRequest(apiUrl, pat, `/git/ref/heads/${DEFAULT_BRANCH}`),
+  );
+  const baseSha = baseRef && typeof baseRef.object?.sha === "string" ? baseRef.object.sha : null;
+  if (!baseSha) throw new DraftActionError("GitHub tidak mengembalikan SHA cabang utama.", 502);
+
+  const baseCommit = await githubJson<{ tree?: { sha?: unknown } }>(
+    await githubRequest(apiUrl, pat, `/git/commits/${baseSha}`),
+  );
+  const baseTreeSha =
+    baseCommit && typeof baseCommit.tree?.sha === "string" ? baseCommit.tree.sha : null;
+  if (!baseTreeSha) throw new DraftActionError("GitHub tidak mengembalikan tree komit utama.", 502);
+
+  const tree = await githubJson<{ sha?: unknown }>(
+    await githubRequest(apiUrl, pat, `/git/trees`, {
+      method: "POST",
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree: [
+          { path: oldPath, mode: "100644", type: "blob", sha: null },
+          { path: newPath, mode: "100644", type: "blob", content: source },
+        ],
+      }),
+    }),
+  );
+  const treeSha = tree && typeof tree.sha === "string" ? tree.sha : null;
+  if (!treeSha) throw new DraftActionError("GitHub tidak mengembalikan SHA tree.", 502);
+
+  const commit = await githubJson<{ sha?: unknown }>(
+    await githubRequest(apiUrl, pat, `/git/commits`, {
+      method: "POST",
+      body: JSON.stringify({
+        message: `cms: rename ${currentName}.md to ${nextName}.md`,
+        tree: treeSha,
+        parents: [baseSha],
+      }),
+    }),
+  );
+  const commitSha = commit && typeof commit.sha === "string" ? commit.sha : null;
+  if (!commitSha) throw new DraftActionError("GitHub tidak mengembalikan SHA komit.", 502);
+
+  const patch = await githubRequest(apiUrl, pat, `/git/refs/heads/${DEFAULT_BRANCH}`, {
+    method: "PATCH",
+    body: JSON.stringify({ sha: commitSha }),
+  });
+  if (!patch.ok)
+    throw new DraftActionError(
+      "GitHub menolak pembaruan cabang utama.",
+      patch.status === 409 ? 409 : 502,
+    );
+
+  return { storageSlug: nextName };
 }

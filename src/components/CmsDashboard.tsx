@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  AlertCircle,
   ArrowUpRight,
   Check,
-  FileText,
-  HelpCircle,
   Inbox,
   LoaderCircle,
   LogOut,
   Moon,
-  ShieldCheck,
   Sun,
   Upload,
   WifiOff,
@@ -177,22 +175,17 @@ function normalizeStoredPost(key: string, value: unknown): [PostKey, Post] | nul
   return [key, { ...emptyPost(key), ...value }];
 }
 
-const statusCopy: Record<
-  ContentStatus,
-  { label: string; detail: string; variant: "secondary" | "warning" | "success" }
-> = {
-  draft: { label: "Draf", detail: "Draf lokal · belum di GitHub", variant: "secondary" },
+const statusCopy: Record<ContentStatus, { label: string; detail: string }> = {
+  draft: { label: "Draf", detail: "Draf lokal · belum di GitHub" },
   ready: {
     label: "Siap rilis",
-    detail: "Menunggu persetujuan owner · terbit lewat dasbor ini",
-    variant: "warning",
+    detail: "Menunggu persetujuan owner sebelum bisa terbit",
   },
   published: {
     label: "Terbit",
     detail: "Revisi ter-merge · live di situs ter-deploy",
-    variant: "success",
   },
-  archived: { label: "Arsip", detail: "Disembunyikan dari situs publik", variant: "secondary" },
+  archived: { label: "Arsip", detail: "Disembunyikan dari situs publik" },
 };
 
 function parseMarkdownDocument(source: string): Partial<Post> | null {
@@ -288,8 +281,6 @@ export default function CmsDashboard({
   const [isMarkdown, setIsMarkdown] = useState(false);
   const [markdownDraft, setMarkdownDraft] = useState("");
   const [markdownBaseline, setMarkdownBaseline] = useState("");
-  const [isPreviewOpen, setPreviewOpen] = useState(false);
-  const [isHelpOpen, setHelpOpen] = useState(false);
   const [isMediaOpen, setMediaOpen] = useState(false);
   const [githubStates, setGithubStates] = useState<Record<string, GithubState>>({});
   const [deployed, setDeployed] = useState<DeployInfo | null>(null);
@@ -311,17 +302,28 @@ export default function CmsDashboard({
   const [pendingRevision, setPendingRevision] = useState<number | null>(null);
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [bodyUploadBusy, setBodyUploadBusy] = useState(false);
+  const [isDragOver, setDragOver] = useState(false);
+  // In-dashboard merge confirmation (replaces window.confirm): a themed card
+  // that states the consequence (auto-deploy to the live site) before the
+  // irreversible action, dismissible without page-level blocking.
+  const [isMergeConfirmOpen, setMergeConfirmOpen] = useState(false);
+  // Locked-post rename (legacy filename → valid slug): the dialog targets one
+  // locked post at a time; "renaming" marks the POST in flight.
+  const [renameTarget, setRenameTarget] = useState<PostKey>("");
+  const [renameValue, setRenameValue] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [isRenaming, setRenaming] = useState(false);
+  // Media entries whose thumbnail failed to load (404 or corrupt): flagged so
+  // the grid can disable their actions instead of letting the editor select a
+  // cover that will be broken on the live site too.
+  const [brokenMediaPaths, setBrokenMediaPaths] = useState<Set<string>>(new Set());
   const [showNewPostForm, setShowNewPostForm] = useState(false);
   const [newPostSlug, setNewPostSlug] = useState("");
   const [activeTab, setActiveTab] = useState<EditorSection>("konten");
   const [sectionIndicator, setSectionIndicator] = useState({ left: 0, width: 0 });
   const [modeIndicator, setModeIndicator] = useState({ left: 0, width: 0 });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const bodyFileInputRef = useRef<HTMLInputElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
-  const previewDialogRef = useRef<HTMLElement | null>(null);
-  const helpDialogRef = useRef<HTMLElement | null>(null);
   const mediaDialogRef = useRef<HTMLElement | null>(null);
   const tabsRef = useRef<HTMLDivElement | null>(null);
   const sectionTabsRef = useRef<HTMLDivElement | null>(null);
@@ -336,9 +338,9 @@ export default function CmsDashboard({
       const light = theme === "light";
       root.dataset.theme = theme;
       button?.setAttribute("aria-pressed", String(light));
-      button?.setAttribute("aria-label", light ? "Activate dark mode" : "Activate light mode");
-      button?.setAttribute("title", light ? "Activate dark mode" : "Activate light mode");
-      if (label) label.textContent = light ? "Dark" : "Light";
+      button?.setAttribute("aria-label", light ? "Aktifkan mode gelap" : "Aktifkan mode terang");
+      button?.setAttribute("title", light ? "Aktifkan mode gelap" : "Aktifkan mode terang");
+      if (label) label.textContent = light ? "Gelap" : "Terang";
     };
     let stored: string | null = null;
     try {
@@ -363,20 +365,13 @@ export default function CmsDashboard({
   }, []);
 
   useEffect(() => {
-    if (!isPreviewOpen && !isHelpOpen && !isMediaOpen) return;
+    if (!isMediaOpen) return;
     restoreFocusRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const activeDialogRef = isPreviewOpen
-      ? previewDialogRef
-      : isHelpOpen
-        ? helpDialogRef
-        : mediaDialogRef;
-    dialogRef.current = activeDialogRef.current;
-    const frame = window.requestAnimationFrame(() => activeDialogRef.current?.focus());
+    dialogRef.current = mediaDialogRef.current;
+    const frame = window.requestAnimationFrame(() => mediaDialogRef.current?.focus());
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setPreviewOpen(false);
-        setHelpOpen(false);
         setMediaOpen(false);
         return;
       }
@@ -405,7 +400,7 @@ export default function CmsDashboard({
       document.body.style.overflow = "";
       restoreFocusRef.current?.focus();
     };
-  }, [isPreviewOpen, isHelpOpen, isMediaOpen]);
+  }, [isMediaOpen]);
 
   // While no post is selected yet (boot, before drafts/repo listing land) the
   // editor renders a stable blank template instead of crashing on undefined.
@@ -447,7 +442,7 @@ export default function CmsDashboard({
       : draftPullRequest?.status === "open"
         ? `Revisi r${draftPullRequest.revision} menunggu persetujuan owner · PR #${draftPullRequest.prNumber}`
         : hasLocalEdits
-          ? "Local edits · not committed to GitHub yet"
+          ? "Ada editan lokal · belum dikirim ke GitHub"
           : statusCopy[contentStatus].detail;
 
   const updatePost = (patch: Partial<Post>, markDirty = true) => {
@@ -487,7 +482,7 @@ export default function CmsDashboard({
         throw new Error("Sesi kedaluwarsa. Masuk kembali untuk melanjutkan.");
       }
       if (!response.ok)
-        throw new Error(payload.error ?? `Request failed with HTTP ${response.status}.`);
+        throw new Error(payload.error ?? `Permintaan gagal (HTTP ${response.status}).`);
       return payload as {
         pullRequest?: DraftPullRequest | null;
         sourceMarkdown?: string | null;
@@ -572,7 +567,7 @@ export default function CmsDashboard({
       if (!isAuthenticated) {
         setPersistenceMode("local");
         setPersistenceError(null);
-        setSaveLabel("Ruang draf lokal");
+        setSaveLabel("Draf tersimpan di browser ini");
         return;
       }
       setPersistenceMode("connecting");
@@ -621,7 +616,7 @@ export default function CmsDashboard({
           }),
         );
         setPersistenceMode("github");
-        setSaveLabel("Draf lokal · revisi GitHub");
+        setSaveLabel("Draf tersimpan · kirim revisi untuk terbit");
         // First paint of the editor once the listing has had its say.
         setSelectedPost((current) => {
           if (current && current !== "") return current;
@@ -632,8 +627,8 @@ export default function CmsDashboard({
         setPersistenceError(error instanceof Error ? error.message : null);
         setSaveLabel(
           error instanceof Error
-            ? `${error.message} · local only`
-            : "GitHub unavailable · local only",
+            ? `${error.message} · mode lokal`
+            : "GitHub tidak tersedia · mode lokal",
         );
       }
     };
@@ -675,7 +670,8 @@ export default function CmsDashboard({
         storageSlug: post.storageSlug,
         post,
       });
-      if (!result.pullRequest) throw new Error("GitHub returned no pull request.");
+      if (!result.pullRequest)
+        throw new Error("GitHub tidak mengembalikan data revisi. Coba lagi.");
       setGithubStates((current) => ({
         ...current,
         [post.storageSlug]: { pullRequest: result.pullRequest!, live: false },
@@ -688,11 +684,16 @@ export default function CmsDashboard({
       }));
       setSaveLabel("Revisi terkirim · PR dibuka");
       setNotice(
-        `Revisi r${result.pullRequest.revision} dikirim sebagai PR #${result.pullRequest.prNumber}. Setujui & gabungkan dari dasbor ini untuk menerbitkan (opsional: via GitHub).`,
+        `Revisi r${result.pullRequest.revision} dikirim (PR #${result.pullRequest.prNumber}). Setujui di tab Terbit untuk menerbitkan.`,
       );
+      // Close the loop on the workflow: the approval control lives in the
+      // Terbit tab, so take the editor there instead of asking them to find it.
+      setActiveTab("terbit");
     } catch (error) {
       setActionError(
-        error instanceof Error ? error.message : "Tidak dapat membuat pull request GitHub.",
+        error instanceof Error
+          ? error.message
+          : "Tidak dapat mengirim revisi ke GitHub. Coba lagi.",
       );
     } finally {
       setBusy(false);
@@ -704,19 +705,14 @@ export default function CmsDashboard({
   // the revision to Terbit via the deploy-confirmation poll — no GitHub visit.
   const mergeRevision = async () => {
     if (!draftPullRequest) return;
-    if (
-      !window.confirm(
-        `Setujui dan gabungkan revisi r${draftPullRequest.revision} ke main? Artikel akan auto-deploy ke situs.`,
-      )
-    )
-      return;
     setBusy(true);
     setActionError(null);
     try {
       const result = await request("/api/cms/drafts/pr/merge", "POST", {
         storageSlug: post.storageSlug,
       });
-      if (!result.pullRequest) throw new Error("GitHub returned no pull request.");
+      if (!result.pullRequest)
+        throw new Error("GitHub tidak mengembalikan data revisi. Coba lagi.");
       setGithubStates((current) => ({
         ...current,
         [post.storageSlug]: { pullRequest: result.pullRequest!, live: false },
@@ -727,11 +723,13 @@ export default function CmsDashboard({
       }));
       setSaveLabel("Revisi digabungkan");
       setNotice(
-        `Revisi r${result.pullRequest.revision} disetujui & digabungkan ke main (PR #${result.pullRequest.prNumber}). Auto-deploy berjalan — artikel berubah menjadi Terbit begitu situs live.`,
+        `Revisi r${result.pullRequest.revision} digabungkan (PR #${result.pullRequest.prNumber}). Auto-deploy berjalan — jadi Terbit saat situs live.`,
       );
     } catch (error) {
       setActionError(
-        error instanceof Error ? error.message : "Tidak dapat menggabungkan revisi GitHub.",
+        error instanceof Error
+          ? error.message
+          : "Tidak dapat menggabungkan revisi. Coba lagi sebentar.",
       );
     } finally {
       setBusy(false);
@@ -757,7 +755,7 @@ export default function CmsDashboard({
       hasUncommittedMarkdown ||
       (isMarkdown && !parseMarkdownDocument(markdownDraft))
     ) {
-      setActionError("Selesaikan penyimpanan artikel ini sebelum berpindah ke artikel lain.");
+      setActionError("Kirim revisi artikel ini dulu sebelum berpindah ke artikel lain.");
       return;
     }
     setSelectedPost(key);
@@ -769,6 +767,22 @@ export default function CmsDashboard({
     setActionError(null);
     setNotice(null);
   };
+
+  // Navigation guard: warn before an unload (reload, close, external link)
+  // that would lose un-persisted work. Mirrors the in-app selectPost guard so
+  // every exit path gets the same protection. localStorage survives reloads,
+  // but markdown-mode drafts are component state and do not.
+  const hasUnsavedWork = hasLocalEdits || hasUncommittedMarkdown;
+  useEffect(() => {
+    if (!hasUnsavedWork) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      // Chrome requires returnValue to be set; legacy browsers read it.
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [hasUnsavedWork]);
 
   const createNewPost = () => {
     const slug = newPostSlug.trim().toLowerCase();
@@ -792,12 +806,70 @@ export default function CmsDashboard({
     setShowNewPostForm(false);
     setNewPostSlug("");
     setActionError(null);
-    setNotice(
-      `Draf "${slug}" dibuat. Tulis artikelnya, lalu simpan revisi untuk membuka pull request GitHub.`,
-    );
+    setNotice(`Draf "${slug}" dibuat. Isi kontennya, lalu kirim revisi untuk membuka PR GitHub.`);
   };
 
-  const titleForPreview = post.title;
+  // Locked-post rename: suggest a normalized slug from the legacy filename,
+  // commit the rename on GitHub, then refresh the listing so the post unlocks.
+  const openRename = (key: PostKey) => {
+    const suggested = key
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80);
+    setRenameTarget(key);
+    setRenameValue(suggested);
+    setRenameError(null);
+  };
+
+  const submitRename = async () => {
+    if (!renameTarget) return;
+    const nextName = renameValue.trim().toLowerCase();
+    if (!isSlugLike(nextName)) {
+      setRenameError(
+        "Nama baru harus huruf kecil, angka, dan tanda hubung tunggal (contoh: panduan-atap-upvc).",
+      );
+      return;
+    }
+    if (posts[nextName] || repoSlugs.includes(nextName)) {
+      setRenameError(`Artikel dengan slug "${nextName}" sudah ada.`);
+      return;
+    }
+    setRenaming(true);
+    setRenameError(null);
+    try {
+      await request("/api/cms/posts/rename", "POST", {
+        currentName: renameTarget,
+        nextName,
+      });
+      // The rename commits to main: refresh the listing and this post's state
+      // under its new identity. Local storage drops the stale locked key.
+      setPosts((current) => {
+        const renamed = current[renameTarget];
+        if (!renamed) return current;
+        const { [renameTarget]: _dropped, ...rest } = current;
+        return { ...rest, [nextName]: { ...renamed, storageSlug: nextName, dirty: false } };
+      });
+      setRepoSlugs((current) => current.map((slug) => (slug === renameTarget ? nextName : slug)));
+      setNeedsRenameSlugs((current) => current.filter((slug) => slug !== renameTarget));
+      setGithubStates((current) => {
+        const { [renameTarget]: _stale, ...rest } = current;
+        return rest;
+      });
+      setSelectedPost((current) => (current === renameTarget ? nextName : current));
+      selectedStorageSlugRef.current = nextName;
+      setRenameTarget("");
+      setRenameValue("");
+      setNotice(
+        `Artikel diganti nama menjadi "${nextName}". Sekarang bisa diedit dan dikirim seperti biasa.`,
+      );
+    } catch (error) {
+      setRenameError(error instanceof Error ? error.message : "Tidak dapat mengganti nama file.");
+    } finally {
+      setRenaming(false);
+    }
+  };
+
   const currentMedia = useMemo(() => {
     const fromCurated = mediaAssets.find(
       (asset) => asset.filename === post.image || asset.filename === post.image.split("/").pop(),
@@ -823,6 +895,17 @@ export default function CmsDashboard({
       : null;
   }, [mediaAssets, uploadedAssets, mainAssets, post.image, post.imageAlt]);
 
+  // Uploaded assets (pending revision + main), deduplicated by repo path.
+  const postMedia = useMemo(
+    () => [
+      ...uploadedAssets,
+      ...mainAssets.filter(
+        (entry) => !uploadedAssets.some((uploaded) => uploaded.path === entry.path),
+      ),
+    ],
+    [uploadedAssets, mainAssets],
+  );
+
   useEffect(() => {
     if (!selectedPost || isLocked) return;
     const fallbackMedia = mediaAssets[0];
@@ -844,16 +927,14 @@ export default function CmsDashboard({
       },
     }));
     setNotice(
-      `Sampul yang hilang diganti dengan ${fallbackMedia.label}. Periksa sebelum menyimpan.`,
+      `Sampul sebelumnya tidak ditemukan · diganti ke ${fallbackMedia.label}. Periksa sebelum menyimpan.`,
     );
   }, [mediaAssets, uploadedAssets, mainAssets, post.image, selectedPost, isLocked]);
 
   const selectMedia = (asset: MediaAsset) => {
     updatePost({ image: asset.filename });
     setMediaOpen(false);
-    setNotice(
-      `Gambar sampul diganti ke ${asset.label}. Dikomit ke repo hanya saat Anda menyimpan revisi GitHub.`,
-    );
+    setNotice(`Sampul diganti ke ${asset.label}. Terkomit saat revisi dikirim.`);
   };
 
   const loadMedia = async () => {
@@ -865,12 +946,12 @@ export default function CmsDashboard({
         { credentials: "same-origin", headers: { Accept: "application/json" } },
       );
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error ?? "Unable to load media.");
+      if (!response.ok) throw new Error(payload.error ?? "Tidak dapat memuat media.");
       setUploadedAssets(payload.assets ?? []);
       setMainAssets(payload.mainAssets ?? []);
       setPendingRevision(payload.revision ?? null);
     } catch {
-      setUploadError("Unable to load media for this post.");
+      setUploadError("Tidak dapat memuat media untuk artikel ini.");
     }
   };
 
@@ -879,7 +960,9 @@ export default function CmsDashboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMediaOpen, isAuthenticated, post.storageSlug]);
 
-  const uploadCover = async (file: File) => {
+  // One upload path: the new asset lands in the article's media grid and
+  // becomes the cover by default; per-asset actions handle the rest.
+  const uploadImage = async (file: File) => {
     if (!isAuthenticated) return;
     setUploadBusy(true);
     setUploadError(null);
@@ -895,19 +978,17 @@ export default function CmsDashboard({
         body: form,
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error ?? "Upload failed.");
+      if (!response.ok) throw new Error(payload.error ?? "Gagal mengunggah gambar.");
       const asset = payload.asset;
       if (asset) {
         setUploadedAssets((current) =>
           current.some((entry) => entry.path === asset.path) ? current : [...current, asset],
         );
         updatePost({ image: asset.path });
-        setNotice(
-          `Sampul diunggah sebagai ${asset.path}. Tambahkan teks alt di bawah, lalu simpan revisi untuk mengomitenya.`,
-        );
+        setNotice(`Sampul terunggah (${asset.path}). Tambahkan teks alt, lalu kirim revisi.`);
       }
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Upload failed.");
+      setUploadError(error instanceof Error ? error.message : "Gagal mengunggah gambar.");
     } finally {
       setUploadBusy(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -916,9 +997,7 @@ export default function CmsDashboard({
 
   const selectUploaded = (asset: UploadedMediaEntry) => {
     updatePost({ image: asset.path });
-    setNotice(
-      `Sampul diganti ke ${asset.path}. Dikomit ke repo hanya saat Anda menyimpan revisi GitHub.`,
-    );
+    setNotice(`Sampul diganti ke ${asset.path}. Terkomit saat revisi dikirim.`);
   };
 
   // Appends `![alt](path)` to the article body. `path` is repo-relative to
@@ -933,40 +1012,8 @@ export default function CmsDashboard({
     const body = post.body.trim();
     updatePost({ body: body ? `${body}\n\n${snippet}` : snippet });
     setNotice(
-      `Gambar disisipkan di akhir artikel (${path}). Gunakan sumber Markdown untuk memindahkannya dan edit teks alt di sana.`,
+      `Gambar disisipkan di akhir artikel. Pindahkan atau edit alt-nya di sumber Markdown.`,
     );
-  };
-
-  const uploadBody = async (file: File) => {
-    if (!isAuthenticated) return;
-    setBodyUploadBusy(true);
-    setUploadError(null);
-    try {
-      const form = new FormData();
-      form.append("storageSlug", post.storageSlug);
-      form.append("kind", "body");
-      form.append("name", file.name);
-      form.append("file", file);
-      const response = await fetch("/api/cms/media", {
-        method: "POST",
-        credentials: "same-origin",
-        body: form,
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error ?? "Upload failed.");
-      const asset = payload.asset as UploadedMediaEntry | undefined;
-      if (asset) {
-        setUploadedAssets((current) =>
-          current.some((entry) => entry.path === asset.path) ? current : [...current, asset],
-        );
-        appendBodyImage(asset.path, asset.filename);
-      }
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Upload failed.");
-    } finally {
-      setBodyUploadBusy(false);
-      if (bodyFileInputRef.current) bodyFileInputRef.current.value = "";
-    }
   };
 
   const openMarkdown = () => {
@@ -983,7 +1030,7 @@ export default function CmsDashboard({
     const parsed = parseMarkdownDocument(markdownDraft);
     if (!parsed) {
       setActionError(
-        "Markdown harus mempertahankan blok frontmatter --- dengan bidang judul, slug, ringkasan, status, dan publishedAt.",
+        "Markdown harus mempertahankan blok frontmatter --- beserta bidang judul (title), slug, ringkasan (excerpt), status, dan tanggal terbit (publishedAt).",
       );
       return;
     }
@@ -1036,7 +1083,7 @@ export default function CmsDashboard({
 
   const nextAction: {
     label: string;
-    variant: "default" | "secondary" | "outline" | "destructive";
+    variant: "default";
     disabled?: boolean;
     onClick: () => void;
   } | null = isMarkdown
@@ -1046,13 +1093,16 @@ export default function CmsDashboard({
           label: "Setujui & gabungkan",
           variant: "default",
           disabled: isBusy || hasUncommittedMarkdown,
-          onClick: () => void mergeRevision(),
+          // The approval opens a themed confirmation card, not the merge
+          // itself: the consequence (auto-deploy to the live site) deserves a
+          // deliberate, designed step.
+          onClick: () => setMergeConfirmOpen(true),
         }
       : isMerged
         ? null
         : isAuthenticated && persistenceMode === "github"
           ? {
-              label: "Simpan revisi & buka PR",
+              label: "Kirim revisi & buka PR",
               variant: "default",
               disabled: isBusy || hasUncommittedMarkdown,
               onClick: () => void createPullRequest(),
@@ -1061,6 +1111,11 @@ export default function CmsDashboard({
 
   const deployedShort = deployed?.commitSha ? deployed.commitSha.slice(0, 7) : null;
   const deployedDate = deployed?.deployedAt ? new Date(deployed.deployedAt).toLocaleString() : null;
+
+  // The status dot is live state, not decoration: it pulses while work is
+  // uncommitted (or an action/upload is in flight) and rests green when the
+  // local copy matches its last saved GitHub state.
+  const isSaveActive = hasLocalEdits || hasUncommittedMarkdown || uploadBusy || isBusy;
 
   // The tab indicators slide from the active button, so they always sit under
   // exactly the tab they belong to — no fixed thirds that drift with length.
@@ -1090,7 +1145,7 @@ export default function CmsDashboard({
           </span>
         </a>
         <div className="cms-save-status" aria-live="polite">
-          <span className={saveLabel.includes("Saving") ? "is-saving" : ""} />
+          <span className={isSaveActive ? "is-saving" : ""} />
           {saveLabel}
         </div>
         <div className="cms-topbar__actions">
@@ -1117,21 +1172,13 @@ export default function CmsDashboard({
             className="cms-theme-toggle"
             data-cms-theme-toggle
             aria-pressed="false"
-            aria-label="Activate light mode"
-            title="Activate light mode"
+            aria-label="Aktifkan mode gelap"
+            title="Aktifkan mode gelap"
           >
             <Sun aria-hidden="true" className="cms-theme-toggle__light" />
             <Moon aria-hidden="true" className="cms-theme-toggle__dark" />
-            <span data-cms-theme-label>Dark</span>
+            <span data-cms-theme-label>Gelap</span>
           </button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Buka catatan alur kerja"
-            onClick={() => setHelpOpen(true)}
-          >
-            <HelpCircle />
-          </Button>
         </div>
       </header>
 
@@ -1144,29 +1191,60 @@ export default function CmsDashboard({
           </div>
         )}
         <div className="cms-post-list">
-          {(Object.keys(posts) as PostKey[]).map((key) => {
-            const entry = posts[key];
-            const locked = needsRenameSlugs.includes(entry.storageSlug);
-            return (
-              <button
-                key={key}
-                className={selectedPost === key ? "is-selected" : ""}
-                aria-pressed={selectedPost === key}
-                onClick={() => selectPost(key)}
-              >
-                <span className={`cms-post-dot cms-post-dot--${entry.status}`} aria-hidden="true" />
-                <span>
-                  <strong>{entry.title || `(${key})`}</strong>
-                  <small>
-                    {locked
-                      ? "Tidak dapat diedit sampai diganti nama"
-                      : `${statusCopy[entry.status].label} · ${entry.date}`}
-                  </small>
-                </span>
-                {locked && <Badge variant="warning">Perlu ganti nama</Badge>}
-              </button>
-            );
-          })}
+          {/* Dirty-first, then newest-first: the work in progress and the most
+              recent articles surface at the top of the navigation map. */}
+          {(Object.keys(posts) as PostKey[])
+            .sort((a, b) => {
+              const entryA = posts[a];
+              const entryB = posts[b];
+              if (Boolean(entryA?.dirty) !== Boolean(entryB?.dirty)) return entryA?.dirty ? -1 : 1;
+              return (entryB?.date ?? "").localeCompare(entryA?.date ?? "");
+            })
+            .map((key) => {
+              const entry = posts[key];
+              const locked = needsRenameSlugs.includes(entry.storageSlug);
+              const isSelected = selectedPost === key;
+              return (
+                <button
+                  key={key}
+                  className={isSelected ? "is-selected" : ""}
+                  // Selection semantics, not toggle semantics: this list is a
+                  // map of openable items, so aria-current is the honest state.
+                  aria-current={isSelected ? "true" : undefined}
+                  onClick={() => selectPost(key)}
+                >
+                  <span
+                    className={`cms-post-dot cms-post-dot--${entry.status}${entry.dirty ? " cms-post-dot--dirty" : ""}`}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <strong>{entry.title || `(${key})`}</strong>
+                    <small>
+                      {locked
+                        ? "Tidak dapat diedit sampai diganti nama"
+                        : entry.dirty
+                          ? `Belum dikirim · ${statusCopy[entry.status].label}`
+                          : `${statusCopy[entry.status].label} · ${entry.date}`}
+                    </small>
+                  </span>
+                  {locked && (
+                    <span className="cms-locked-actions">
+                      <Badge variant="warning">Perlu ganti nama</Badge>
+                      <button
+                        type="button"
+                        className="cms-rename-link"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openRename(key);
+                        }}
+                      >
+                        Ganti nama
+                      </button>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
         </div>
         <div className="cms-new-post">
           {!showNewPostForm ? (
@@ -1204,8 +1282,8 @@ export default function CmsDashboard({
             <WifiOff aria-hidden="true" />
             <div className="cms-local-banner__text">
               <strong>
-                GitHub tidak dapat dijangkau · perubahan tersimpan lokal di browser ini. Simpan
-                revisi &amp; terbitkan aktif kembali setelah koneksi pulih.
+                GitHub tak terjangkau · perubahan tersimpan di browser ini. Kirim revisi saat
+                koneksi pulih.
               </strong>
               {persistenceError && <small>{persistenceError}</small>}
             </div>
@@ -1272,7 +1350,7 @@ export default function CmsDashboard({
               )}
             </div>
             {notice && (
-              <div className="cms-notice">
+              <div className="cms-notice" role="status">
                 <Check />
                 <span>{notice}</span>
                 <button onClick={() => setNotice(null)} aria-label="Tutup pemberitahuan">
@@ -1282,7 +1360,7 @@ export default function CmsDashboard({
             )}
             {actionError && (
               <div className="cms-error" role="alert">
-                <X />
+                <AlertCircle />
                 <span>{actionError}</span>
                 <button onClick={() => setActionError(null)} aria-label="Tutup pesan error">
                   <X />
@@ -1308,30 +1386,13 @@ export default function CmsDashboard({
                 >
                   {statusCopy[contentStatus].label}
                 </Badge>
-                <Button variant="outline" onClick={() => setPreviewOpen(true)}>
-                  Pratinjau <ArrowUpRight data-icon="inline-end" />
-                </Button>
-                {draftPullRequest?.status === "open" && (
-                  <Button
-                    variant="ghost"
-                    onClick={() =>
-                      window.open(draftPullRequest.prUrl, "_blank", "noopener,noreferrer")
-                    }
-                  >
-                    Lihat PR di GitHub <ArrowUpRight data-icon="inline-end" />
-                  </Button>
-                )}
                 {nextAction && (
                   <Button
                     variant={nextAction.variant}
                     disabled={nextAction.disabled}
                     onClick={nextAction.onClick}
                   >
-                    {isBusy ? (
-                      <LoaderCircle className="cms-spin" data-icon="inline-start" />
-                    ) : nextAction.variant === "secondary" ? (
-                      <ShieldCheck data-icon="inline-start" />
-                    ) : null}
+                    {isBusy ? <LoaderCircle className="cms-spin" data-icon="inline-start" /> : null}
                     {nextAction.label}
                   </Button>
                 )}
@@ -1440,7 +1501,6 @@ export default function CmsDashboard({
                           markdown={post.body}
                           onChange={(body) => {
                             updatePost({ body });
-                            setSaveLabel("Menyimpan lokal…");
                           }}
                         />
                       </section>
@@ -1605,6 +1665,109 @@ export default function CmsDashboard({
         )}
       </main>
 
+      {renameTarget && (
+        <div
+          className="cms-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setRenameTarget("");
+          }}
+        >
+          <section
+            className="cms-modal cms-rename-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rename-title"
+            aria-describedby="rename-desc"
+          >
+            <div className="cms-modal__body">
+              <h2 id="rename-title">Ganti nama artikel</h2>
+              <p id="rename-desc" className="cms-rename-modal__desc">
+                File <code>{renameTarget}.md</code> memakai nama yang tidak valid untuk slug URL.
+                Ganti nama untuk membuka artikel ini untuk diedit dan diterbitkan. Perubahan
+                langsung dikomit ke GitHub.
+              </p>
+              <div className="cms-rename-modal__field">
+                <label htmlFor="rename-input">Nama file baru (tanpa .md)</label>
+                <Input
+                  id="rename-input"
+                  value={renameValue}
+                  onChange={(event) => setRenameValue(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void submitRename();
+                  }}
+                />
+                {renameError && (
+                  <p className="cms-field-error" role="alert">
+                    {renameError}
+                  </p>
+                )}
+              </div>
+              <div className="cms-rename-modal__actions">
+                <Button
+                  variant="default"
+                  disabled={isRenaming || !renameValue.trim()}
+                  onClick={() => void submitRename()}
+                >
+                  {isRenaming ? (
+                    <LoaderCircle className="cms-spin" data-icon="inline-start" />
+                  ) : null}
+                  Ganti nama
+                </Button>
+                <Button variant="ghost" disabled={isRenaming} onClick={() => setRenameTarget("")}>
+                  Batal
+                </Button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {isMergeConfirmOpen && draftPullRequest && (
+        <div
+          className="cms-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setMergeConfirmOpen(false);
+          }}
+        >
+          <section
+            className="cms-modal cms-merge-confirm"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="merge-confirm-title"
+            aria-describedby="merge-confirm-desc"
+          >
+            <div className="cms-modal__body">
+              <h2 id="merge-confirm-title">Setujui & gabungkan revisi?</h2>
+              <p id="merge-confirm-desc" className="cms-merge-confirm__desc">
+                Revisi <strong>r{draftPullRequest.revision}</strong> (PR #
+                {draftPullRequest.prNumber}) akan digabungkan ke <code>main</code>, lalu auto-deploy
+                menerbitkannya di situs publik. Tindakan ini memicu deploy baru.
+              </p>
+              <div className="cms-merge-confirm__actions">
+                <Button
+                  variant="default"
+                  disabled={isBusy}
+                  onClick={() => {
+                    setMergeConfirmOpen(false);
+                    void mergeRevision();
+                  }}
+                >
+                  {isBusy ? <LoaderCircle className="cms-spin" data-icon="inline-start" /> : null}
+                  Ya, gabungkan & terbitkan
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={isBusy}
+                  onClick={() => setMergeConfirmOpen(false)}
+                >
+                  Batal
+                </Button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
       {isMediaOpen && (
         <div
           className="cms-modal-backdrop"
@@ -1633,245 +1796,161 @@ export default function CmsDashboard({
             <div className="cms-modal__body">
               <h2 id="media-title">Perpustakaan media</h2>
               <p id="media-description" className="cms-media-modal__intro">
-                Pilih sampul dari repo, unggah gambar baru (JPEG, PNG, WebP · ≤ 5 MB · ≤ 8000 px),
-                dan sisipkan gambar yang diunggah ke isi artikel. Unggahan masuk ke{" "}
-                <code>src/images/blog/{post.storageSlug}/</code> dan hanya dikomit saat Anda
-                menyimpan revisi GitHub.
+                Unggah gambar baru (JPEG, PNG, WebP · ≤ 5 MB) atau pilih yang sudah ada. Klik gambar
+                untuk jadi sampul; unggahan masuk ke{" "}
+                <code>src/images/blog/{post.storageSlug}/</code> dan terkomit saat revisi dikirim.
               </p>
-              <>
-                <div className="cms-upload-zone">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    aria-label="Pilih file gambar untuk diunggah sebagai sampul"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file) void uploadCover(file);
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadBusy}
-                  >
-                    {uploadBusy ? (
-                      <LoaderCircle className="cms-spin" data-icon="inline-start" />
-                    ) : (
-                      <Upload data-icon="inline-start" />
-                    )}
-                    {uploadBusy ? "Mengunggah…" : "Unggah gambar sampul"}
-                  </Button>
+              <div
+                className={`cms-upload-zone${isDragOver ? " is-dragover" : ""}`}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  if (!isDragOver) setDragOver(true);
+                }}
+                onDragLeave={(event) => {
+                  // Only clear when the pointer truly left the zone, not when
+                  // it moved across a child element (dragleave bubbles).
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+                    setDragOver(false);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragOver(false);
+                  if (uploadBusy) return;
+                  const file = Array.from(event.dataTransfer.files).find((entry) =>
+                    /^image\/(jpeg|png|webp)$/.test(entry.type),
+                  );
+                  if (file) void uploadImage(file);
+                  else setUploadError("Hanya gambar JPEG, PNG, atau WebP yang bisa diunggah.");
+                }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  aria-label="Pilih file gambar untuk diunggah"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) void uploadImage(file);
+                  }}
+                />
+                <div className="cms-upload-zone__hint" aria-hidden="true">
+                  <Upload />
+                  <span>Tarik & lepas gambar di sini</span>
                 </div>
-                <div className="cms-upload-zone cms-upload-zone--body">
-                  <input
-                    ref={bodyFileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    aria-label="Pilih file gambar untuk diunggah ke isi artikel"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file) void uploadBody(file);
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => bodyFileInputRef.current?.click()}
-                    disabled={bodyUploadBusy}
-                  >
-                    {bodyUploadBusy ? (
-                      <LoaderCircle className="cms-spin" data-icon="inline-start" />
-                    ) : (
-                      <Upload data-icon="inline-start" />
-                    )}
-                    {bodyUploadBusy ? "Mengunggah…" : "Unggah gambar ke isi artikel"}
-                  </Button>
-                  <small>Disisipkan sebagai Markdown di akhir artikel Anda.</small>
-                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadBusy}
+                >
+                  {uploadBusy ? (
+                    <LoaderCircle className="cms-spin" data-icon="inline-start" />
+                  ) : (
+                    <Upload data-icon="inline-start" />
+                  )}
+                  {uploadBusy ? "Mengunggah…" : "Unggah gambar"}
+                </Button>
                 {uploadError && (
                   <p className="cms-field-error" role="alert">
                     {uploadError}
                   </p>
                 )}
-              </>
-              {(uploadedAssets.length > 0 || mainAssets.length > 0) && (
+              </div>
+              {postMedia.length > 0 && (
                 <div className="cms-media-uploads">
                   <h3>
                     Media untuk artikel ini
                     {pendingRevision ? <small> · revisi tertunda r{pendingRevision}</small> : null}
                   </h3>
                   <div className="cms-media-grid">
-                    {[
-                      ...uploadedAssets,
-                      ...mainAssets.filter(
-                        (entry) => !uploadedAssets.some((uploaded) => uploaded.path === entry.path),
-                      ),
-                    ].map((asset) => (
-                      <button
-                        key={asset.path}
-                        type="button"
-                        className={`cms-media-option${asset.path === post.image ? " is-selected" : ""}`}
-                        aria-pressed={asset.path === post.image}
-                        onClick={() => selectUploaded(asset)}
-                      >
-                        <img
-                          src={asset.url}
-                          alt=""
-                          loading="lazy"
-                          onError={(event) => {
-                            event.currentTarget.style.visibility = "hidden";
-                          }}
-                        />
-                        <strong>{asset.filename}</strong>
-                        <small>{asset.path}</small>
-                      </button>
-                    ))}
+                    {postMedia.map((asset) => {
+                      const isBroken = brokenMediaPaths.has(asset.path);
+                      return (
+                        <div
+                          key={asset.path}
+                          className={`cms-media-option${asset.path === post.image ? " is-selected" : ""}${isBroken ? " is-broken" : ""}`}
+                        >
+                          <img
+                            src={asset.url}
+                            alt=""
+                            loading="lazy"
+                            onError={() => {
+                              setBrokenMediaPaths((current) => {
+                                if (current.has(asset.path)) return current;
+                                const next = new Set(current);
+                                next.add(asset.path);
+                                return next;
+                              });
+                            }}
+                          />
+                          {isBroken && <span className="cms-media-broken-badge">Gambar rusak</span>}
+                          <strong>{asset.filename}</strong>
+                          <small>{asset.path}</small>
+                          <div className="cms-media-option__actions">
+                            <button
+                              type="button"
+                              className={asset.path === post.image ? "is-active" : ""}
+                              aria-pressed={asset.path === post.image}
+                              disabled={isBroken}
+                              onClick={() => selectUploaded(asset)}
+                            >
+                              Sampul
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isBroken}
+                              onClick={() => appendBodyImage(asset.path, asset.filename)}
+                            >
+                              Sisipkan
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
+                  <small className="cms-media-note">
+                    "Sisipkan" menambah <code>![alt](path)</code> di akhir artikel.
+                  </small>
                 </div>
               )}
               {mediaAssets.length ? (
                 <div className="cms-media-grid">
-                  {mediaAssets.map((asset) => (
-                    <button
-                      key={asset.filename}
-                      type="button"
-                      className={`cms-media-option${asset.filename === post.image ? " is-selected" : ""}`}
-                      aria-pressed={asset.filename === post.image}
-                      onClick={() => selectMedia(asset)}
-                    >
-                      <img src={asset.src} alt="" />
-                      <strong>{asset.label}</strong>
-                      <small>{asset.filename}</small>
-                    </button>
-                  ))}
+                  {mediaAssets.map((asset) => {
+                    const isBroken = brokenMediaPaths.has(asset.filename);
+                    return (
+                      <button
+                        key={asset.filename}
+                        type="button"
+                        className={`cms-media-option${asset.filename === post.image ? " is-selected" : ""}${isBroken ? " is-broken" : ""}`}
+                        aria-pressed={asset.filename === post.image}
+                        disabled={isBroken}
+                        onClick={() => selectMedia(asset)}
+                      >
+                        <img
+                          src={asset.src}
+                          alt=""
+                          loading="lazy"
+                          onError={() => {
+                            setBrokenMediaPaths((current) => {
+                              if (current.has(asset.filename)) return current;
+                              const next = new Set(current);
+                              next.add(asset.filename);
+                              return next;
+                            });
+                          }}
+                        />
+                        {isBroken && <span className="cms-media-broken-badge">Gambar rusak</span>}
+                        <strong>{asset.label}</strong>
+                        <small>{asset.filename}</small>
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="cms-media-empty">
                   Tidak ada gambar repo yang tersedia untuk dipilih.
                 </p>
               )}
-              {(uploadedAssets.length > 0 || mainAssets.length > 0) && (
-                <div className="cms-media-uploads">
-                  <h3>Sisipkan gambar ke isi artikel</h3>
-                  <ul className="cms-body-insert-list">
-                    {[
-                      ...uploadedAssets,
-                      ...mainAssets.filter(
-                        (entry) => !uploadedAssets.some((uploaded) => uploaded.path === entry.path),
-                      ),
-                    ].map((asset) => (
-                      <li key={`insert-${asset.path}`}>
-                        <span>
-                          <strong>{asset.filename}</strong>
-                          <small>{asset.path}</small>
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => appendBodyImage(asset.path, asset.filename)}
-                        >
-                          <FileText data-icon="inline-start" />
-                          Sisipkan
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                  <small className="cms-media-note">
-                    Menyisipkan <code>![alt](path)</code> di akhir artikel; pindahkan atau edit teks
-                    alt di sumber Markdown.
-                  </small>
-                </div>
-              )}
             </div>
-          </section>
-        </div>
-      )}
-      {isPreviewOpen && (
-        <div
-          className="cms-modal-backdrop"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setPreviewOpen(false);
-          }}
-        >
-          <section
-            ref={previewDialogRef}
-            tabIndex={-1}
-            className="cms-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="preview-title"
-            aria-describedby="preview-description"
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="cms-modal-close"
-              aria-label="Tutup pratinjau"
-              onClick={() => setPreviewOpen(false)}
-            >
-              <X />
-            </Button>
-            <div className="cms-modal__body">
-              <div className="cms-content-kicker">PANDUAN MATERIAL · {post.date}</div>
-              <h2 id="preview-title">{titleForPreview}</h2>
-              <p id="preview-description">{post.excerpt}</p>
-              <div className="cms-private-link">
-                <span>TAUTAN PRIBADI</span>
-                <strong>preview.bsm.local/p/{post.slug}</strong>
-                <small>Prototipe saja · bukan rute pratinjau produksi</small>
-              </div>
-              <p>
-                Konten draf tetap pribadi sampai owner menyetujui revisinya dari dasbor ini —
-                mergenya otomatis menerbitkan situs.
-              </p>
-            </div>
-          </section>
-        </div>
-      )}
-      {isHelpOpen && (
-        <div
-          className="cms-modal-backdrop"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setHelpOpen(false);
-          }}
-        >
-          <section
-            ref={helpDialogRef}
-            tabIndex={-1}
-            className="cms-modal cms-help-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="help-title"
-            aria-describedby="help-description"
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="cms-modal-close"
-              aria-label="Tutup catatan"
-              onClick={() => setHelpOpen(false)}
-            >
-              <X />
-            </Button>
-            <h2 id="help-title">Satu permukaan. Tanpa ujung longgar.</h2>
-            <p id="help-description">
-              Dasbor ini menjaga jalur konten tetap eksplisit: draf lokal → revisi (PR GitHub) →
-              persetujuan &amp; merge owner → deploy otomatis. Semua langkah bisa dilakukan di sini;
-              GitHub tidak wajib dibuka.
-            </p>
-            <ul>
-              <li>
-                Draf tersimpan otomatis di browser ini; revisi GitHub dibuat hanya saat Anda
-                menyimpannya secara eksplisit.
-              </li>
-              <li>
-                Owner menyetujui &amp; menggabungkan revisi langsung dari dasbor ini (GitHub
-                opsional).
-              </li>
-              <li>
-                Merge ke main otomatis mendeploy; kredensial deploy tidak pernah sampai ke browser.
-              </li>
-            </ul>
           </section>
         </div>
       )}
