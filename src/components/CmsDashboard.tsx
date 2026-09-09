@@ -425,6 +425,14 @@ export default function CmsDashboard({
   const githubState = githubStates[post.storageSlug];
   const draftPullRequest = githubState?.pullRequest ?? null;
   const isLive = Boolean(githubState?.live);
+
+  // Keep the poller's slug ref in step with the selected post, whichever path
+  // set the selection (boot restore, repo-listing fallback, explicit pick).
+  // Manual setters remain authoritative within their tick; this only repairs
+  // paths that call setSelectedPost directly.
+  useEffect(() => {
+    selectedStorageSlugRef.current = posts[selectedPost]?.storageSlug ?? selectedPost;
+  }, [selectedPost, posts]);
   const isMerged = draftPullRequest?.status === "merged";
   const isPendingDeploy = isMerged && !isLive;
   const contentStatus: ContentStatus = isLive
@@ -502,20 +510,29 @@ export default function CmsDashboard({
     }
   };
 
+  // Single fetch-and-record for a post's PR state; shared by the boot loop and
+  // the 30s poller. Errors propagate — callers decide how to handle them.
+  const fetchPostState = async (storageSlug: string) => {
+    const result = await request(
+      `/api/cms/drafts/pr?storageSlug=${encodeURIComponent(storageSlug)}`,
+      "GET",
+    );
+    setGithubStates((current) => ({
+      ...current,
+      [storageSlug]: {
+        pullRequest: result.pullRequest ?? null,
+        live: Boolean(result.live),
+      },
+    }));
+    return result;
+  };
+
   const refreshPostState = async (storageSlug: string) => {
-    if (!isAuthenticated) return;
+    // The 30s poller runs against selectedStorageSlugRef, which stays "" until
+    // the user picks a post — an empty slug only earns the endpoint's 400.
+    if (!isAuthenticated || !storageSlug) return;
     try {
-      const result = await request(
-        `/api/cms/drafts/pr?storageSlug=${encodeURIComponent(storageSlug)}`,
-        "GET",
-      );
-      setGithubStates((current) => ({
-        ...current,
-        [storageSlug]: {
-          pullRequest: result.pullRequest ?? null,
-          live: Boolean(result.live),
-        },
-      }));
+      await fetchPostState(storageSlug);
     } catch {
       // Transient polling failures must not disturb the editing surface.
     }
@@ -572,42 +589,37 @@ export default function CmsDashboard({
         const knownKeys = Array.from(
           new Set<string>([...(Object.keys(posts) as PostKey[]), ...repoSlugs]),
         );
-        for (const key of knownKeys) {
-          const result = await request(
-            `/api/cms/drafts/pr?storageSlug=${encodeURIComponent(key)}`,
-            "GET",
-          );
-          setGithubStates((current) => ({
-            ...current,
-            [key]: {
-              pullRequest: result.pullRequest ?? null,
-              live: Boolean(result.live),
-            },
-          }));
-          const source = result.sourceMarkdown;
-          if (source) {
+        // Fetch all post states in parallel: each fetchPostState records its
+        // result via keyed functional updaters, so completion order is
+        // irrelevant. Any rejection bubbles to the outer catch: a dead GitHub
+        // connection must flip the dashboard to local-only mode, not fail
+        // silently.
+        await Promise.all(
+          knownKeys.map(async (key) => {
+            const result = await fetchPostState(key);
+            const source = result.sourceMarkdown;
+            if (!source) return;
             const parsed = parseMarkdownDocument(source);
-            if (parsed) {
-              setPosts((current) => {
-                const existing = current[key];
-                // Repo source overlays only when the local copy is clean: not
-                // dirty, or a fresh empty draft that has never been edited.
-                const isClean =
-                  !existing || (!existing.dirty && existing.title === "" && existing.body === "");
-                if (!isClean) return current;
-                return {
-                  ...current,
-                  [key]: {
-                    ...(existing ?? emptyPost(key)),
-                    ...parsed,
-                    storageSlug: key,
-                    dirty: false,
-                  },
-                };
-              });
-            }
-          }
-        }
+            if (!parsed) return;
+            setPosts((current) => {
+              const existing = current[key];
+              // Repo source overlays only when the local copy is clean: not
+              // dirty, or a fresh empty draft that has never been edited.
+              const isClean =
+                !existing || (!existing.dirty && existing.title === "" && existing.body === "");
+              if (!isClean) return current;
+              return {
+                ...current,
+                [key]: {
+                  ...(existing ?? emptyPost(key)),
+                  ...parsed,
+                  storageSlug: key,
+                  dirty: false,
+                },
+              };
+            });
+          }),
+        );
         setPersistenceMode("github");
         setSaveLabel("Draf lokal · revisi GitHub");
         // First paint of the editor once the listing has had its say.

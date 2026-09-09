@@ -594,6 +594,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 
 .cms-section-tabs {
+  position: relative; /* containing block for the sliding __indicator */
   display: flex;
   align-items: center;
   gap: 26px;
