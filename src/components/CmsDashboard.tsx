@@ -4,20 +4,24 @@ import {
   Check,
   FileText,
   HelpCircle,
+  Inbox,
   LoaderCircle,
   LogOut,
   Moon,
   ShieldCheck,
   Sun,
   Upload,
+  WifiOff,
   X,
 } from "lucide-react";
 import { Badge, Button, Card, Input } from "./ui";
 import MarkdownWysiwyg from "./MarkdownWysiwyg";
 import { serializeDraftMarkdown } from "../utils/cms-drafts.ts";
 
-// Posts are keyed by storage slug (the filename without .md), seeded from the
-// demo set and grown with the repository listing and locally created articles.
+// Posts are keyed by storage slug (the filename without .md): the repository
+// listing (ADR 0013) plus locally created browser drafts. `dirty` marks a post
+// whose local copy diverges from its last loaded/saved GitHub state; the repo
+// source is only ever overlaid onto a post that is not dirty.
 type PostKey = string;
 type ContentStatus = "draft" | "ready" | "published" | "archived";
 type DeployInfo = { commitSha?: string; deployedAt?: string };
@@ -37,6 +41,10 @@ type Post = {
   storageSlug: string;
   status: ContentStatus;
   draft?: boolean;
+  // True while the local copy has edits not yet sent as a revision PR (or
+  // reloaded from the repo). Persisted alongside the post in localStorage so
+  // the repo listing never clobbers in-progress work across reloads.
+  dirty?: boolean;
 };
 
 type DraftPullRequest = {
@@ -81,60 +89,6 @@ const sectionTabs: Array<{ value: EditorSection; label: string }> = [
   { value: "terbit", label: "Terbit" },
 ];
 
-const initialBodies: Record<PostKey, string> = {
-  brc: `Pagar BRC adalah pagar las galvanis yang diproduksi dari besi beton polos dilas membentuk mesh (kawat) persegi. Karena diproduksi di pabrik dengan cetakan presisi, ukuran dan kekuatannya seragam.\n\n## Perhatikan diameter besi (∅)\n\nDiameter besi menentukan kekuatan rangka. Pagar BRC umumnya menggunakan besi ∅6 mm untuk kebutuhan umum.\n\nMulai bagian berikutnya dengan menjelaskan kebutuhan proyek Anda…`,
-  atap: `Atap UPVC dan Alderon sama-sama dirancang untuk kebutuhan penutup bangunan yang ringan dan tahan cuaca. Perbandingan yang tepat dimulai dari kondisi lokasi dan kebutuhan ruang.\n\n## Periksa kondisi pabrik\n\nPertimbangkan bentang, sirkulasi udara, pencahayaan, dan kebutuhan perawatan sebelum memilih material.\n\nTambahkan konteks proyek Anda untuk melanjutkan panduan ini…`,
-  bondek: `Bondek dan wiremesh bekerja pada bagian yang berbeda dalam konstruksi lantai cor. Memahami fungsi masing-masing membantu tim memilih kombinasi material yang sesuai.\n\n## Mulai dari fungsi material\n\nBondek menjadi bekisting tetap, sementara wiremesh membantu membentuk tulangan pada pelat lantai.\n\nTambahkan kebutuhan bentang dan ketebalan untuk melanjutkan panduan ini…`,
-};
-
-const initialPosts: Record<PostKey, Post> = {
-  brc: {
-    id: "7bff2b31-948a-7426-9f1a-6c4d7a8b2e10",
-    title: "Cara Memilih Pagar BRC: Ukuran, Ketebalan & Galvanis",
-    kicker: "Panduan Material",
-    excerpt: "Bedah spesifikasi pagar BRC supaya proyek pagar Anda tahan karat dan sesuai beban.",
-    body: initialBodies.brc,
-    date: "2026-07-18",
-    publishedAt: "2026-07-18",
-    slug: "cara-memilih-pagar-brc",
-    aliases: [],
-    image: "pagar-brc-panel-perspektif.jpg",
-    imageAlt: "Panel pagar BRC galvanis tampak perspektif",
-    storageSlug: "cara-memilih-pagar-brc",
-    status: "draft",
-  },
-  atap: {
-    id: "ed940a62-6272-4e1a-9d8e-5c7b3f0a6d21",
-    title: "Atap UPVC vs Alderon: Mana yang Pas untuk Pabrik Anda?",
-    kicker: "Banding Material",
-    excerpt: "Atap dingin untuk gudang dan pabrik. Bandingkan material sebelum memesan.",
-    body: initialBodies.atap,
-    date: "2026-07-09",
-    publishedAt: "2026-07-09",
-    slug: "atap-upvc-vs-alderon",
-    aliases: [],
-    image: "atap-upvc.jpeg",
-    imageAlt: "Atap UPVC untuk bangunan industri",
-    storageSlug: "atap-upvc-vs-alderon",
-    status: "published",
-  },
-  bondek: {
-    id: "5445c8c9-b8a3-8e25-9d16-7f0a2b9e6c31",
-    title: "Bondek vs Wiremesh: Solusi Lantai Cor yang Tepat",
-    kicker: "Struktur & Lantai",
-    excerpt: "Pahami perbedaan bondek dan wiremesh sebelum menentukan kebutuhan proyek.",
-    body: initialBodies.bondek,
-    date: "2026-06-27",
-    publishedAt: "2026-06-27",
-    slug: "bondek-vs-wiremesh",
-    aliases: [],
-    image: "bondek.png",
-    imageAlt: "Bondek untuk lantai cor beton",
-    storageSlug: "bondek-vs-wiremesh",
-    status: "published",
-  },
-};
-
 // v4: posts are keyed by storage slug (v3 stored them under fixed editor keys).
 const STORAGE_KEY = "bsm-cms-prototype-v4";
 const LEGACY_STORAGE_KEY = "bsm-cms-prototype-v3";
@@ -171,7 +125,7 @@ function createPostId(): string {
 }
 
 // Blank post template keyed by its storage slug (matches the frontmatter contract
-// in src/content.config.ts).
+// in src/content.config.ts). A fresh local draft is never dirty by default.
 function emptyPost(storageSlug: string): Post {
   const today = new Date().toISOString().slice(0, 10);
   return {
@@ -189,6 +143,7 @@ function emptyPost(storageSlug: string): Post {
     storageSlug,
     status: "draft",
     draft: true,
+    dirty: false,
   };
 }
 
@@ -209,6 +164,7 @@ function isPostRecord(value: unknown): value is Post {
     typeof candidate.storageSlug === "string" &&
     isContentStatus(candidate.status) &&
     (candidate.draft === undefined || typeof candidate.draft === "boolean") &&
+    (candidate.dirty === undefined || typeof candidate.dirty === "boolean") &&
     Array.isArray(candidate.aliases) &&
     (candidate.aliases as unknown[]).every((alias) => typeof alias === "string")
   );
@@ -325,8 +281,10 @@ export default function CmsDashboard({
   mediaAssets: MediaAsset[];
   isAuthenticated: boolean;
 }) {
-  const [posts, setPosts] = useState(initialPosts);
-  const [selectedPost, setSelectedPost] = useState<PostKey>("brc");
+  // No seed set (#43): the workspace boots empty and fills from browser-local
+  // drafts plus the repository listing (ADR 0013).
+  const [posts, setPosts] = useState<Record<PostKey, Post>>({});
+  const [selectedPost, setSelectedPost] = useState<PostKey>("");
   const [isMarkdown, setIsMarkdown] = useState(false);
   const [markdownDraft, setMarkdownDraft] = useState("");
   const [markdownBaseline, setMarkdownBaseline] = useState("");
@@ -335,12 +293,18 @@ export default function CmsDashboard({
   const [isMediaOpen, setMediaOpen] = useState(false);
   const [githubStates, setGithubStates] = useState<Record<string, GithubState>>({});
   const [deployed, setDeployed] = useState<DeployInfo | null>(null);
-  const [saveLabel, setSaveLabel] = useState("Menghubungkan ke CMS…");
+  const [saveLabel, setSaveLabel] = useState("Menghubungkan ke GitHub…");
   const [persistenceMode, setPersistenceMode] = useState<PersistenceMode>("connecting");
+  // Technical detail for the persistent local-fallback banner (secondary line).
+  const [persistenceError, setPersistenceError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isBusy, setBusy] = useState(false);
-  const [hasLocalEdits, setHasLocalEdits] = useState(false);
+  // Truth from the repository listing (ADR 0013): which slugs exist as repo
+  // posts, and which legacy files are flagged needsRename (read-only until
+  // renamed).
+  const [repoSlugs, setRepoSlugs] = useState<string[]>([]);
+  const [needsRenameSlugs, setNeedsRenameSlugs] = useState<string[]>([]);
   const [isHydrated, setHydrated] = useState(false);
   const [uploadedAssets, setUploadedAssets] = useState<UploadedMediaEntry[]>([]);
   const [mainAssets, setMainAssets] = useState<UploadedMediaEntry[]>([]);
@@ -362,7 +326,7 @@ export default function CmsDashboard({
   const tabsRef = useRef<HTMLDivElement | null>(null);
   const sectionTabsRef = useRef<HTMLDivElement | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-  const selectedStorageSlugRef = useRef(initialPosts[selectedPost]?.storageSlug ?? selectedPost);
+  const selectedStorageSlugRef = useRef<PostKey>("");
 
   useEffect(() => {
     const root = document.documentElement;
@@ -443,7 +407,19 @@ export default function CmsDashboard({
     };
   }, [isPreviewOpen, isHelpOpen, isMediaOpen]);
 
-  const post = posts[selectedPost];
+  // While no post is selected yet (boot, before drafts/repo listing land) the
+  // editor renders a stable blank template instead of crashing on undefined.
+  const fallbackPost = useMemo(() => emptyPost(selectedPost), [selectedPost]);
+  const post = posts[selectedPost] ?? fallbackPost;
+  // "Untouched" re-anchored (#45): a per-post dirty flag persisted alongside the
+  // post, set on first edit and cleared on revision-PR creation / repo reload.
+  const hasLocalEdits = Boolean(post.dirty);
+  // State-model gates (#46): the main pane swaps between editor, connecting
+  // hint, and empty panel; the topbar + sidebar chrome survive every state.
+  const zeroPosts = Object.keys(posts).length === 0;
+  const showEmptyPanel = zeroPosts && persistenceMode !== "connecting";
+  const showLocalBanner = persistenceMode === "local" && isAuthenticated;
+  const isLocked = needsRenameSlugs.includes(post.storageSlug);
   const currentMarkdown = useMemo(() => serializeDraftMarkdown(post), [post]);
   const hasUncommittedMarkdown = isMarkdown && markdownDraft !== markdownBaseline;
   const githubState = githubStates[post.storageSlug];
@@ -467,8 +443,15 @@ export default function CmsDashboard({
           : statusCopy[contentStatus].detail;
 
   const updatePost = (patch: Partial<Post>, markDirty = true) => {
-    if (markDirty) setHasLocalEdits(true);
-    setPosts((current) => ({ ...current, [selectedPost]: { ...current[selectedPost], ...patch } }));
+    if (isLocked) return; // legacy file pending rename: read-only
+    setPosts((current) => ({
+      ...current,
+      [selectedPost]: {
+        ...current[selectedPost],
+        ...patch,
+        ...(markDirty ? { dirty: true } : {}),
+      },
+    }));
     if (markDirty) {
       setSaveLabel(
         persistenceMode === "github" ? "Perubahan lokal · belum di GitHub" : "Tersimpan lokal",
@@ -539,10 +522,11 @@ export default function CmsDashboard({
   };
 
   useEffect(() => {
+    let stored: PostKey[] = [];
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      const legacyStored = stored ? null : window.localStorage.getItem(LEGACY_STORAGE_KEY);
-      const storedValue = stored ?? legacyStored;
+      const storedPostKeys = window.localStorage.getItem(STORAGE_KEY);
+      const legacyStored = storedPostKeys ? null : window.localStorage.getItem(LEGACY_STORAGE_KEY);
+      const storedValue = storedPostKeys ?? legacyStored;
       if (storedValue) {
         try {
           const saved: unknown = JSON.parse(storedValue);
@@ -550,17 +534,13 @@ export default function CmsDashboard({
           const normalizedEntries = Object.entries(saved)
             .map(([key, value]) => normalizeStoredPost(key, value))
             .filter((entry): entry is [PostKey, Post] => entry !== null);
+          stored = normalizedEntries.map(([key]) => key);
           const safeSaved: Record<string, Post> = Object.fromEntries(normalizedEntries);
-          setPosts((current) => ({ ...current, ...safeSaved }));
-          const savedActivePost = safeSaved[selectedPost];
-          setHasLocalEdits(
-            Boolean(
-              savedActivePost &&
-              JSON.stringify(savedActivePost) !== JSON.stringify(initialPosts[selectedPost]),
-            ),
-          );
+          // Browser drafts restore as-is; their per-post dirty flags ride along,
+          // so in-progress work survives the reload.
+          setPosts(safeSaved);
+          setSelectedPost((current) => (safeSaved[current] ? current : (stored[0] ?? "")));
         } catch {
-          setHasLocalEdits(false);
           try {
             window.localStorage.removeItem(STORAGE_KEY);
           } catch {
@@ -574,27 +554,32 @@ export default function CmsDashboard({
     const loadGitHubState = async () => {
       if (!isAuthenticated) {
         setPersistenceMode("local");
+        setPersistenceError(null);
         setSaveLabel("Ruang draf lokal");
         return;
       }
       setPersistenceMode("connecting");
       try {
-        // The repo's actual posts (ADR 0013) plus the seeded demo posts; locally
-        // created drafts live in browser storage and are merged above.
-        const listed = isAuthenticated ? await request("/api/cms/posts", "GET") : null;
-        const repoSlugs = (listed?.posts ?? []).map((entry) => entry.storageSlug);
+        // ADR 0013: the repository listing is truth. Every slug it returns is a
+        // repo post; browser drafts for those slugs merge on top unless dirty.
+        const listed = await request("/api/cms/posts", "GET");
+        const listedPosts = listed?.posts ?? [];
+        setRepoSlugs(listedPosts.map((entry) => entry.storageSlug));
+        setNeedsRenameSlugs(
+          listedPosts.filter((entry) => entry.needsRename).map((entry) => entry.storageSlug),
+        );
+        const repoSlugs = listedPosts.map((entry) => entry.storageSlug);
         const knownKeys = Array.from(
           new Set<string>([...(Object.keys(posts) as PostKey[]), ...repoSlugs]),
         );
         for (const key of knownKeys) {
-          const persistentSlug = initialPosts[key]?.storageSlug ?? key;
           const result = await request(
-            `/api/cms/drafts/pr?storageSlug=${encodeURIComponent(persistentSlug)}`,
+            `/api/cms/drafts/pr?storageSlug=${encodeURIComponent(key)}`,
             "GET",
           );
           setGithubStates((current) => ({
             ...current,
-            [persistentSlug]: {
+            [key]: {
               pullRequest: result.pullRequest ?? null,
               live: Boolean(result.live),
             },
@@ -604,23 +589,20 @@ export default function CmsDashboard({
             const parsed = parseMarkdownDocument(source);
             if (parsed) {
               setPosts((current) => {
-                // Only overlay the repository source when the post is untouched
-                // (no browser edits), so local work is never clobbered.
-                if (
-                  !initialPosts[key] &&
-                  current[key]?.storageSlug === persistentSlug &&
-                  current[key]?.title === "" &&
-                  current[key]?.body === ""
-                )
-                  return {
-                    ...current,
-                    [key]: { ...current[key], ...parsed, storageSlug: persistentSlug },
-                  };
-                if (JSON.stringify(current[key]) !== JSON.stringify(initialPosts[key]))
-                  return current;
+                const existing = current[key];
+                // Repo source overlays only when the local copy is clean: not
+                // dirty, or a fresh empty draft that has never been edited.
+                const isClean =
+                  !existing || (!existing.dirty && existing.title === "" && existing.body === "");
+                if (!isClean) return current;
                 return {
                   ...current,
-                  [key]: { ...current[key], ...parsed, storageSlug: persistentSlug },
+                  [key]: {
+                    ...(existing ?? emptyPost(key)),
+                    ...parsed,
+                    storageSlug: key,
+                    dirty: false,
+                  },
                 };
               });
             }
@@ -628,8 +610,14 @@ export default function CmsDashboard({
         }
         setPersistenceMode("github");
         setSaveLabel("Draf lokal · revisi GitHub");
+        // First paint of the editor once the listing has had its say.
+        setSelectedPost((current) => {
+          if (current && current !== "") return current;
+          return stored[0] ?? repoSlugs[0] ?? "";
+        });
       } catch (error) {
         setPersistenceMode("local");
+        setPersistenceError(error instanceof Error ? error.message : null);
         setSaveLabel(
           error instanceof Error
             ? `${error.message} · local only`
@@ -645,6 +633,9 @@ export default function CmsDashboard({
       void refreshPostState(selectedStorageSlugRef.current);
     }, 30000);
     return () => window.clearInterval(interval);
+    // `posts` is intentionally read once at boot: the merge runs against the
+    // just-restored browser drafts, not against live edit state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, request]);
 
   useEffect(() => {
@@ -677,7 +668,13 @@ export default function CmsDashboard({
         ...current,
         [post.storageSlug]: { pullRequest: result.pullRequest!, live: false },
       }));
-      setHasLocalEdits(false);
+      // The revision PR now carries the work: clear the dirty flag so the repo
+      // source can overlay this post again until the next local edit (#45).
+      setPosts((current) => ({
+        ...current,
+        [selectedPost]: { ...current[selectedPost], dirty: false },
+      }));
+      setSaveLabel("Revisi terkirim · PR dibuka");
       setNotice(
         `Revisi r${result.pullRequest.revision} dikirim sebagai PR #${result.pullRequest.prNumber}. Setujui & gabungkan dari dasbor ini untuk menerbitkan (opsional: via GitHub).`,
       );
@@ -712,7 +709,11 @@ export default function CmsDashboard({
         ...current,
         [post.storageSlug]: { pullRequest: result.pullRequest!, live: false },
       }));
-      setHasLocalEdits(false);
+      setPosts((current) => ({
+        ...current,
+        [selectedPost]: { ...current[selectedPost], dirty: false },
+      }));
+      setSaveLabel("Revisi digabungkan");
       setNotice(
         `Revisi r${result.pullRequest.revision} disetujui & digabungkan ke main (PR #${result.pullRequest.prNumber}). Auto-deploy berjalan — artikel berubah menjadi Terbit begitu situs live.`,
       );
@@ -727,8 +728,20 @@ export default function CmsDashboard({
 
   const selectPost = (key: PostKey) => {
     if (selectedPost === key) return;
+    const target = posts[key];
+    // Legacy flagged files are read-only until renamed; they can still be
+    // selected and read.
+    if (target && needsRenameSlugs.includes(target.storageSlug)) {
+      setSelectedPost(key);
+      selectedStorageSlugRef.current = target.storageSlug;
+      setActiveTab("konten");
+      setIsMarkdown(false);
+      setActionError(null);
+      setNotice(null);
+      return;
+    }
     if (
-      hasLocalEdits ||
+      post.dirty ||
       hasUncommittedMarkdown ||
       (isMarkdown && !parseMarkdownDocument(markdownDraft))
     ) {
@@ -736,12 +749,11 @@ export default function CmsDashboard({
       return;
     }
     setSelectedPost(key);
-    selectedStorageSlugRef.current = posts[key]?.storageSlug ?? key;
+    selectedStorageSlugRef.current = target?.storageSlug ?? key;
     setActiveTab("konten");
     setIsMarkdown(false);
     setMarkdownDraft("");
     setMarkdownBaseline("");
-    setHasLocalEdits(false);
     setActionError(null);
     setNotice(null);
   };
@@ -754,7 +766,10 @@ export default function CmsDashboard({
       );
       return;
     }
-    if (posts[slug]) {
+    // Guard against both visible posts and the full repo listing (#45): a slug
+    // that exists on GitHub but whose source has not loaded yet must not be
+    // shadowed by a local draft created in the async-fetch window.
+    if (posts[slug] || repoSlugs.includes(slug)) {
       setActionError(`Artikel dengan slug "${slug}" sudah ada.`);
       return;
     }
@@ -764,7 +779,6 @@ export default function CmsDashboard({
     selectedStorageSlugRef.current = slug;
     setShowNewPostForm(false);
     setNewPostSlug("");
-    setHasLocalEdits(false);
     setActionError(null);
     setNotice(
       `Draf "${slug}" dibuat. Tulis artikelnya, lalu simpan revisi untuk membuka pull request GitHub.`,
@@ -798,6 +812,7 @@ export default function CmsDashboard({
   }, [mediaAssets, uploadedAssets, mainAssets, post.image, post.imageAlt]);
 
   useEffect(() => {
+    if (!selectedPost || isLocked) return;
     const fallbackMedia = mediaAssets[0];
     if (!fallbackMedia) return;
     const resolvable = (path: string) =>
@@ -810,13 +825,16 @@ export default function CmsDashboard({
     if (resolvable(post.image)) return;
     setPosts((current) => ({
       ...current,
-      [selectedPost]: { ...current[selectedPost], image: fallbackMedia.filename },
+      [selectedPost]: {
+        ...current[selectedPost],
+        image: fallbackMedia.filename,
+        dirty: true,
+      },
     }));
-    setHasLocalEdits(true);
     setNotice(
       `Sampul yang hilang diganti dengan ${fallbackMedia.label}. Periksa sebelum menyimpan.`,
     );
-  }, [mediaAssets, uploadedAssets, mainAssets, post.image, selectedPost]);
+  }, [mediaAssets, uploadedAssets, mainAssets, post.image, selectedPost, isLocked]);
 
   const selectMedia = (asset: MediaAsset) => {
     updatePost({ image: asset.filename });
@@ -1107,26 +1125,36 @@ export default function CmsDashboard({
 
       <aside className="cms-sidebar" aria-label="Navigasi editorial">
         <div className="cms-sidebar__eyebrow">Artikel</div>
+        {persistenceMode === "connecting" && (
+          <div className="cms-connecting-hint" role="status">
+            <LoaderCircle className="cms-spin" aria-hidden="true" />
+            <span>Menghubungkan ke GitHub…</span>
+          </div>
+        )}
         <div className="cms-post-list">
-          {(Object.keys(posts) as PostKey[]).map((key) => (
-            <button
-              key={key}
-              className={selectedPost === key ? "is-selected" : ""}
-              aria-pressed={selectedPost === key}
-              onClick={() => selectPost(key)}
-            >
-              <span
-                className={`cms-post-dot cms-post-dot--${posts[key].status}`}
-                aria-hidden="true"
-              />
-              <span>
-                <strong>{posts[key].title || `(${key})`}</strong>
-                <small>
-                  {statusCopy[posts[key].status].label} · {posts[key].date}
-                </small>
-              </span>
-            </button>
-          ))}
+          {(Object.keys(posts) as PostKey[]).map((key) => {
+            const entry = posts[key];
+            const locked = needsRenameSlugs.includes(entry.storageSlug);
+            return (
+              <button
+                key={key}
+                className={selectedPost === key ? "is-selected" : ""}
+                aria-pressed={selectedPost === key}
+                onClick={() => selectPost(key)}
+              >
+                <span className={`cms-post-dot cms-post-dot--${entry.status}`} aria-hidden="true" />
+                <span>
+                  <strong>{entry.title || `(${key})`}</strong>
+                  <small>
+                    {locked
+                      ? "Tidak dapat diedit sampai diganti nama"
+                      : `${statusCopy[entry.status].label} · ${entry.date}`}
+                  </small>
+                </span>
+                {locked && <Badge variant="warning">Perlu ganti nama</Badge>}
+              </button>
+            );
+          })}
         </div>
         <div className="cms-new-post">
           {!showNewPostForm ? (
@@ -1159,368 +1187,410 @@ export default function CmsDashboard({
       </aside>
 
       <main className="cms-main">
-        <div className="cms-mobile-workspace">
-          <label>
-            <span>ARTIKEL</span>
-            <select
-              value={selectedPost}
-              onChange={(event) => selectPost(event.target.value as PostKey)}
-              aria-label="Pilih artikel"
-            >
-              {(Object.keys(posts) as PostKey[]).map((key) => (
-                <option key={key} value={key}>
-                  {posts[key].title || `(${key})`}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!showNewPostForm ? (
-            <Button
-              variant="outline"
-              onClick={() => setShowNewPostForm(true)}
-              aria-label="Buat artikel baru"
-            >
+        {showLocalBanner && (
+          <div className="cms-local-banner" role="alert">
+            <WifiOff aria-hidden="true" />
+            <div className="cms-local-banner__text">
+              <strong>
+                GitHub tidak dapat dijangkau · perubahan tersimpan lokal di browser ini. Simpan
+                revisi &amp; terbitkan aktif kembali setelah koneksi pulih.
+              </strong>
+              {persistenceError && <small>{persistenceError}</small>}
+            </div>
+          </div>
+        )}
+        {showEmptyPanel ? (
+          <section className="cms-empty-state" aria-labelledby="cms-empty-title">
+            <Inbox aria-hidden="true" className="cms-empty-state__icon" />
+            <h2 id="cms-empty-title">Belum ada artikel</h2>
+            <p>
+              Repositori belum memiliki artikel, dan browser ini tidak menyimpan draf lokal. Mulai
+              dari yang pertama.
+            </p>
+            <Button variant="default" onClick={() => setShowNewPostForm(true)}>
               ＋ Artikel baru
             </Button>
-          ) : (
-            <div className="cms-new-post__form">
-              <label htmlFor="new-post-slug-mobile">Slug (URL)</label>
-              <div className="cms-new-post__row">
-                <Input
-                  id="new-post-slug-mobile"
-                  value={newPostSlug}
-                  placeholder="judul-artikel-baru"
-                  aria-label="Slug artikel baru"
-                  onChange={(event) => setNewPostSlug(event.target.value)}
-                />
-                <Button variant="default" onClick={createNewPost} disabled={!newPostSlug.trim()}>
-                  Buat
+          </section>
+        ) : (
+          <>
+            <div className="cms-mobile-workspace">
+              <label>
+                <span>ARTIKEL</span>
+                <select
+                  value={selectedPost}
+                  onChange={(event) => selectPost(event.target.value as PostKey)}
+                  aria-label="Pilih artikel"
+                >
+                  {(Object.keys(posts) as PostKey[]).map((key) => (
+                    <option key={key} value={key}>
+                      {posts[key].title || `(${key})`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {!showNewPostForm ? (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowNewPostForm(true)}
+                  aria-label="Buat artikel baru"
+                >
+                  ＋ Artikel baru
                 </Button>
-              </div>
-              <small>Huruf kecil, angka, dan tanda hubung saja.</small>
-            </div>
-          )}
-        </div>
-        {notice && (
-          <div className="cms-notice">
-            <Check />
-            <span>{notice}</span>
-            <button onClick={() => setNotice(null)} aria-label="Tutup pemberitahuan">
-              <X />
-            </button>
-          </div>
-        )}
-        {actionError && (
-          <div className="cms-error" role="alert">
-            <X />
-            <span>{actionError}</span>
-            <button onClick={() => setActionError(null)} aria-label="Tutup pesan error">
-              <X />
-            </button>
-          </div>
-        )}
-
-        <div className="cms-heading">
-          <div>
-            <div className="cms-kicker">{post.storageSlug}.md</div>
-            <h1>{post.title || "Artikel tanpa judul"}</h1>
-            <p>{contentDetail}</p>
-          </div>
-          <div className="cms-heading__actions">
-            <Badge
-              variant={
-                contentStatus === "published"
-                  ? "success"
-                  : contentStatus === "ready"
-                    ? "warning"
-                    : "outline"
-              }
-            >
-              {statusCopy[contentStatus].label}
-            </Badge>
-            <Button variant="outline" onClick={() => setPreviewOpen(true)}>
-              Pratinjau <ArrowUpRight data-icon="inline-end" />
-            </Button>
-            {draftPullRequest?.status === "open" && (
-              <Button
-                variant="ghost"
-                onClick={() => window.open(draftPullRequest.prUrl, "_blank", "noopener,noreferrer")}
-              >
-                Lihat PR di GitHub <ArrowUpRight data-icon="inline-end" />
-              </Button>
-            )}
-            {nextAction && (
-              <Button
-                variant={nextAction.variant}
-                disabled={nextAction.disabled}
-                onClick={nextAction.onClick}
-              >
-                {isBusy ? (
-                  <LoaderCircle className="cms-spin" data-icon="inline-start" />
-                ) : nextAction.variant === "secondary" ? (
-                  <ShieldCheck data-icon="inline-start" />
-                ) : null}
-                {nextAction.label}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <Card className="cms-editor-card">
-          <div
-            className="cms-section-tabs"
-            ref={sectionTabsRef}
-            role="tablist"
-            aria-label="Bagian artikel"
-          >
-            {sectionTabs.map((tab) => (
-              <button
-                key={tab.value}
-                id={`section-${tab.value}-tab`}
-                className={activeTab === tab.value ? "is-active" : ""}
-                role="tab"
-                aria-selected={activeTab === tab.value}
-                aria-controls={`section-${tab.value}-panel`}
-                tabIndex={activeTab === tab.value ? 0 : -1}
-                onClick={() => setActiveTab(tab.value)}
-                onKeyDown={(event) =>
-                  moveTab(event, sectionTabsRef, (nextIndex) => {
-                    const next = sectionTabs[nextIndex];
-                    if (next) setActiveTab(next.value);
-                  })
-                }
-              >
-                {tab.label}
-              </button>
-            ))}
-            <span
-              className="cms-section-tabs__indicator"
-              aria-hidden="true"
-              style={{ left: sectionIndicator.left, width: sectionIndicator.width }}
-            />
-          </div>
-          <div className="cms-section-panels">
-            <section
-              id="section-konten-panel"
-              className={activeTab === "konten" ? "is-active" : ""}
-              role="tabpanel"
-              aria-labelledby="section-konten-tab"
-            >
-              <div className="cms-panel-toolbar">
-                <div className="cms-segmented" ref={tabsRef} role="group" aria-label="Mode editor">
-                  <button
-                    id="write-tab"
-                    className={!isMarkdown ? "is-active" : ""}
-                    onClick={closeMarkdown}
-                    aria-pressed={!isMarkdown}
-                  >
-                    Editor visual
-                  </button>
-                  <button
-                    id="markdown-tab"
-                    className={isMarkdown ? "is-active" : ""}
-                    onClick={openMarkdown}
-                    aria-pressed={isMarkdown}
-                  >
-                    Sumber Markdown
-                  </button>
-                  <span
-                    className="cms-segmented__indicator"
-                    aria-hidden="true"
-                    style={{ left: modeIndicator.left, width: modeIndicator.width }}
-                  />
-                </div>
-              </div>
-              {!isMarkdown ? (
-                <div id="write-editor" className="cms-writing-surface">
-                  <section className="cms-field-group">
-                    <label className="cms-field-label" htmlFor="post-title">
-                      Judul <span>Judul utama yang tampil di daftar dan pratinjau</span>
-                    </label>
-                    <Input
-                      id="post-title"
-                      className="cms-title-input"
-                      value={post.title}
-                      onChange={(event) => updatePost({ title: event.target.value })}
-                    />
-                    <label className="cms-field-label" htmlFor="post-excerpt">
-                      Ringkasan <span>Ringkasan singkat yang tampil di daftar</span>
-                    </label>
-                    <textarea
-                      id="post-excerpt"
-                      className="cms-excerpt-input"
-                      value={post.excerpt}
-                      aria-label="Ringkasan artikel"
-                      onChange={(event) => updatePost({ excerpt: event.target.value })}
-                    />
-                  </section>
-                  <section className="cms-field-group">
-                    <span className="cms-field-label">
-                      Isi artikel <span>Rich text · disimpan lokal sampai revisi dikirim</span>
-                    </span>
-                    <MarkdownWysiwyg
-                      key={`${post.storageSlug}:${isHydrated ? "hydrated" : "boot"}`}
-                      markdown={post.body}
-                      onChange={(body) => {
-                        updatePost({ body });
-                        setSaveLabel("Menyimpan lokal…");
-                      }}
-                    />
-                  </section>
-                </div>
               ) : (
-                <div id="markdown-editor" className="cms-markdown-panel">
-                  <section className="cms-field-group">
-                    <label className="cms-field-label" htmlFor="markdown-input">
-                      Sumber <span>Editan tersinkron kembali ke editor visual</span>
-                    </label>
-                    <textarea
-                      id="markdown-input"
-                      className="cms-markdown-input"
-                      value={markdownDraft}
-                      onChange={(event) => updateMarkdown(event.target.value)}
-                      aria-describedby="markdown-note"
-                      spellCheck={false}
+                <div className="cms-new-post__form">
+                  <label htmlFor="new-post-slug-mobile">Slug (URL)</label>
+                  <div className="cms-new-post__row">
+                    <Input
+                      id="new-post-slug-mobile"
+                      value={newPostSlug}
+                      placeholder="judul-artikel-baru"
+                      aria-label="Slug artikel baru"
+                      onChange={(event) => setNewPostSlug(event.target.value)}
                     />
-                    <p id="markdown-note" className="cms-source-note">
-                      Isi artikel saat ini ditampilkan sebagai Markdown. Pertahankan blok
-                      frontmatter <code>---</code>; bidang yang didukung dinormalkan saat editan
-                      diterapkan.
-                    </p>
-                  </section>
+                    <Button
+                      variant="default"
+                      onClick={createNewPost}
+                      disabled={!newPostSlug.trim()}
+                    >
+                      Buat
+                    </Button>
+                  </div>
+                  <small>Huruf kecil, angka, dan tanda hubung saja.</small>
                 </div>
               )}
-            </section>
-
-            <section
-              id="section-sampul-panel"
-              className={activeTab === "sampul" ? "is-active" : ""}
-              role="tabpanel"
-              aria-labelledby="section-sampul-tab"
-            >
-              <div className="cms-writing-surface">
-                <section className="cms-field-group">
-                  <span className="cms-field-label">
-                    Gambar sampul <span>Opsional</span>
-                  </span>
-                  <figure className="cms-cover">
-                    {currentMedia ? (
-                      <img src={currentMedia.src} alt={currentMedia.alt} />
-                    ) : (
-                      <div className="cms-cover__empty">Belum ada gambar sampul.</div>
-                    )}
-                    <figcaption>
-                      <span className="cms-cover__action">
-                        <button
-                          type="button"
-                          onClick={() => setMediaOpen(true)}
-                          aria-haspopup="dialog"
-                          aria-label={`Ganti gambar sampul${currentMedia ? `, pilihan saat ini ${currentMedia.label}` : ""}`}
-                        >
-                          Ganti gambar
-                        </button>
-                        <small id="media-picker-note">
-                          Unggah atau pilih dari gambar yang didukung repo.
-                        </small>
-                      </span>
-                    </figcaption>
-                  </figure>
-                  <label className="cms-field-label" htmlFor="post-image-alt">
-                    Teks alt <span>Wajib saat gambar sampul dipasang</span>
-                  </label>
-                  <Input
-                    id="post-image-alt"
-                    value={post.imageAlt}
-                    placeholder="Deskripsi singkat gambar untuk aksesibilitas…"
-                    onChange={(event) => updatePost({ imageAlt: event.target.value })}
-                  />
-                  {post.image && !post.imageAlt.trim() && (
-                    <p className="cms-field-error" role="alert">
-                      Teks alt wajib sebelum revisi bisa disimpan.
-                    </p>
-                  )}
-                </section>
+            </div>
+            {notice && (
+              <div className="cms-notice">
+                <Check />
+                <span>{notice}</span>
+                <button onClick={() => setNotice(null)} aria-label="Tutup pemberitahuan">
+                  <X />
+                </button>
               </div>
-            </section>
+            )}
+            {actionError && (
+              <div className="cms-error" role="alert">
+                <X />
+                <span>{actionError}</span>
+                <button onClick={() => setActionError(null)} aria-label="Tutup pesan error">
+                  <X />
+                </button>
+              </div>
+            )}
 
-            <section
-              id="section-terbit-panel"
-              className={activeTab === "terbit" ? "is-active" : ""}
-              role="tabpanel"
-              aria-labelledby="section-terbit-tab"
-            >
-              <div className="cms-writing-surface">
-                <section className="cms-field-group">
-                  <label className="cms-field-label" htmlFor="post-status">
-                    Status <span>Disimpan di frontmatter artikel</span>
-                  </label>
-                  <select
-                    id="post-status"
-                    className="cms-status-select"
-                    value={post.status}
-                    onChange={(event) =>
-                      updatePost({ status: event.target.value as "draft" | "ready" | "published" })
+            <div className="cms-heading">
+              <div>
+                <div className="cms-kicker">{post.storageSlug}.md</div>
+                <h1>{post.title || "Artikel tanpa judul"}</h1>
+                <p>{contentDetail}</p>
+              </div>
+              <div className="cms-heading__actions">
+                <Badge
+                  variant={
+                    contentStatus === "published"
+                      ? "success"
+                      : contentStatus === "ready"
+                        ? "warning"
+                        : "outline"
+                  }
+                >
+                  {statusCopy[contentStatus].label}
+                </Badge>
+                <Button variant="outline" onClick={() => setPreviewOpen(true)}>
+                  Pratinjau <ArrowUpRight data-icon="inline-end" />
+                </Button>
+                {draftPullRequest?.status === "open" && (
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      window.open(draftPullRequest.prUrl, "_blank", "noopener,noreferrer")
                     }
                   >
-                    <option value="draft">Draf</option>
-                    <option value="ready">Siap rilis</option>
-                    <option value="published">Terbit</option>
-                  </select>
-                  {draftPullRequest?.status === "open" && (
-                    <a
-                      className="cms-pr-link"
-                      href={draftPullRequest.prUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                    Lihat PR di GitHub <ArrowUpRight data-icon="inline-end" />
+                  </Button>
+                )}
+                {nextAction && (
+                  <Button
+                    variant={nextAction.variant}
+                    disabled={nextAction.disabled}
+                    onClick={nextAction.onClick}
+                  >
+                    {isBusy ? (
+                      <LoaderCircle className="cms-spin" data-icon="inline-start" />
+                    ) : nextAction.variant === "secondary" ? (
+                      <ShieldCheck data-icon="inline-start" />
+                    ) : null}
+                    {nextAction.label}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <Card className="cms-editor-card">
+              <div
+                className="cms-section-tabs"
+                ref={sectionTabsRef}
+                role="tablist"
+                aria-label="Bagian artikel"
+              >
+                {sectionTabs.map((tab) => (
+                  <button
+                    key={tab.value}
+                    id={`section-${tab.value}-tab`}
+                    className={activeTab === tab.value ? "is-active" : ""}
+                    role="tab"
+                    aria-selected={activeTab === tab.value}
+                    aria-controls={`section-${tab.value}-panel`}
+                    tabIndex={activeTab === tab.value ? 0 : -1}
+                    onClick={() => setActiveTab(tab.value)}
+                    onKeyDown={(event) =>
+                      moveTab(event, sectionTabsRef, (nextIndex) => {
+                        const next = sectionTabs[nextIndex];
+                        if (next) setActiveTab(next.value);
+                      })
+                    }
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+                <span
+                  className="cms-section-tabs__indicator"
+                  aria-hidden="true"
+                  style={{ left: sectionIndicator.left, width: sectionIndicator.width }}
+                />
+              </div>
+              <div className="cms-section-panels">
+                <section
+                  id="section-konten-panel"
+                  className={activeTab === "konten" ? "is-active" : ""}
+                  role="tabpanel"
+                  aria-labelledby="section-konten-tab"
+                >
+                  <div className="cms-panel-toolbar">
+                    <div
+                      className="cms-segmented"
+                      ref={tabsRef}
+                      role="group"
+                      aria-label="Mode editor"
                     >
-                      Review PR #{draftPullRequest.prNumber} <ArrowUpRight data-icon="inline-end" />
-                    </a>
+                      <button
+                        id="write-tab"
+                        className={!isMarkdown ? "is-active" : ""}
+                        onClick={closeMarkdown}
+                        aria-pressed={!isMarkdown}
+                      >
+                        Editor visual
+                      </button>
+                      <button
+                        id="markdown-tab"
+                        className={isMarkdown ? "is-active" : ""}
+                        onClick={openMarkdown}
+                        aria-pressed={isMarkdown}
+                      >
+                        Sumber Markdown
+                      </button>
+                      <span
+                        className="cms-segmented__indicator"
+                        aria-hidden="true"
+                        style={{ left: modeIndicator.left, width: modeIndicator.width }}
+                      />
+                    </div>
+                  </div>
+                  {!isMarkdown ? (
+                    <div id="write-editor" className="cms-writing-surface">
+                      <section className="cms-field-group">
+                        <label className="cms-field-label" htmlFor="post-title">
+                          Judul <span>Judul utama yang tampil di daftar dan pratinjau</span>
+                        </label>
+                        <Input
+                          id="post-title"
+                          className="cms-title-input"
+                          value={post.title}
+                          onChange={(event) => updatePost({ title: event.target.value })}
+                        />
+                        <label className="cms-field-label" htmlFor="post-excerpt">
+                          Ringkasan <span>Ringkasan singkat yang tampil di daftar</span>
+                        </label>
+                        <textarea
+                          id="post-excerpt"
+                          className="cms-excerpt-input"
+                          value={post.excerpt}
+                          aria-label="Ringkasan artikel"
+                          onChange={(event) => updatePost({ excerpt: event.target.value })}
+                        />
+                      </section>
+                      <section className="cms-field-group">
+                        <span className="cms-field-label">
+                          Isi artikel <span>Rich text · disimpan lokal sampai revisi dikirim</span>
+                        </span>
+                        <MarkdownWysiwyg
+                          key={`${post.storageSlug}:${isHydrated ? "hydrated" : "boot"}`}
+                          markdown={post.body}
+                          onChange={(body) => {
+                            updatePost({ body });
+                            setSaveLabel("Menyimpan lokal…");
+                          }}
+                        />
+                      </section>
+                    </div>
+                  ) : (
+                    <div id="markdown-editor" className="cms-markdown-panel">
+                      <section className="cms-field-group">
+                        <label className="cms-field-label" htmlFor="markdown-input">
+                          Sumber <span>Editan tersinkron kembali ke editor visual</span>
+                        </label>
+                        <textarea
+                          id="markdown-input"
+                          className="cms-markdown-input"
+                          value={markdownDraft}
+                          onChange={(event) => updateMarkdown(event.target.value)}
+                          aria-describedby="markdown-note"
+                          spellCheck={false}
+                        />
+                        <p id="markdown-note" className="cms-source-note">
+                          Isi artikel saat ini ditampilkan sebagai Markdown. Pertahankan blok
+                          frontmatter <code>---</code>; bidang yang didukung dinormalkan saat editan
+                          diterapkan.
+                        </p>
+                      </section>
+                    </div>
                   )}
                 </section>
 
-                <section className="cms-field-group">
-                  <span className="cms-field-label">
-                    Deploy <span>Otomatis</span>
-                  </span>
-                  <div className="cms-deploy-line">
-                    <div>
-                      <strong>
-                        {deployedShort ? `Ter-deploy ${deployedShort}` : "Auto-deploy"}
-                      </strong>
-                      <small>
-                        {deployedDate ??
-                          "Setiap merge ke main menerbitkan situs; tidak ada langkah deploy manual."}
-                      </small>
-                    </div>
+                <section
+                  id="section-sampul-panel"
+                  className={activeTab === "sampul" ? "is-active" : ""}
+                  role="tabpanel"
+                  aria-labelledby="section-sampul-tab"
+                >
+                  <div className="cms-writing-surface">
+                    <section className="cms-field-group">
+                      <span className="cms-field-label">
+                        Gambar sampul <span>Opsional</span>
+                      </span>
+                      <figure className="cms-cover">
+                        {currentMedia ? (
+                          <img src={currentMedia.src} alt={currentMedia.alt} />
+                        ) : (
+                          <div className="cms-cover__empty">Belum ada gambar sampul.</div>
+                        )}
+                        <figcaption>
+                          <span className="cms-cover__action">
+                            <button
+                              type="button"
+                              onClick={() => setMediaOpen(true)}
+                              aria-haspopup="dialog"
+                              aria-label={`Ganti gambar sampul${currentMedia ? `, pilihan saat ini ${currentMedia.label}` : ""}`}
+                            >
+                              Ganti gambar
+                            </button>
+                            <small id="media-picker-note">
+                              Unggah atau pilih dari gambar yang didukung repo.
+                            </small>
+                          </span>
+                        </figcaption>
+                      </figure>
+                      <label className="cms-field-label" htmlFor="post-image-alt">
+                        Teks alt <span>Wajib saat gambar sampul dipasang</span>
+                      </label>
+                      <Input
+                        id="post-image-alt"
+                        value={post.imageAlt}
+                        placeholder="Deskripsi singkat gambar untuk aksesibilitas…"
+                        onChange={(event) => updatePost({ imageAlt: event.target.value })}
+                      />
+                      {post.image && !post.imageAlt.trim() && (
+                        <p className="cms-field-error" role="alert">
+                          Teks alt wajib sebelum revisi bisa disimpan.
+                        </p>
+                      )}
+                    </section>
                   </div>
                 </section>
 
-                <section className="cms-field-group">
-                  <label className="cms-field-label" htmlFor="post-slug">
-                    Slug URL <span>Slug yang stabil melindungi tautan lama</span>
-                  </label>
-                  <div className="cms-slug">
-                    <span>/blog/</span>
-                    <Input
-                      id="post-slug"
-                      value={post.slug}
-                      onChange={(event) => updatePost({ slug: event.target.value })}
-                    />
+                <section
+                  id="section-terbit-panel"
+                  className={activeTab === "terbit" ? "is-active" : ""}
+                  role="tabpanel"
+                  aria-labelledby="section-terbit-tab"
+                >
+                  <div className="cms-writing-surface">
+                    <section className="cms-field-group">
+                      <label className="cms-field-label" htmlFor="post-status">
+                        Status <span>Disimpan di frontmatter artikel</span>
+                      </label>
+                      <select
+                        id="post-status"
+                        className="cms-status-select"
+                        value={post.status}
+                        onChange={(event) =>
+                          updatePost({
+                            status: event.target.value as "draft" | "ready" | "published",
+                          })
+                        }
+                      >
+                        <option value="draft">Draf</option>
+                        <option value="ready">Siap rilis</option>
+                        <option value="published">Terbit</option>
+                      </select>
+                      {draftPullRequest?.status === "open" && (
+                        <a
+                          className="cms-pr-link"
+                          href={draftPullRequest.prUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Review PR #{draftPullRequest.prNumber}{" "}
+                          <ArrowUpRight data-icon="inline-end" />
+                        </a>
+                      )}
+                    </section>
+
+                    <section className="cms-field-group">
+                      <span className="cms-field-label">
+                        Deploy <span>Otomatis</span>
+                      </span>
+                      <div className="cms-deploy-line">
+                        <div>
+                          <strong>
+                            {deployedShort ? `Ter-deploy ${deployedShort}` : "Auto-deploy"}
+                          </strong>
+                          <small>
+                            {deployedDate ??
+                              "Setiap merge ke main menerbitkan situs; tidak ada langkah deploy manual."}
+                          </small>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="cms-field-group">
+                      <label className="cms-field-label" htmlFor="post-slug">
+                        Slug URL <span>Slug yang stabil melindungi tautan lama</span>
+                      </label>
+                      <div className="cms-slug">
+                        <span>/blog/</span>
+                        <Input
+                          id="post-slug"
+                          value={post.slug}
+                          onChange={(event) => updatePost({ slug: event.target.value })}
+                        />
+                      </div>
+                      <label className="cms-field-label" htmlFor="post-date">
+                        Tanggal terbit
+                      </label>
+                      <Input
+                        id="post-date"
+                        type="date"
+                        value={post.date}
+                        onChange={(event) => updatePost({ date: event.target.value })}
+                      />
+                    </section>
                   </div>
-                  <label className="cms-field-label" htmlFor="post-date">
-                    Tanggal terbit
-                  </label>
-                  <Input
-                    id="post-date"
-                    type="date"
-                    value={post.date}
-                    onChange={(event) => updatePost({ date: event.target.value })}
-                  />
                 </section>
               </div>
-            </section>
-          </div>
-        </Card>
+            </Card>
+          </>
+        )}
       </main>
 
       {isMediaOpen && (
