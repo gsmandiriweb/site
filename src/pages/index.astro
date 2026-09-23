@@ -243,30 +243,18 @@ const fmtBlogDate = (date: Date) =>
     </div>
   </section>
 
-  <!-- ===================== THE CATALOG · six families in the yard ===================== -->
-  <section class="catalog" id="katalog" aria-labelledby="cat-title">
-    <header class="catalog__head" data-reveal>
-      <span class="rail">KATALOG · 6 KELOMPOK MATERIAL</span>
-      <h2 id="cat-title">Satu sumber untuk material proyek</h2>
-      <p class="catalog__sub">BSM menyediakan enam kelompok material konstruksi dari basis Surabaya. Mulai dari pagar BRC, lalu telusuri atap, dinding, pintu, struktur, dan utilitas untuk kebutuhan pengadaan Anda.</p>
-      <div class="rail-controls" aria-label="Navigasi kelompok material">
-        <button class="rail-control" type="button" data-carousel-dir="prev" data-carousel-target="categories" aria-label="Kelompok material sebelumnya">←</button>
-        <span class="rail-progress label" data-carousel-progress="categories" aria-live="polite">01 / 06</span>
-        <button class="rail-control" type="button" data-carousel-dir="next" data-carousel-target="categories" aria-label="Kelompok material berikutnya">→</button>
-      </div>
-    </header>
-    <div class="catalog__grid" data-carousel-track="categories" role="region" aria-roledescription="carousel" aria-label="Enam kelompok material BSM" tabindex="0">
-      {categories.map((c, i) => (
-        <a class="cat-tile carousel__slide" aria-label={`${c.name} · kelompok ${i + 1} dari ${categories.length}`} href={u(`/kategori/${c.slug}`)}>
-          <Image src={imageAsset(c.image)} alt={c.name} width={600} height={450} loading="lazy" class="cat-tile__img" />
-          <div class="cat-tile__overlay"></div>
-          <div class="cat-tile__body">
-            <span class="cat-tile__no">RAK {String(i + 1).padStart(2, "0")}</span>
-            <b>{c.name}</b>
-            <span class="cat-tile__count">{c.count} lini · {c.lines[0]} →</span>
-          </div>
-        </a>
-      ))}
+  <!-- ===================== MATERIAL LAINNYA · compact text strip ===================== -->
+  <!-- Pagar BRC is the flagship; other families stay discoverable but quiet.
+       Full browse experience lives on /katalog and the header nav. -->
+  <section class="catalog" id="katalog" aria-label="Material konstruksi lainnya">
+    <div class="catalog__strip" data-reveal>
+      <span class="rail">MATERIAL LAINNYA</span>
+      <p class="catalog__sub">Selain pagar BRC, BSM juga memasok material konstruksi lain dari Surabaya. Telusuri <a href={u("/katalog")}>katalog lengkap</a> atau per kelompok:</p>
+      <ul class="catalog__links">
+        {categories.filter((c) => c.slug !== "pagar").map((c) => (
+          <li><a href={u(`/kategori/${c.slug}`)}>{c.name} <span aria-hidden="true">↗</span></a></li>
+        ))}
+      </ul>
     </div>
   </section>
 
