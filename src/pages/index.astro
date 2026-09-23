@@ -857,9 +857,6 @@ const fmtBlogDate = (date: Date) =>
   .stock__yard { display: flex; gap: 0; overflow-x: auto; padding: 0.5rem 0.25rem 1.5rem; scroll-snap-type: x mandatory; scroll-padding-inline: 0.25rem; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--yard-steel) transparent; contain: layout paint; }
   .stock__yard::-webkit-scrollbar { height: 0.35rem; }
   .stock__yard::-webkit-scrollbar-thumb { background: var(--yard-steel); border-radius: 1rem; }
-  .catalog__grid { display: flex; gap: clamp(1rem, 2vw, 1.5rem); overflow-x: auto; padding: 0.5rem 0.25rem 1.5rem; scroll-snap-type: x mandatory; scroll-padding-inline: 0.25rem; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--yard-steel) transparent; }
-  .catalog__grid::-webkit-scrollbar { height: 0.35rem; }
-  .catalog__grid::-webkit-scrollbar-thumb { background: var(--yard-steel); border-radius: 1rem; }
   .carousel__slide { scroll-snap-align: start; }
   .stock-item { flex: 0 0 clamp(13rem, 17vw, 16rem); min-width: 0; display: flex; flex-direction: column; scroll-snap-align: start; }
   .stock-item__photo { position: relative; overflow: hidden; background: #25282c; border-block: 1px solid rgba(201,180,138,0.28); border-radius: 0; aspect-ratio: 3/4; box-shadow: 0 14px 28px -18px rgba(0,0,0,0.7); }
@@ -893,21 +890,19 @@ const fmtBlogDate = (date: Date) =>
   .stock-item__wa:hover { color: var(--yard-accent-darker); border-bottom-color: var(--yard-accent-darker); }
   .stock__order { margin-top: clamp(2.5rem, 5vw, 3.5rem); text-align: center; }
 
-  /* ===================== THE CATALOG ===================== */
-  .catalog { padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem); background: rgba(12, 13, 16, 0.82); backdrop-filter: blur(3px); }
-  .catalog__head { max-width: 60ch; margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
-  .catalog__head .rail { display: block; margin-bottom: 0.7rem; }
-  .catalog__head h2 { font-family: var(--fd); font-weight: 700; font-stretch: 112%; font-size: clamp(1.7rem, 4vw, 2.8rem); line-height: 1.04; letter-spacing: -0.01em; margin-bottom: 1rem; text-wrap: balance; }
-  .catalog__sub { color: var(--theme-muted); max-width: 56ch; }
-  .cat-tile { position: relative; flex: 0 0 min(26rem, 72vw); border-radius: 4px; overflow: hidden; aspect-ratio: 4/3; box-shadow: 0 14px 28px -18px rgba(0,0,0,0.7); }
-  .cat-tile__img { width: 100%; height: 100%; object-fit: cover; }
-  .cat-tile:hover { box-shadow: 0 18px 32px -18px rgba(0,0,0,0.76); }
-  .cat-tile__overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(12,13,16,0.92) 100%); }
-  :global(html[data-theme="light"]) .cat-tile__overlay { background: linear-gradient(180deg, transparent 32%, rgba(23,33,43,0.82) 100%); }
-  .cat-tile__body { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.1rem 1.2rem; z-index: 2; background: rgba(12,13,16,0.78); border-top: 1px solid rgba(201,180,138,0.24); }
-  .cat-tile__no { display: block; margin-bottom: 0.3rem; color: #fffaf2; font-family: var(--fm); font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; }
-  .cat-tile__body b { display: block; margin-bottom: 0.2rem; color: #fffaf2; font-family: var(--fd); font-weight: 600; font-size: 1.1rem; }
-  .cat-tile__count { color: #fffaf2; font-family: var(--fm); font-size: 0.66rem; letter-spacing: 0.06em; }
+  /* ===================== MATERIAL LAINNYA · compact strip =====================
+     Pagar BRC is the flagship; this section deliberately stays quiet — text
+     links only, no imagery, so the other families never compete with it. */
+  .catalog { padding: clamp(2.25rem, 5vw, 3.5rem) clamp(1rem, 5vw, 4rem); background: rgba(12, 13, 16, 0.82); backdrop-filter: blur(3px); border-top: 1px solid rgba(201,180,138,0.16); }
+  .catalog__strip { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: baseline; gap: 1rem clamp(1.5rem, 4vw, 3rem); }
+  .catalog__strip .rail { flex: 0 0 auto; }
+  .catalog__sub { color: var(--theme-muted); max-width: 44ch; font-size: 0.92rem; }
+  .catalog__sub a { color: var(--beam); border-bottom: 1px solid rgba(201,180,138,0.5); padding-bottom: 0.1rem; transition: border-color 0.2s; }
+  .catalog__sub a:hover { border-color: var(--beam); }
+  .catalog__links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.6rem; list-style: none; margin: 0; padding: 0; }
+  .catalog__links a { color: var(--theme-text); font-size: 0.88rem; border-bottom: 1px solid rgba(130,138,147,0.36); padding-bottom: 0.12rem; transition: color 0.2s, border-color 0.2s; }
+  .catalog__links a span { color: var(--beam); margin-left: 0.15rem; }
+  .catalog__links a:hover { color: var(--beam); border-color: var(--beam); }
 
   /* ===================== FIELD NOTES ===================== */
   .field-notes { padding: clamp(3.5rem, 8vw, 6rem) clamp(1rem, 5vw, 4rem); background: var(--theme-surface); border-top: 1px solid rgba(201,180,138,0.16); }
@@ -969,9 +964,9 @@ const fmtBlogDate = (date: Date) =>
   :global(html[data-theme="light"]) .reach-tile__cap { color: #f3efe5; }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .cta, .hero__plate, .stock-item__photo, .stock-item__img, .cat-tile, .cat-tile__img, .field-note, .field-note__img, .field-notes__all { transition: none; }
-    .stock__yard, .catalog__grid { scroll-behavior: auto; }
-    .stock-item:hover .stock-item__img, .cat-tile:hover .cat-tile__img, .cta:hover, .nav__wa:hover, .cat-tile:hover { transform: none; }
+    .cta, .hero__plate, .stock-item__photo, .stock-item__img, .field-note, .field-note__img, .field-notes__all { transition: none; }
+    .stock__yard { scroll-behavior: auto; }
+    .stock-item:hover .stock-item__img, .cta:hover, .nav__wa:hover { transform: none; }
     .hero__plate-link:hover .hero__plate, .hero__plate-link:focus-visible .hero__plate { transform: none !important; }
   }
 </style>
