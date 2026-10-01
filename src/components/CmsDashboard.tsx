@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   LogOut,
   Moon,
+  Plus,
   Sun,
   Upload,
   WifiOff,
@@ -15,6 +16,7 @@ import {
 import { Badge, Button, Card, Input } from "./ui";
 import MarkdownWysiwyg from "./MarkdownWysiwyg";
 import { serializeDraftMarkdown } from "../utils/cms-drafts.ts";
+import { isCoverMissing, resolveCover } from "../utils/cms-media.ts";
 
 // Posts are keyed by storage slug (the filename without .md): the repository
 // listing (ADR 0013) plus locally created browser drafts. `dirty` marks a post
@@ -175,18 +177,89 @@ function normalizeStoredPost(key: string, value: unknown): [PostKey, Post] | nul
   return [key, { ...emptyPost(key), ...value }];
 }
 
-const statusCopy: Record<ContentStatus, { label: string; detail: string }> = {
-  draft: { label: "Draf", detail: "Draf lokal · belum di GitHub" },
-  ready: {
-    label: "Siap rilis",
-    detail: "Menunggu persetujuan owner sebelum bisa terbit",
-  },
-  published: {
+// Where an article actually is, as distinct from what its frontmatter wishes
+// for. The header badge used to fall through to `post.status`, so setting
+// Status to "Terbit" and sending a revision put a green "Terbit" badge directly
+// above the line "Revisi r1 menunggu persetujuan owner" — the badge and the
+// sentence underneath it disagreed, and the louder one was wrong. Publication
+// state is derived from the PR and deploy state only; `archived` has no UI, so
+// it never reaches here.
+type PublicationState = "live" | "deploying" | "awaiting" | "edited" | "not-live" | "draft";
+
+const publicationCopy: Record<
+  PublicationState,
+  { label: string; detail: string; tone: "success" | "warning" | "outline" }
+> = {
+  live: {
     label: "Terbit",
     detail: "Revisi ter-merge · live di situs ter-deploy",
+    tone: "success",
   },
-  archived: { label: "Arsip", detail: "Disembunyikan dari situs publik" },
+  deploying: {
+    label: "Sedang deploy",
+    detail: "Revisi ter-merge · auto-deploy sedang berjalan",
+    tone: "warning",
+  },
+  awaiting: {
+    label: "Menunggu persetujuan",
+    detail: "Revisi menunggu persetujuan owner di tab Terbit",
+    tone: "warning",
+  },
+  edited: {
+    label: "Draf",
+    detail: "Ada editan lokal · belum dikirim ke GitHub",
+    tone: "outline",
+  },
+  "not-live": {
+    label: "Belum tayang",
+    detail: "Sudah ada di file artikel, tapi belum terlihat di situs ter-deploy",
+    tone: "outline",
+  },
+  draft: {
+    label: "Draf",
+    detail: "Draf lokal · belum di GitHub",
+    tone: "outline",
+  },
 };
+
+// Dot hues, kept in step with the badge. `not-live` reads as amber: the file
+// says published but the site does not show it, which is a "check this" state,
+// not a green one.
+const publicationDot: Record<PublicationState, ContentStatus> = {
+  live: "published",
+  deploying: "ready",
+  awaiting: "ready",
+  "not-live": "ready",
+  edited: "draft",
+  draft: "draft",
+};
+
+function publicationStateFor(entry: Post, state: GithubState | undefined): PublicationState {
+  const live = Boolean(state?.live);
+  const pullRequest = state?.pullRequest ?? null;
+  if (live) return "live";
+  if (pullRequest?.status === "merged") return "deploying";
+  if (pullRequest?.status === "open") return "awaiting";
+  if (entry.dirty) return "edited";
+  // In the file, not on the site. Distinct from "draft" because the fix is not
+  // "write it" — it is "merge it, or take it back out of the file".
+  if (entry.status === "published") return "not-live";
+  return "draft";
+}
+
+/**
+ * An unsupported frontmatter key, carried out of the parser so the caller can
+ * name the exact line instead of describing the required fields.
+ */
+export class FrontmatterKeyError extends Error {
+  constructor(
+    readonly key: string,
+    readonly line: string,
+  ) {
+    super(`Bidang "${key}" tidak didukung.`);
+    this.name = "FrontmatterKeyError";
+  }
+}
 
 function parseMarkdownDocument(source: string): Partial<Post> | null {
   const match = source.match(/^---\n([\s\S]*?)\n---\n?\n?([\s\S]*)$/);
@@ -215,7 +288,13 @@ function parseMarkdownDocument(source: string): Partial<Post> | null {
     const separator = trimmedLine.indexOf(":");
     if (separator < 1) return null;
     const key = trimmedLine.slice(0, separator).trim();
-    if (!supportedKeys.has(key)) return null;
+    if (!supportedKeys.has(key)) {
+      // Name the offending key. The error used to list only the *required*
+      // fields, so an unsupported key produced "pertaining blok frontmatter…
+      // judul, slug, ringkasan, status, publishedAt" with no hint that the real
+      // problem was some other line entirely.
+      throw new FrontmatterKeyError(key, trimmedLine);
+    }
     const rawValue = trimmedLine.slice(separator + 1).trim();
     let value = rawValue;
     if (rawValue.startsWith('"')) {
@@ -265,6 +344,85 @@ function parseMarkdownDocument(source: string): Partial<Post> | null {
     imageAlt: frontmatter.imageAlt ?? "",
     body,
   };
+}
+
+/**
+ * Shared dialog behaviour: move focus into the dialog on open, keep Tab inside
+ * it, close on Escape, lock background scroll, and restore focus to whatever
+ * opened it.
+ *
+ * Every modal in the dashboard goes through this. It used to exist only for the
+ * media picker, which left the irreversible merge confirmation with no focus
+ * entry, no trap, no Escape, and no announcement — a keyboard user had to Tab
+ * through the whole form (including the editor's contenteditable) to reach it,
+ * and could not get out. WCAG 2.1.2 No Keyboard Trap, 2.4.3 Focus Order.
+ *
+ * `onClose` is held in a ref so an inline arrow cannot re-run the effect on
+ * every render, which would yank focus back to the top of the dialog mid-edit.
+ */
+function useDialogFocus(
+  open: boolean,
+  dialogRef: React.RefObject<HTMLElement | null>,
+  onClose: () => void,
+  initialFocusRef?: React.RefObject<HTMLElement | null>,
+) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) return;
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    // Prefer an explicit first stop (the safe choice in a destructive confirm,
+    // the text field in a rename); otherwise focus the dialog itself so its
+    // `aria-labelledby` title is announced.
+    const frame = window.requestAnimationFrame(() => {
+      (initialFocusRef?.current ?? dialogRef.current)?.focus();
+    });
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      // `[disabled]` elements and the visually-hidden file input are excluded:
+      // parking focus on something with no pixels is the invisible-focus-stop
+      // failure the media picker had.
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          "button:not([disabled]), a[href], input:not([disabled]):not([tabindex='-1']), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])",
+        ),
+      );
+      if (!focusable.length) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      // Only pull focus back if it is still inside the dialog: a merge that
+      // closed on click has already moved focus on, and stealing it back would
+      // fight the success path.
+      if (dialogRef.current?.contains(document.activeElement)) trigger?.focus();
+    };
+  }, [open, dialogRef, initialFocusRef]);
 }
 
 export default function CmsDashboard({
@@ -323,12 +481,19 @@ export default function CmsDashboard({
   const [sectionIndicator, setSectionIndicator] = useState({ left: 0, width: 0 });
   const [modeIndicator, setModeIndicator] = useState({ left: 0, width: 0 });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const dialogRef = useRef<HTMLElement | null>(null);
   const mediaDialogRef = useRef<HTMLElement | null>(null);
+  const mergeDialogRef = useRef<HTMLElement | null>(null);
+  const renameDialogRef = useRef<HTMLElement | null>(null);
+  // First focus stop per dialog. The merge confirm opens on "Batal", not on the
+  // destructive choice: a reflexive Enter must never publish to production.
+  const mergeCancelRef = useRef<HTMLButtonElement | null>(null);
+  const renameInputRef = useRef<HTMLInputElement | null>(null);
   const tabsRef = useRef<HTMLDivElement | null>(null);
   const sectionTabsRef = useRef<HTMLDivElement | null>(null);
-  const restoreFocusRef = useRef<HTMLElement | null>(null);
   const selectedStorageSlugRef = useRef<PostKey>("");
+  // The storage slug whose asset list has actually landed. Stays "" until then,
+  // so a cover is never reported missing against an empty list.
+  const [mediaLoadedFor, setMediaLoadedFor] = useState<PostKey>("");
 
   useEffect(() => {
     const root = document.documentElement;
@@ -364,43 +529,16 @@ export default function CmsDashboard({
     };
   }, []);
 
-  useEffect(() => {
-    if (!isMediaOpen) return;
-    restoreFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialogRef.current = mediaDialogRef.current;
-    const frame = window.requestAnimationFrame(() => mediaDialogRef.current?.focus());
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMediaOpen(false);
-        return;
-      }
-      if (event.key !== "Tab" || !dialogRef.current) return;
-      const focusable = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
-          "button, a, input, textarea, select, [tabindex]:not([tabindex='-1'])",
-        ),
-      );
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.cancelAnimationFrame(frame);
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
-      restoreFocusRef.current?.focus();
-    };
-  }, [isMediaOpen]);
+  // All three dialogs share one focus contract. The merge confirmation and the
+  // rename prompt previously had none of it.
+  useDialogFocus(isMediaOpen, mediaDialogRef, () => setMediaOpen(false));
+  useDialogFocus(
+    isMergeConfirmOpen,
+    mergeDialogRef,
+    () => setMergeConfirmOpen(false),
+    mergeCancelRef,
+  );
+  useDialogFocus(Boolean(renameTarget), renameDialogRef, () => setRenameTarget(""), renameInputRef);
 
   // While no post is selected yet (boot, before drafts/repo listing land) the
   // editor renders a stable blank template instead of crashing on undefined.
@@ -419,7 +557,6 @@ export default function CmsDashboard({
   const hasUncommittedMarkdown = isMarkdown && markdownDraft !== markdownBaseline;
   const githubState = githubStates[post.storageSlug];
   const draftPullRequest = githubState?.pullRequest ?? null;
-  const isLive = Boolean(githubState?.live);
 
   // Keep the poller's slug ref in step with the selected post, whichever path
   // set the selection (boot restore, repo-listing fallback, explicit pick).
@@ -429,21 +566,22 @@ export default function CmsDashboard({
     selectedStorageSlugRef.current = posts[selectedPost]?.storageSlug ?? selectedPost;
   }, [selectedPost, posts]);
   const isMerged = draftPullRequest?.status === "merged";
-  const isPendingDeploy = isMerged && !isLive;
-  const contentStatus: ContentStatus = isLive
-    ? "published"
-    : isPendingDeploy
-      ? "ready"
-      : post.status;
-  const contentDetail = isLive
-    ? "Revisi ter-merge · live di situs"
-    : isPendingDeploy
-      ? "Revisi ter-merge · auto-deploy sedang berjalan"
-      : draftPullRequest?.status === "open"
-        ? `Revisi r${draftPullRequest.revision} menunggu persetujuan owner · PR #${draftPullRequest.prNumber}`
-        : hasLocalEdits
-          ? "Ada editan lokal · belum dikirim ke GitHub"
-          : statusCopy[contentStatus].detail;
+  const isAwaitingApproval = draftPullRequest?.status === "open";
+  // No PR/live record for this article at all (a local browser draft, or a repo
+  // post whose state has not been fetched yet). Reporting a publication state
+  // from nothing is how the sidebar ended up claiming "Menunggu persetujuan"
+  // and "Sedang deploy" for articles that had never been sent anywhere.
+  const hasRepoRecord = Boolean(githubState);
+  const publicationState = hasRepoRecord ? publicationStateFor(post, githubState) : "draft";
+  const publication = publicationCopy[publicationState];
+  // The PR number belongs in the sentence, not the badge, so it stays out of the
+  // label the badge has to fit on one line.
+  const contentDetail = isAwaitingApproval
+    ? `${publication.detail} · PR #${draftPullRequest!.prNumber}`
+    : !hasRepoRecord && post.status === "published"
+      ? // The one case where the file's word is the only evidence there is.
+        "Status Terbit di file · belum ada catatan deploy untuk artikel ini"
+      : publication.detail;
 
   const updatePost = (patch: Partial<Post>, markDirty = true) => {
     if (isLocked) return; // legacy file pending rename: read-only
@@ -594,7 +732,14 @@ export default function CmsDashboard({
             const result = await fetchPostState(key);
             const source = result.sourceMarkdown;
             if (!source) return;
-            const parsed = parseMarkdownDocument(source);
+            let parsed: Partial<Post> | null;
+            try {
+              parsed = parseMarkdownDocument(source);
+            } catch {
+              // A repo file with a key this dashboard does not model: leave the
+              // local copy alone rather than clobbering it with a null parse.
+              return;
+            }
             if (!parsed) return;
             setPosts((current) => {
               const existing = current[key];
@@ -750,11 +895,7 @@ export default function CmsDashboard({
       setNotice(null);
       return;
     }
-    if (
-      post.dirty ||
-      hasUncommittedMarkdown ||
-      (isMarkdown && !parseMarkdownDocument(markdownDraft))
-    ) {
+    if (post.dirty || hasUncommittedMarkdown) {
       setActionError("Kirim revisi artikel ini dulu sebelum berpindah ke artikel lain.");
       return;
     }
@@ -906,30 +1047,31 @@ export default function CmsDashboard({
     [uploadedAssets, mainAssets],
   );
 
-  useEffect(() => {
-    if (!selectedPost || isLocked) return;
-    const fallbackMedia = mediaAssets[0];
-    if (!fallbackMedia) return;
-    const resolvable = (path: string) =>
-      !path ||
-      mediaAssets.some(
-        (asset) => asset.filename === path || asset.filename === path.split("/").pop(),
-      ) ||
-      uploadedAssets.some((asset) => asset.path === path) ||
-      mainAssets.some((asset) => asset.path === path);
-    if (resolvable(post.image)) return;
-    setPosts((current) => ({
-      ...current,
-      [selectedPost]: {
-        ...current[selectedPost],
-        image: fallbackMedia.filename,
-        dirty: true,
-      },
-    }));
-    setNotice(
-      `Sampul sebelumnya tidak ditemukan · diganti ke ${fallbackMedia.label}. Periksa sebelum menyimpan.`,
-    );
-  }, [mediaAssets, uploadedAssets, mainAssets, post.image, selectedPost, isLocked]);
+  // Cover resolution is a report, never an edit. This used to be an effect that
+  // rewrote `post.image` to the first curated image and set `dirty: true` when
+  // the cover could not be found — while the article's own asset list had not
+  // even been fetched yet, so every CMS-uploaded cover (stored as
+  // `blog/<slug>/cover.jpg`) looked missing. The owner was left with a replaced
+  // cover, a dirty post that `selectPost` refused to let them leave, no discard
+  // control, and "Kirim revisi" as the only way out: one click from publishing
+  // the wrong image to production. The decision now lives in
+  // `utils/cms-media.ts` and is covered by tests.
+  const coverResolution = useMemo(
+    () =>
+      resolveCover(
+        post.image,
+        [
+          ...mediaAssets.map((asset) => ({ filename: asset.filename })),
+          ...[...uploadedAssets, ...mainAssets].map((asset) => ({
+            path: asset.path,
+            filename: asset.filename,
+          })),
+        ],
+        mediaLoadedFor === post.storageSlug,
+      ),
+    [mediaAssets, uploadedAssets, mainAssets, mediaLoadedFor, post.image, post.storageSlug],
+  );
+  const coverMissing = isCoverMissing(coverResolution);
 
   const selectMedia = (asset: MediaAsset) => {
     updatePost({ image: asset.filename });
@@ -937,26 +1079,46 @@ export default function CmsDashboard({
     setNotice(`Sampul diganti ke ${asset.label}. Terkomit saat revisi dikirim.`);
   };
 
-  const loadMedia = async () => {
+  const loadMedia = async (storageSlug: string) => {
     if (!isAuthenticated) return;
     setUploadError(null);
     try {
       const response = await fetch(
-        `/api/cms/media?storageSlug=${encodeURIComponent(post.storageSlug)}`,
-        { credentials: "same-origin", headers: { Accept: "application/json" } },
+        `/api/cms/media?storageSlug=${encodeURIComponent(storageSlug)}`,
+        {
+          credentials: "same-origin",
+          headers: { Accept: "application/json" },
+        },
       );
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error ?? "Tidak dapat memuat media.");
       setUploadedAssets(payload.assets ?? []);
       setMainAssets(payload.mainAssets ?? []);
       setPendingRevision(payload.revision ?? null);
+      setMediaLoadedFor(storageSlug);
     } catch {
       setUploadError("Tidak dapat memuat media untuk artikel ini.");
     }
   };
 
+  // The article's asset list loads on selection, not only when the media dialog
+  // opens. Deferring it to the dialog is exactly what let the cover check run
+  // against an empty list and declare a valid CMS-uploaded cover missing.
+  // Switching articles clears the previous list first, so a path belonging to
+  // another article can never be resolved — or reported missing — here.
   useEffect(() => {
-    if (isMediaOpen && isAuthenticated) void loadMedia();
+    if (!isAuthenticated || !post.storageSlug) return;
+    setUploadedAssets([]);
+    setMainAssets([]);
+    setMediaLoadedFor("");
+    void loadMedia(post.storageSlug);
+    // `loadMedia` is recreated each render; the slug is the only real trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, post.storageSlug]);
+
+  // Re-read on open so a just-uploaded asset is present without a page reload.
+  useEffect(() => {
+    if (isMediaOpen && isAuthenticated) void loadMedia(post.storageSlug);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMediaOpen, isAuthenticated, post.storageSlug]);
 
@@ -1027,16 +1189,30 @@ export default function CmsDashboard({
 
   const closeMarkdown = () => {
     if (!isMarkdown) return;
-    const parsed = parseMarkdownDocument(markdownDraft);
+    let parsed: Partial<Post> | null;
+    try {
+      parsed = parseMarkdownDocument(markdownDraft);
+    } catch (error) {
+      setActionError(
+        error instanceof FrontmatterKeyError
+          ? `Baris "${error.line}" memakai bidang "${error.key}" yang tidak didukung CMS. Hapus baris itu atau ganti nama field-nya.`
+          : "Markdown tidak bisa dibaca. Periksa blok frontmatter.",
+      );
+      return;
+    }
     if (!parsed) {
       setActionError(
         "Markdown harus mempertahankan blok frontmatter --- beserta bidang judul (title), slug, ringkasan (excerpt), status, dan tanggal terbit (publishedAt).",
       );
       return;
     }
+    // `date` is the legacy twin of `publishedAt`; the site sorts by
+    // `publishedAt` (utils/blog.ts: blogPublishedAt), so a hand-edited source
+    // that moved only one of them would change the date shown without changing
+    // the blog's order. Move them together.
     const normalized =
-      parsed.status === "draft" && post.status === "ready"
-        ? { ...parsed, status: "ready" as const }
+      parsed.date !== undefined && parsed.publishedAt !== undefined
+        ? { ...parsed, date: parsed.publishedAt }
         : parsed;
     const contentChanged =
       normalized.id !== post.id ||
@@ -1059,7 +1235,12 @@ export default function CmsDashboard({
 
   const updateMarkdown = (source: string) => {
     setMarkdownDraft(source);
-    if (parseMarkdownDocument(source)) setActionError(null);
+    try {
+      if (parseMarkdownDocument(source)) setActionError(null);
+    } catch {
+      // Keep the previous error visible while the owner is still typing; the
+      // exact offending line is named when they try to apply the source.
+    }
   };
 
   const moveTab = (
@@ -1204,6 +1385,14 @@ export default function CmsDashboard({
               const entry = posts[key];
               const locked = needsRenameSlugs.includes(entry.storageSlug);
               const isSelected = selectedPost === key;
+              // The list reports the same publication state as the header, from
+              // the same PR/deploy data — a sidebar dot is not a second opinion.
+              // With no record for the article, it reports plain "Draf" and the
+              // date rather than inventing a workflow state.
+              const state = githubStates[key]
+                ? publicationStateFor(entry, githubStates[key])
+                : "draft";
+              const showDate = state === "draft" || state === "live";
               return (
                 <button
                   key={key}
@@ -1214,7 +1403,7 @@ export default function CmsDashboard({
                   onClick={() => selectPost(key)}
                 >
                   <span
-                    className={`cms-post-dot cms-post-dot--${entry.status}${entry.dirty ? " cms-post-dot--dirty" : ""}`}
+                    className={`cms-post-dot cms-post-dot--${publicationDot[state]}${state === "edited" ? " cms-post-dot--dirty" : ""}`}
                     aria-hidden="true"
                   />
                   <span>
@@ -1222,9 +1411,7 @@ export default function CmsDashboard({
                     <small>
                       {locked
                         ? "Tidak dapat diedit sampai diganti nama"
-                        : entry.dirty
-                          ? `Belum dikirim · ${statusCopy[entry.status].label}`
-                          : `${statusCopy[entry.status].label} · ${entry.date}`}
+                        : `${publicationCopy[state].label}${showDate ? ` · ${entry.date}` : ""}`}
                     </small>
                   </span>
                   {locked && (
@@ -1253,7 +1440,8 @@ export default function CmsDashboard({
               className="cms-new-post__toggle"
               onClick={() => setShowNewPostForm(true)}
             >
-              ＋ Artikel baru
+              <Plus data-icon="inline-start" aria-hidden="true" />
+              Artikel baru
             </button>
           ) : (
             <div className="cms-new-post__form">
@@ -1298,7 +1486,8 @@ export default function CmsDashboard({
               dari yang pertama.
             </p>
             <Button variant="default" onClick={() => setShowNewPostForm(true)}>
-              ＋ Artikel baru
+              <Plus data-icon="inline-start" aria-hidden="true" />
+              Artikel baru
             </Button>
           </section>
         ) : (
@@ -1324,7 +1513,8 @@ export default function CmsDashboard({
                   onClick={() => setShowNewPostForm(true)}
                   aria-label="Buat artikel baru"
                 >
-                  ＋ Artikel baru
+                  <Plus data-icon="inline-start" aria-hidden="true" />
+                  Artikel baru
                 </Button>
               ) : (
                 <div className="cms-new-post__form">
@@ -1370,22 +1560,16 @@ export default function CmsDashboard({
 
             <div className="cms-heading">
               <div>
-                <div className="cms-kicker">{post.storageSlug}.md</div>
+                {/* The filename is a spec key, not an eyebrow: it sits BELOW the
+                    title now. Above it, a 12px mono string at 3.1:1 was the first
+                    thing read in the heading, which put a filename above the
+                    article's own name. */}
                 <h1>{post.title || "Artikel tanpa judul"}</h1>
                 <p>{contentDetail}</p>
+                <div className="cms-kicker">{post.storageSlug}.md</div>
               </div>
               <div className="cms-heading__actions">
-                <Badge
-                  variant={
-                    contentStatus === "published"
-                      ? "success"
-                      : contentStatus === "ready"
-                        ? "warning"
-                        : "outline"
-                  }
-                >
-                  {statusCopy[contentStatus].label}
-                </Badge>
+                <Badge variant={publication.tone}>{publication.label}</Badge>
                 {nextAction && (
                   <Button
                     variant={nextAction.variant}
@@ -1472,6 +1656,17 @@ export default function CmsDashboard({
                   {!isMarkdown ? (
                     <div id="write-editor" className="cms-writing-surface">
                       <section className="cms-field-group">
+                        <label className="cms-field-label" htmlFor="post-kicker">
+                          Label kartu{" "}
+                          <span>
+                            Teks kecil di atas judul pada kartu blog · kosongkan bila tidak dipakai
+                          </span>
+                        </label>
+                        <Input
+                          id="post-kicker"
+                          value={post.kicker}
+                          onChange={(event) => updatePost({ kicker: event.target.value })}
+                        />
                         <label className="cms-field-label" htmlFor="post-title">
                           Judul <span>Judul utama yang tampil di daftar dan pratinjau</span>
                         </label>
@@ -1540,9 +1735,20 @@ export default function CmsDashboard({
                       <span className="cms-field-label">
                         Gambar sampul <span>Opsional</span>
                       </span>
+                      {coverMissing && (
+                        <p className="cms-field-error" role="alert">
+                          Gambar <code>{coverResolution.path}</code> tidak ditemukan di repo, jadi
+                          artikel ini akan terbit tanpa sampul. Unggah atau pilih gambar lain —
+                          sampul Anda yang lama tidak dihapus.
+                        </p>
+                      )}
                       <figure className="cms-cover">
                         {currentMedia ? (
                           <img src={currentMedia.src} alt={currentMedia.alt} />
+                        ) : coverMissing ? (
+                          <div className="cms-cover__empty">
+                            Sampul tidak ditemukan — pilih gambar lain.
+                          </div>
                         ) : (
                           <div className="cms-cover__empty">Belum ada gambar sampul.</div>
                         )}
@@ -1589,7 +1795,7 @@ export default function CmsDashboard({
                   <div className="cms-writing-surface">
                     <section className="cms-field-group">
                       <label className="cms-field-label" htmlFor="post-status">
-                        Status <span>Disimpan di frontmatter artikel</span>
+                        Status <span>Menentukan apakah artikel muncul di situs publik</span>
                       </label>
                       <select
                         id="post-status"
@@ -1597,14 +1803,18 @@ export default function CmsDashboard({
                         value={post.status}
                         onChange={(event) =>
                           updatePost({
-                            status: event.target.value as "draft" | "ready" | "published",
+                            status: event.target.value as "draft" | "published" | "archived",
                           })
                         }
                       >
-                        <option value="draft">Draf</option>
-                        <option value="ready">Siap rilis</option>
-                        <option value="published">Terbit</option>
+                        <option value="draft">Draf · tidak tampil di situs</option>
+                        <option value="published">Terbit · tampil di situs</option>
+                        <option value="archived">Arsip · disembunyikan dari situs</option>
                       </select>
+                      <p className="cms-source-note">
+                        Status tersimpan di file artikel. Mengubahnya di sini belum menerbitkan —
+                        kirim revisi, lalu setujui di tab ini.
+                      </p>
                       {draftPullRequest?.status === "open" && (
                         <a
                           className="cms-pr-link"
@@ -1647,14 +1857,26 @@ export default function CmsDashboard({
                           onChange={(event) => updatePost({ slug: event.target.value })}
                         />
                       </div>
-                      <label className="cms-field-label" htmlFor="post-date">
-                        Tanggal terbit
+                      <label className="cms-field-label" htmlFor="post-published-at">
+                        Tanggal terbit{" "}
+                        <span>
+                          Menentukan urutan artikel di blog dan tanggal yang tampil di kartu
+                        </span>
                       </label>
                       <Input
-                        id="post-date"
+                        id="post-published-at"
                         type="date"
-                        value={post.date}
-                        onChange={(event) => updatePost({ date: event.target.value })}
+                        value={post.publishedAt || post.date}
+                        onChange={(event) => {
+                          const nextDate = event.target.value;
+                          // `date` is the legacy field older posts still carry and
+                          // `publishedAt` is what the site actually sorts by
+                          // (utils/blog.ts: blogPublishedAt). Editing one and
+                          // leaving the other stale is how a publication-date
+                          // change silently failed to reorder the blog, so both
+                          // move together.
+                          updatePost({ publishedAt: nextDate, date: nextDate });
+                        }}
                       />
                     </section>
                   </div>
@@ -1673,6 +1895,8 @@ export default function CmsDashboard({
           }}
         >
           <section
+            ref={renameDialogRef}
+            tabIndex={-1}
             className="cms-modal cms-rename-modal"
             role="dialog"
             aria-modal="true"
@@ -1689,6 +1913,7 @@ export default function CmsDashboard({
               <div className="cms-rename-modal__field">
                 <label htmlFor="rename-input">Nama file baru (tanpa .md)</label>
                 <Input
+                  ref={renameInputRef}
                   id="rename-input"
                   value={renameValue}
                   onChange={(event) => setRenameValue(event.target.value)}
@@ -1730,6 +1955,8 @@ export default function CmsDashboard({
           }}
         >
           <section
+            ref={mergeDialogRef}
+            tabIndex={-1}
             className="cms-modal cms-merge-confirm"
             role="alertdialog"
             aria-modal="true"
@@ -1742,6 +1969,11 @@ export default function CmsDashboard({
                 Revisi <strong>r{draftPullRequest.revision}</strong> (PR #
                 {draftPullRequest.prNumber}) akan digabungkan ke <code>main</code>, lalu auto-deploy
                 menerbitkannya di situs publik. Tindakan ini memicu deploy baru.
+              </p>
+              <p className="cms-merge-confirm__warn">
+                <strong>Tidak bisa dibatalkan.</strong> Konten otomatis akan tersimpan di branch
+                revisi — Anda tetap bisa menutup artikel ini lewat Status Arsip di revisi
+                berikutnya.
               </p>
               <div className="cms-merge-confirm__actions">
                 <Button
@@ -1756,6 +1988,7 @@ export default function CmsDashboard({
                   Ya, gabungkan & terbitkan
                 </Button>
                 <Button
+                  ref={mergeCancelRef}
                   variant="ghost"
                   disabled={isBusy}
                   onClick={() => setMergeConfirmOpen(false)}
@@ -1827,7 +2060,12 @@ export default function CmsDashboard({
                   ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  aria-label="Pilih file gambar untuk diunggah"
+                  // Visually clipped to 1px, so it must not be a tab stop: the
+                  // focus trap could otherwise park focus on an element with no
+                  // pixels. The visible "Unggah gambar" button is the real
+                  // control and opens this picker programmatically.
+                  tabIndex={-1}
+                  aria-hidden="true"
                   onChange={(event) => {
                     const file = event.target.files?.[0];
                     if (file) void uploadImage(file);

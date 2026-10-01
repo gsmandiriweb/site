@@ -1,113 +1,184 @@
 /* ============================================================
-   BSM Editorial CMS — "Tools" visual world.
+   BSM Editorial CMS — "Steel Yard, less ink".
 
-   A calm, neutral admin surface for the publishing workflow.
-   Deliberately separate from the storefront's industrial Steel
-   Yard look: cool slate neutrals + a single denim accent,
-   sentence-case Hanken Grotesk chrome, mono reserved for purely
-   technical values (slugs, hashes, Markdown). Light is the base
-   theme; dark is a first-class peer defined via html[data-theme].
+   The admin is the storefront's drafting sheet with the ink
+   pulled back: same warm paper, same blueprint-bronze, same
+   signal orange, same three faces, same squared radii. It is an
+   Operate surface, so the differences from the public site are
+   deliberate and narrow — a light base theme (the storefront is
+   dark-first), less hue in chrome, and a tighter type scale.
+   What it is NOT is a third design world: it used to be a
+   cool-slate "Tools" console with a denim accent, zero DESIGN.md
+   colours, 12 different corner radii, and a font stack whose three
+   custom properties were never defined on this page — so Archivo,
+   Hanken Grotesk and JetBrains Mono downloaded on every load and
+   not one glyph rendered. The `bsm-theme` key is now shared with
+   /admin/login and means the same thing on both.
 
-   Tokens:  --cms-bg        app canvas
+   Tokens:  --cms-bg        app canvas (drafting paper)
             --cms-surface   cards, panels
             --cms-surface-2 inset wells, hover fills
             --cms-surface-3 pressed / control tracks
-            --cms-accent    denim blue (the only hue in chrome)
+            --cms-accent    blueprint-bronze (chrome + focus, never a CTA)
+            --cms-signal    safety orange — primary actions ONLY
             --cms-success / --cms-warning / --cms-danger  status only
    ============================================================ */
 :root {
   color-scheme: light;
 
-  --cms-bg: #f4f5f7;
-  --cms-surface: #ffffff;
-  --cms-surface-2: #f6f7f9;
-  --cms-surface-3: #eceef1;
+  --cms-bg: #f3efe5;
+  --cms-surface: #faf8f2;
+  --cms-surface-2: #e9e3d4;
+  --cms-surface-3: #ded7c5;
 
-  --cms-border: #e2e4e9;
-  --cms-border-strong: #cfd3da;
+  --cms-border: #ddd6c4;
+  --cms-border-strong: #c3bba6;
 
-  --cms-ink: #161a21;
-  --cms-muted: #5c6470;
-  --cms-faint: #8b93a0;
+  --cms-ink: #17212b;
+  --cms-muted: #6b6558;
+  /* Secondary text (field hints, sidebar meta, media filenames) at 12px needs
+     4.5:1, not 3:1. #6b6558 clears it on --cms-bg (5.04), --cms-surface-2
+     (4.52) and --cms-surface. */
+  --cms-faint: #6b6558;
 
-  --cms-accent: #2f5fcf;
-  --cms-accent-strong: #254da8;
-  --cms-on-accent: #ffffff;
-  --cms-accent-soft: #2f5fcf14;
-  --cms-accent-ring: 0 0 0 3px #2f5fcf2e;
+  /* Bronze is the drafting-pen colour: chrome, active states, focus. */
+  --cms-accent: #694b1f;
+  --cms-accent-strong: #4f3815;
+  --cms-on-accent: #fcfaf4;
+  --cms-accent-soft: #694b1f14;
+  /* Solid, not an 18%-alpha halo: the old ring measured 1.30:1 against the
+     field it surrounded. Bronze measures 6.96:1 on paper. */
+  --cms-accent-ring: 0 0 0 2px var(--cms-accent);
 
-  --cms-success: #177a4b;
-  --cms-success-soft: #177a4b14;
-  --cms-warning: #97550c;
-  --cms-warning-soft: #97550c12;
-  --cms-danger: #c0392e;
-  --cms-danger-soft: #c0392e12;
+  /* Safety orange, per DESIGN.md's "The Orange Is a Button Rule": the primary
+     action fill and nothing else. signal-deep (#c8430f) rather than the bright
+     #e8551e, because the near-white label needs 4.5:1 and bright orange only
+     reaches 3.50:1. */
+  --cms-signal: #c8430f;
+  --cms-signal-strong: #a8360b;
+  --cms-on-signal: #fcfaf4;
+  --cms-signal-soft: #c8430f14;
+  /* Orange as TEXT needs to go deeper still: #c8430f is 4.29:1 on paper, so
+     links and spec marks use this. */
+  --cms-signal-text: #ad3d0d;
 
-  --cms-code-bg: #f1f2f5;
-  --cms-code-ink: #38445a;
+  /* WCAG 1.4.11 non-text contrast for control boundaries. */
+  --cms-control-border: #8d8674;
 
-  --cms-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
-  --cms-shadow-lg: 0 24px 60px -12px rgba(16, 24, 40, 0.22);
+  --cms-success: #1d6b45;
+  --cms-success-soft: #1d6b4519;
+  --cms-warning: #7a4a0c;
+  --cms-warning-soft: #7a4a0c1a;
+  --cms-danger: #a8302a;
+  --cms-danger-soft: #a8302a19;
+
+  --cms-code-bg: #ece7d9;
+  --cms-code-ink: #2f3a46;
+
+  /* Flat by rest (the Flat Sheet Rule). Depth is a response to state only. */
+  --cms-shadow-sm: 0 1px 2px rgba(23, 33, 43, 0.06);
+  --cms-shadow-lg: 0 24px 60px -12px rgba(23, 33, 43, 0.18);
   --cms-overlay: rgba(23, 28, 36, 0.46);
 
-  --cms-radius: 12px;
-  --cms-radius-sm: 8px;
-  --cms-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Drafting sheet, not pill: 4 / 8 / 14, matching DESIGN.md. */
+  --cms-radius: 8px;
+  --cms-radius-sm: 4px;
+  --cms-radius-lg: 14px;
+  --cms-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* One left rule for the editor card, and one width for the whole column.
+     Every row inside the card — section tabs, the mode toolbar, the writing
+     surface — pads by --cms-card-inset, so a tab label, a toggle and a field
+     label all sit on the same vertical line.
+
+     --cms-column is the one width number for the surface: the card fills it,
+     and the writing surface fills the card minus its two insets. The column
+     used to be 1080px while the writing surface capped itself at 860px, which
+     left 219px of dead space to the right of every field. Capping the column
+     instead of the surface removes the gap AND keeps the fields at a
+     comfortable single-line measure — a 1080px-wide text input is genuinely
+     hard to use, because the eye loses the line on return. */
+  --cms-card-inset: 28px;
+  --cms-column: 916px;
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
 
-  --cms-bg: #0e1116;
-  --cms-surface: #151a21;
-  --cms-surface-2: #1b212b;
-  --cms-surface-3: #242c38;
+  --cms-bg: #0b0d0f;
+  --cms-surface: #14161a;
+  --cms-surface-2: #1d2025;
+  --cms-surface-3: #272b31;
 
-  --cms-border: #232b36;
-  --cms-border-strong: #343e4c;
+  --cms-border: #2b2f36;
+  --cms-border-strong: #3d434c;
 
-  --cms-ink: #e7ebf1;
-  --cms-muted: #9aa3b1;
-  --cms-faint: #6b7482;
+  --cms-ink: #f4f1e9;
+  --cms-muted: #9aa0a8;
+  --cms-faint: #9aa0a8;
 
-  --cms-accent: #5d87f5;
-  --cms-accent-strong: #7d9ef7;
-  --cms-on-accent: #0b1120;
-  --cms-accent-soft: #5d87f51f;
-  --cms-accent-ring: 0 0 0 3px #5d87f545;
+  --cms-accent: #c9b48a;
+  --cms-accent-strong: #ddcba8;
+  --cms-on-accent: #17140d;
+  --cms-accent-soft: #c9b48a1f;
+  --cms-accent-ring: 0 0 0 2px var(--cms-accent);
 
-  --cms-success: #49b785;
-  --cms-success-soft: #49b7851f;
-  --cms-warning: #e1a83e;
-  --cms-warning-soft: #e1a83e1a;
-  --cms-danger: #e46a60;
-  --cms-danger-soft: #e46a601f;
+  --cms-signal: #c8430f;
+  --cms-signal-strong: #e8551e;
+  --cms-on-signal: #fcfaf4;
+  --cms-signal-soft: #c8430f26;
+  --cms-signal-text: #f0764a;
 
-  --cms-code-bg: #0a0d12;
+  --cms-control-border: #6e7681;
+
+  --cms-success: #4bb07a;
+  --cms-success-soft: #4bb07a24;
+  --cms-warning: #d9a441;
+  --cms-warning-soft: #d9a44124;
+  --cms-danger: #e2705f;
+  --cms-danger-soft: #e2705f24;
+
+  --cms-code-bg: #101216;
   --cms-code-ink: #c9d3e2;
 
-  --cms-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --cms-shadow-lg: 0 24px 60px -12px rgba(0, 0, 0, 0.55);
+  --cms-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --cms-shadow-lg: 0 24px 60px -12px rgba(0, 0, 0, 0.6);
   --cms-overlay: rgba(5, 8, 12, 0.62);
 }
 
+/* The three faces the storefront uses, declared HERE. They were consumed in
+   65+ declarations on this page but defined only in global.css, which /admin
+   never imports — so all three downloaded on every dashboard load and none
+   rendered. Same stacks, same order, same fallbacks as the public site. */
 body:has([data-cms-dashboard]) {
+  --font-display: "Archivo", "Arial Narrow", sans-serif;
+  --font-body: "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
   margin: 0;
   background: var(--cms-bg);
   color: var(--cms-ink);
-  font-family: var(--font-body, system-ui, sans-serif);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-.cms-dashboard button,
+/* Form controls inherit the dashboard's type so chrome reads as one system.
+   `color: inherit` is deliberately NOT applied to buttons: a bare
+   `.cms-dashboard button` reset outranks every `.cms-ui-button--*` variant
+   (0,1,1 vs 0,1,0), which silently flattened the primary CTA to ink-on-accent
+   at 3.04:1 and dropped its declared 13px/600 weight. Buttons get family only,
+   so the component's own `font`/`color` still wins. */
 .cms-dashboard input,
 .cms-dashboard textarea,
 .cms-dashboard select {
   font: inherit;
   color: inherit;
+}
+.cms-dashboard button {
+  font-family: inherit;
 }
 
 .cms-dashboard {
@@ -121,13 +192,21 @@ body:has([data-cms-dashboard]) {
   top: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: 260px 1fr 260px;
+  /* The centre cell is the least actionable string in the bar (save status),
+     and the only consequential control was bottom-right of a 960px card. Flip
+     the prime cell to the left, next to the brand it belongs with. */
+  grid-template-columns: 260px 260px 1fr;
   align-items: center;
   gap: 16px;
   min-height: 56px;
   padding: 0 20px;
   background: var(--cms-surface);
-  border-bottom: 1px solid var(--cms-border);
+  /* The blueprint rule: a 2px bronze line under the header, the one place the
+     region colour is allowed to run at full strength in this surface. */
+  border-bottom: 2px solid var(--cms-accent);
+  /* Two rows below 1041px (the save status wraps to its own line), so the bar
+     must be allowed to grow rather than clip its second row. */
+  row-gap: 0;
 }
 @supports (backdrop-filter: blur(1px)) {
   .cms-topbar {
@@ -149,11 +228,11 @@ body:has([data-cms-dashboard]) {
   place-items: center;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--cms-radius);
   background: var(--cms-accent-soft);
   border: 1px solid var(--cms-border);
   color: var(--cms-accent);
-  font: 700 0.6875rem/1 var(--font-mono, monospace);
+  font: 700 0.6875rem/1 var(--font-mono);
   letter-spacing: 0.08em;
 }
 .cms-brand strong,
@@ -161,27 +240,29 @@ body:has([data-cms-dashboard]) {
   display: block;
 }
 .cms-brand strong {
-  font: 600 0.875rem/1.2 var(--font-body, system-ui, sans-serif);
+  font: 600 0.875rem/1.2 var(--font-body);
   letter-spacing: -0.012em;
 }
 .cms-brand small {
   margin-top: 2px;
   color: var(--cms-muted);
-  font: 400 0.75rem/1.2 var(--font-body, system-ui, sans-serif);
+  font: 400 0.75rem/1.2 var(--font-body);
 }
 
 .cms-save-status {
-  justify-self: center;
+  grid-column: 2;
+  justify-self: start;
   display: inline-flex;
   align-items: center;
   gap: 9px;
   color: var(--cms-muted);
-  font: 450 0.8125rem/1 var(--font-body, system-ui, sans-serif);
+  font: 450 0.8125rem/1 var(--font-body);
 }
 .cms-save-status span {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  /* A drafting dot, not a notification pip: square like the sheet. */
+  border-radius: 2px;
   background: var(--cms-success);
   box-shadow: 0 0 0 4px var(--cms-success-soft);
 }
@@ -197,6 +278,7 @@ body:has([data-cms-dashboard]) {
 
 .cms-topbar__actions {
   justify-self: end;
+  grid-column: 3;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -209,11 +291,12 @@ body:has([data-cms-dashboard]) {
   min-height: 32px;
   padding: 0 11px;
   border: 1px solid var(--cms-border);
-  border-radius: 999px;
+  /* Squared per DESIGN.md ("drafting-sheet, not pill"). */
+  border-radius: var(--cms-radius-sm);
   background: transparent;
   color: var(--cms-muted);
   cursor: pointer;
-  font: 500 0.75rem/1 var(--font-body, system-ui, sans-serif);
+  font: 500 0.75rem/1 var(--font-body);
   transition:
     background 0.15s var(--cms-ease),
     color 0.15s var(--cms-ease),
@@ -253,9 +336,10 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-sidebar__eyebrow {
   padding: 0 10px;
-  color: var(--cms-muted);
-  font: 600 0.75rem/1.2 var(--font-body, system-ui, sans-serif);
-  letter-spacing: 0.02em;
+  color: var(--cms-accent);
+  font: 500 0.6875rem/1.2 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .cms-post-list {
@@ -297,7 +381,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   overflow: hidden;
 }
 .cms-post-list strong {
-  font: 600 0.8125rem/1.3 var(--font-body, system-ui, sans-serif);
+  font: 600 0.8125rem/1.3 var(--font-body);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -305,7 +389,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-post-list small {
   margin-top: 4px;
   color: var(--cms-faint);
-  font: 400 0.75rem/1.3 var(--font-body, system-ui, sans-serif);
+  font: 400 0.75rem/1.3 var(--font-body);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -314,7 +398,11 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   flex: none;
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  /* Square status mark, matching the save-status dot and the sheet. A 7px
+     circle is too small to carry a draft/ready/live distinction on its own
+     anyway — the adjacent text is the real channel, and only the unsent
+     "hollow ring" modifier is doing non-colour work. */
+  border-radius: 1px;
   background: var(--cms-faint);
   box-shadow: 0 0 0 3px var(--cms-surface);
 }
@@ -351,7 +439,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   background: transparent;
   color: var(--cms-muted);
   cursor: pointer;
-  font: 500 0.8125rem/1 var(--font-body, system-ui, sans-serif);
+  font: 500 0.8125rem/1 var(--font-body);
   transition:
     border-color 0.15s var(--cms-ease),
     color 0.15s var(--cms-ease),
@@ -372,13 +460,13 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   display: block;
   margin-bottom: 7px;
   color: var(--cms-muted);
-  font: 600 0.75rem/1.2 var(--font-body, system-ui, sans-serif);
+  font: 600 0.75rem/1.2 var(--font-body);
 }
 .cms-new-post__form small {
   display: block;
   margin-top: 8px;
   color: var(--cms-faint);
-  font: 400 0.75rem/1.45 var(--font-body, system-ui, sans-serif);
+  font: 400 0.75rem/1.45 var(--font-body);
 }
 .cms-new-post__row {
   display: flex;
@@ -395,12 +483,15 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 
 /* ---------- Main column ---------- */
 .cms-main {
+  /* margin-left clears the fixed 260px sidebar. It must stay `margin-left`,
+     not `margin-inline` — the shorthand zeroes both sides and slides the whole
+     column under the sidebar. */
   margin-left: 260px;
-  /* The editor column is centered in the space right of the sidebar and
-     capped at a comfortable reading width — full-bleed text fields stretch
-     past the eye's comfortable line length on wide monitors. */
-  max-width: 1080px;
-  margin-inline: auto 0;
+  /* The editor column is left-hung beside the sidebar and capped at
+     --cms-column, which is also the card's width. One number, so the card
+     fills it and the fields fill the card — no dead space to the right, and no
+     second cap to keep in sync. */
+  max-width: var(--cms-column);
   padding: 34px clamp(22px, 4vw, 56px) 120px;
 }
 .cms-mobile-workspace {
@@ -413,7 +504,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-mobile-workspace label > span {
   color: var(--cms-muted);
-  font: 600 0.6875rem/1.2 var(--font-body, system-ui, sans-serif);
+  font: 600 0.6875rem/1.2 var(--font-body);
 }
 .cms-mobile-workspace select {
   width: 100%;
@@ -424,7 +515,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   border-radius: var(--cms-radius-sm);
   background: var(--cms-surface);
   color: var(--cms-ink);
-  font: 500 0.8125rem/1 var(--font-body, system-ui, sans-serif);
+  font: 500 0.8125rem/1 var(--font-body);
   text-overflow: ellipsis;
 }
 
@@ -436,14 +527,31 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   gap: 28px;
   margin-bottom: 24px;
 }
+/* The repo filename, demoted below the title it belongs to. */
+/* A dimension line under the title block, with the filename hung off it — the
+   drawing-sheet idiom. It was a 12px mono string floating above the h1, which
+   read as an eyebrow and put a filename above the article's own name. */
 .cms-kicker {
+  position: relative;
+  width: min(100%, 46ch);
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--cms-border-strong);
   color: var(--cms-faint);
-  font: 500 0.75rem/1.3 var(--font-mono, monospace);
-  letter-spacing: 0.02em;
+  font: 500 0.6875rem/1.3 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+.cms-kicker::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 28px;
+  border-top: 2px solid var(--cms-accent);
 }
 .cms-heading h1 {
   margin: 6px 0 0;
-  font-family: var(--font-display, system-ui, sans-serif);
+  font-family: var(--font-display);
   font-weight: 700;
   font-stretch: 110%;
   font-size: clamp(1.5rem, 2.6vw, 2rem);
@@ -454,7 +562,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-heading p {
   margin: 6px 0 0;
   color: var(--cms-muted);
-  font: 400 0.875rem/1.5 var(--font-body, system-ui, sans-serif);
+  font: 400 0.875rem/1.5 var(--font-body);
   max-width: 56ch;
 }
 .cms-heading__actions {
@@ -475,7 +583,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   border: 1px solid var(--cms-border);
   border-radius: var(--cms-radius-sm);
   color: var(--cms-muted);
-  font: 400 0.75rem/1.3 var(--font-body, system-ui, sans-serif);
+  font: 400 0.75rem/1.3 var(--font-body);
 }
 .cms-connecting-hint svg {
   flex: none;
@@ -507,11 +615,11 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-local-banner__text strong {
   color: var(--cms-ink);
-  font: 500 0.8125rem/1.5 var(--font-body, system-ui, sans-serif);
+  font: 500 0.8125rem/1.5 var(--font-body);
 }
 .cms-local-banner__text small {
   color: var(--cms-muted);
-  font: 400 0.6875rem/1.4 var(--font-mono, monospace);
+  font: 400 0.6875rem/1.4 var(--font-mono);
 }
 
 /* ---------- Empty state (zero posts, github mode — #46) ---------- */
@@ -532,14 +640,14 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-empty-state h2 {
   margin: 0;
-  font: 700 1.125rem/1.2 var(--font-body, system-ui, sans-serif);
+  font: 700 1.125rem/1.2 var(--font-body);
   letter-spacing: -0.01em;
 }
 .cms-empty-state p {
   margin: 0;
   max-width: 44ch;
   color: var(--cms-muted);
-  font: 400 0.8125rem/1.6 var(--font-body, system-ui, sans-serif);
+  font: 400 0.8125rem/1.6 var(--font-body);
 }
 .cms-empty-state button + button,
 .cms-empty-state > :last-child {
@@ -556,7 +664,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   padding: 11px 14px;
   border: 1px solid;
   border-radius: var(--cms-radius-sm);
-  font: 400 0.8125rem/1.5 var(--font-body, system-ui, sans-serif);
+  font: 400 0.8125rem/1.5 var(--font-body);
 }
 .cms-notice {
   border-color: var(--cms-success);
@@ -592,7 +700,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   height: 26px;
   margin-left: auto;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--cms-radius-sm);
   background: transparent;
   color: var(--cms-muted);
   cursor: pointer;
@@ -609,16 +717,25 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 
 /* ---------- Workspace card + section tabs ---------- */
+/* The editor card shares the heading's box exactly. It was `max-width: 960px;
+   margin-inline: auto` inside a 1080px column, which centred it and started it
+   60px right of the title — then every nested layer indented again (tabs +22,
+   writing surface +48, fields +48 more), producing seven distinct left edges
+   and a staircase. One left rule now: the card's left edge IS the heading's
+   left edge, and one inset token governs every row inside it. */
 .cms-editor-card {
   min-width: 0;
-  max-width: 960px;
-  margin-inline: auto;
+  margin-inline: 0;
   overflow: hidden;
   border-radius: var(--cms-radius);
 }
+/* Flat at rest (the Flat Sheet Rule). The card used to carry a resting shadow
+   because its 1px border measured 1.17:1 against the page and was invisible
+   without it; the border is now a real hairline, so the shadow is not load
+   bearing. Depth stays a response to state. */
 .cms-editor-card.cms-ui-card {
-  border-color: var(--cms-border);
-  box-shadow: var(--cms-shadow-sm);
+  border-color: var(--cms-border-strong);
+  box-shadow: none;
 }
 
 .cms-section-tabs {
@@ -627,7 +744,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   align-items: center;
   gap: 26px;
   min-height: 54px;
-  padding: 0 22px;
+  padding: 0 var(--cms-card-inset);
   border-bottom: 1px solid var(--cms-border);
   background: var(--cms-surface);
 }
@@ -641,7 +758,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   background: transparent;
   color: var(--cms-muted);
   cursor: pointer;
-  font: 600 0.875rem/1 var(--font-body, system-ui, sans-serif);
+  font: 600 0.875rem/1 var(--font-body);
   transition: color 0.15s var(--cms-ease);
 }
 .cms-section-tabs button:hover {
@@ -673,7 +790,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   justify-content: space-between;
   align-items: center;
   gap: 14px;
-  padding: 12px 22px;
+  padding: 12px var(--cms-card-inset);
   border-bottom: 1px solid var(--cms-border);
   background: var(--cms-surface-2);
 }
@@ -685,7 +802,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   gap: 2px;
   padding: 3px;
   border: 1px solid var(--cms-border);
-  border-radius: 9px;
+  border-radius: var(--cms-radius);
   background: var(--cms-surface-3);
 }
 .cms-segmented button {
@@ -693,11 +810,11 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   z-index: 1;
   padding: 6px 13px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--cms-radius-sm);
   background: transparent;
   color: var(--cms-muted);
   cursor: pointer;
-  font: 500 0.8125rem/1 var(--font-body, system-ui, sans-serif);
+  font: 500 0.8125rem/1 var(--font-body);
   white-space: nowrap;
   transition: color 0.15s var(--cms-ease);
 }
@@ -710,30 +827,31 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   top: 3px;
   bottom: 3px;
   left: 3px;
-  border: 1px solid var(--cms-border);
-  border-radius: 6px;
+  border: 1px solid var(--cms-border-strong);
+  border-radius: var(--cms-radius-sm);
   background: var(--cms-surface);
-  box-shadow: var(--cms-shadow-sm);
   transition:
     left 260ms var(--cms-ease),
     width 260ms var(--cms-ease);
 }
 
 /* ---------- Writing surface ---------- */
+/* The writing surface hangs off the card's left edge on the same inset as the
+   tabs and the toolbar, so a tab label, the mode toggle, and a field label all
+   land on one vertical line. It carries NO max-width of its own: the column
+   above is the single width, so there is nothing to leave dead beside it. The
+   prose measure is still bounded — the editor's own content caps at 66ch. */
 .cms-writing-surface,
 .cms-markdown-panel {
-  max-width: 820px;
-  /* Center the writing surface inside the editor card: with the card wider
-     than the surface, the content column reads centered, not left-hugging. */
-  margin-inline: auto;
-}
-.cms-writing-surface {
   box-sizing: border-box;
   width: 100%;
-  padding: clamp(26px, 3.5vw, 44px) clamp(20px, 3.5vw, 48px) 52px;
+  margin-inline: 0;
+}
+.cms-writing-surface {
+  padding: clamp(26px, 3.5vw, 44px) var(--cms-card-inset) 52px;
 }
 .cms-markdown-panel {
-  padding: clamp(26px, 4vw, 44px) clamp(20px, 4vw, 56px) 52px;
+  padding: clamp(26px, 4vw, 44px) var(--cms-card-inset) 52px;
 }
 
 .cms-field-group + .cms-field-group {
@@ -743,18 +861,29 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   margin-top: 0;
 }
 
+/* Per DESIGN.md's label spec: mono, 500, tracked, uppercase — the drafting
+   sheet's field voice. The hint beside it drops back to the body face, because
+   it is a sentence explaining the field, not a spec key. */
 .cms-field-label {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
   margin: 18px 0 8px;
+  color: var(--cms-ink);
+  font: 500 0.75rem/1.4 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.cms-field-label > span {
   color: var(--cms-muted);
-  font: 600 0.8125rem/1.4 var(--font-body, system-ui, sans-serif);
+  font: 400 0.8125rem/1.5 var(--font-body);
+  letter-spacing: 0;
+  text-transform: none;
 }
 .cms-field-label span {
   color: var(--cms-faint);
-  font: 400 0.75rem/1.4 var(--font-body, system-ui, sans-serif);
+  font: 400 0.75rem/1.4 var(--font-body);
 }
 .cms-writing-surface .cms-field-label {
   margin-top: 14px;
@@ -766,11 +895,11 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   width: 100%;
   min-height: 38px;
   padding: 8px 11px;
-  border: 1px solid var(--cms-border-strong);
+  border: 1px solid var(--cms-control-border);
   border-radius: var(--cms-radius-sm);
   background: var(--cms-surface);
   color: var(--cms-ink);
-  font: 450 0.9375rem/1.45 var(--font-body, system-ui, sans-serif);
+  font: 450 0.9375rem/1.45 var(--font-body);
   outline: none;
   transition:
     border-color 0.15s var(--cms-ease),
@@ -787,9 +916,9 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-dashboard .cms-title-input {
   min-height: 0;
   padding: 13px 15px;
-  border-radius: 10px;
+  border-radius: var(--cms-radius);
   border-color: var(--cms-border);
-  font-family: var(--font-display, system-ui, sans-serif);
+  font-family: var(--font-display);
   font-weight: 700;
   font-stretch: 105%;
   font-size: clamp(1.25rem, 2vw, 1.5rem);
@@ -807,11 +936,11 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   width: 100%;
   min-height: 84px;
   padding: 11px 13px;
-  border: 1px solid var(--cms-border-strong);
+  border: 1px solid var(--cms-control-border);
   border-radius: var(--cms-radius-sm);
   background: var(--cms-surface);
   color: var(--cms-ink);
-  font: 450 0.9375rem/1.55 var(--font-body, system-ui, sans-serif);
+  font: 450 0.9375rem/1.55 var(--font-body);
   resize: vertical;
   outline: none;
   transition:
@@ -826,14 +955,14 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-field-error {
   margin: 8px 0 0;
   color: var(--cms-danger);
-  font: 450 0.8125rem/1.5 var(--font-body, system-ui, sans-serif);
+  font: 450 0.8125rem/1.5 var(--font-body);
 }
 
 /* ---------- Cover ---------- */
 .cms-cover {
   margin: 0;
   border: 1px solid var(--cms-border);
-  border-radius: 10px;
+  border-radius: var(--cms-radius);
   background: var(--cms-surface-2);
   overflow: hidden;
 }
@@ -848,7 +977,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   place-items: center;
   min-height: 160px;
   color: var(--cms-faint);
-  font: 450 0.875rem/1.4 var(--font-body, system-ui, sans-serif);
+  font: 450 0.875rem/1.4 var(--font-body);
 }
 .cms-cover figcaption {
   display: flex;
@@ -856,7 +985,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   gap: 14px;
   padding: 10px 13px;
   color: var(--cms-muted);
-  font: 500 0.75rem/1.4 var(--font-body, system-ui, sans-serif);
+  font: 500 0.75rem/1.4 var(--font-body);
 }
 .cms-cover__action {
   display: grid;
@@ -865,17 +994,17 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-cover__action small {
   color: var(--cms-faint);
-  font: 400 0.75rem/1.45 var(--font-body, system-ui, sans-serif);
+  font: 400 0.75rem/1.45 var(--font-body);
   text-align: right;
 }
 .cms-cover figcaption button {
   padding: 0;
   border: 0;
-  border-bottom: 1px solid var(--cms-accent);
+  border-bottom: 1px solid var(--cms-signal-text);
   background: transparent;
-  color: var(--cms-accent);
+  color: var(--cms-signal-text);
   cursor: pointer;
-  font: 600 0.8125rem/1.4 var(--font-body, system-ui, sans-serif);
+  font: 600 0.8125rem/1.4 var(--font-body);
 }
 .cms-cover figcaption button:disabled {
   color: var(--cms-faint);
@@ -894,10 +1023,10 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   min-height: 560px;
   padding: 18px 20px;
   border: 1px solid var(--cms-border);
-  border-radius: 10px;
+  border-radius: var(--cms-radius);
   background: var(--cms-code-bg);
   color: var(--cms-code-ink);
-  font: 400 0.8125rem/1.75 var(--font-mono, monospace);
+  font: 400 0.8125rem/1.75 var(--font-mono);
   resize: vertical;
   outline: none;
   transition:
@@ -911,23 +1040,23 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-source-note {
   margin: 12px 0 0;
   color: var(--cms-faint);
-  font: 400 0.8125rem/1.6 var(--font-body, system-ui, sans-serif);
+  font: 400 0.8125rem/1.6 var(--font-body);
 }
 .cms-source-note code {
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: var(--cms-radius-sm);
   background: var(--cms-surface-3);
   color: var(--cms-muted);
-  font: 500 0.75rem/1.4 var(--font-mono, monospace);
+  font: 500 0.75rem/1.4 var(--font-mono);
 }
 .cms-markdown {
   min-height: 380px;
   margin: 0;
   padding: 22px;
-  border-radius: 10px;
+  border-radius: var(--cms-radius);
   background: var(--cms-code-bg);
   color: var(--cms-code-ink);
-  font: 400 0.8125rem/1.75 var(--font-mono, monospace);
+  font: 400 0.8125rem/1.75 var(--font-mono);
   white-space: pre-wrap;
   overflow: auto;
 }
@@ -935,18 +1064,18 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 /* ---------- Puboolish tab: status + slug + deploy ---------- */
 .cms-deploy-line small {
   color: var(--cms-muted);
-  font: 400 0.8125rem/1.5 var(--font-body, system-ui, sans-serif);
+  font: 400 0.8125rem/1.5 var(--font-body);
 }
 
 .cms-status-select {
   width: 100%;
   min-height: 36px;
   padding: 0 30px 0 11px;
-  border: 1px solid var(--cms-border-strong);
+  border: 1px solid var(--cms-control-border);
   border-radius: var(--cms-radius-sm);
   background: var(--cms-surface);
   color: var(--cms-ink);
-  font: 500 0.875rem/1 var(--font-body, system-ui, sans-serif);
+  font: 500 0.875rem/1 var(--font-body);
 }
 
 .cms-pr-link {
@@ -955,9 +1084,10 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   gap: 5px;
   width: fit-content;
   margin-top: 16px;
-  border-bottom: 1px solid var(--cms-accent);
-  color: var(--cms-accent);
-  font: 600 0.8125rem/1.4 var(--font-body, system-ui, sans-serif);
+  border-bottom: 1px solid var(--cms-signal-text);
+  color: var(--cms-signal-text);
+  font: 600 0.75rem/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
   text-decoration: none;
 }
 .cms-pr-link:hover {
@@ -969,11 +1099,11 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   display: flex;
   align-items: center;
   min-height: 36px;
-  border: 1px solid var(--cms-border-strong);
+  border: 1px solid var(--cms-control-border);
   border-radius: var(--cms-radius-sm);
   background: var(--cms-surface);
   color: var(--cms-faint);
-  font: 400 0.8125rem/1 var(--font-mono, monospace);
+  font: 400 0.8125rem/1 var(--font-mono);
 }
 .cms-slug > span {
   padding-left: 11px;
@@ -985,7 +1115,15 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   background: transparent;
   box-shadow: none;
   color: var(--cms-ink);
-  font: 400 0.8125rem/1 var(--font-mono, monospace);
+  font: 400 0.8125rem/1 var(--font-mono);
+}
+/* The nested input zeroes its own border and shadow, and lands later in the
+   file than `.cms-ui-input:focus` at equal specificity — so it used to win and
+   the Slug URL field produced NO visible focus response at all. The focus ring
+   is restored here, where the border was removed. */
+.cms-slug:focus-within {
+  border-color: var(--cms-accent);
+  box-shadow: var(--cms-accent-ring);
 }
 
 .cms-deploy-line strong,
@@ -994,16 +1132,19 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-deploy-line strong {
   color: var(--cms-ink);
-  font: 600 0.875rem/1.3 var(--font-body, system-ui, sans-serif);
+  font: 600 0.875rem/1.3 var(--font-body);
 }
 .cms-deploy-line small {
   color: var(--cms-muted);
-  font: 400 0.8125rem/1.5 var(--font-body, system-ui, sans-serif);
+  font: 400 0.8125rem/1.5 var(--font-body);
   margin-top: 3px;
 }
 
 /* ---------- Buttons ---------- */
-.cms-ui-button {
+/* (0,2,0) on purpose. The bare `.cms-dashboard button` reset above sits at
+   (0,1,1) and would otherwise win the family, which is how the CTA was
+   rendering in Hanken Groteske while this rule asked for JetBrains Mono. */
+.cms-dashboard .cms-ui-button {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -1013,7 +1154,10 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   border: 1px solid transparent;
   border-radius: var(--cms-radius-sm);
   cursor: pointer;
-  font: 600 0.8125rem/1 var(--font-body, system-ui, sans-serif);
+  /* Mono, tracked, uppercase — the control voice from DESIGN.md. */
+  font: 600 0.6875rem/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   transition:
     background 0.15s var(--cms-ease),
     border-color 0.15s var(--cms-ease),
@@ -1037,12 +1181,16 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   height: 15px;
 }
 
+/* The primary action is safety orange (DESIGN.md: "The Orange Is a Button
+   Rule"). signal-deep rather than bright #e8551e, because the near-white label
+   needs 4.5:1 and bright orange only reaches 3.50:1. Bronze is deliberately
+   NOT the CTA colour here — it is the pen, used for chrome and focus. */
 .cms-ui-button--default {
-  background: var(--cms-accent);
-  color: var(--cms-on-accent);
+  background: var(--cms-signal);
+  color: var(--cms-on-signal);
 }
 .cms-ui-button--default:hover:not(:disabled) {
-  background: var(--cms-accent-strong);
+  background: var(--cms-signal-strong);
 }
 .cms-ui-button--secondary {
   background: var(--cms-surface-3);
@@ -1081,7 +1229,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   min-height: auto;
   padding: 0;
   border: 0;
-  color: var(--cms-accent);
+  color: var(--cms-signal-text);
   background: transparent;
 }
 .cms-ui-button--sm {
@@ -1110,8 +1258,8 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   min-height: 22px;
   padding: 0 9px;
   border: 1px solid transparent;
-  border-radius: 999px;
-  font: 600 0.6875rem/1 var(--font-body, system-ui, sans-serif);
+  border-radius: var(--cms-radius-sm);
+  font: 600 0.6875rem/1 var(--font-mono);
   letter-spacing: 0.01em;
   white-space: nowrap;
 }
@@ -1153,7 +1301,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-wysiwyg {
   margin-top: 0;
   border: 1px solid var(--cms-border);
-  border-radius: 10px;
+  border-radius: var(--cms-radius);
   background: var(--cms-surface);
   overflow: hidden;
 }
@@ -1193,7 +1341,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   min-height: 360px;
   padding: 18px 22px 26px;
   color: var(--cms-ink);
-  font: 450 1rem/1.72 var(--font-body, system-ui, sans-serif);
+  font: 450 1rem/1.72 var(--font-body);
 }
 .cms-wysiwyg__content > * {
   max-width: 66ch;
@@ -1205,7 +1353,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-wysiwyg__content h2,
 .cms-wysiwyg__content h3 {
   color: var(--cms-ink);
-  font-family: var(--font-body, system-ui, sans-serif);
+  font-family: var(--font-body);
   letter-spacing: -0.015em;
 }
 .cms-wysiwyg__content h2 {
@@ -1219,7 +1367,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   line-height: 1.3;
 }
 .cms-wysiwyg__content a {
-  color: var(--cms-accent);
+  color: var(--cms-signal-text);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -1231,17 +1379,17 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-wysiwyg__content code {
   padding: 2px 5px;
-  border-radius: 4px;
+  border-radius: var(--cms-radius-sm);
   background: var(--cms-surface-3);
   color: var(--cms-code-ink);
-  font: 500 0.875em/1.4 var(--font-mono, monospace);
+  font: 500 0.875em/1.4 var(--font-mono);
 }
 .cms-wysiwyg__content pre {
   padding: 14px 16px;
-  border-radius: 8px;
+  border-radius: var(--cms-radius);
   background: var(--cms-code-bg);
   color: var(--cms-code-ink);
-  font: 400 0.8125rem/1.7 var(--font-mono, monospace);
+  font: 400 0.8125rem/1.7 var(--font-mono);
   overflow: auto;
 }
 .cms-wysiwyg__content pre code {
@@ -1250,7 +1398,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-wysiwyg__content img {
   max-width: 100%;
-  border-radius: 8px;
+  border-radius: var(--cms-radius);
 }
 
 /* ---------- Modals ---------- */
@@ -1280,7 +1428,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   max-height: min(760px, 100vh - 36px);
   overflow: auto;
   border: 1px solid var(--cms-border);
-  border-radius: 14px;
+  border-radius: var(--cms-radius-lg);
   background: var(--cms-surface);
   box-shadow: var(--cms-shadow-lg);
   animation: cms-modal-in 0.22s var(--cms-ease);
@@ -1308,7 +1456,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-modal h2 {
   margin: 14px 0 12px;
   color: var(--cms-ink);
-  font-family: var(--font-display, system-ui, sans-serif);
+  font-family: var(--font-display);
   font-weight: 700;
   font-stretch: 108%;
   font-size: clamp(1.5rem, 3.2vw, 2.125rem);
@@ -1318,14 +1466,14 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-modal__body > p {
   color: var(--cms-muted);
-  font: 400 0.9375rem/1.65 var(--font-body, system-ui, sans-serif);
+  font: 400 0.9375rem/1.65 var(--font-body);
 }
 .cms-modal__body code {
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: var(--cms-radius-sm);
   background: var(--cms-surface-3);
   color: var(--cms-muted);
-  font: 500 0.8125rem/1.4 var(--font-mono, monospace);
+  font: 500 0.8125rem/1.4 var(--font-mono);
 }
 .cms-modal-close {
   position: absolute;
@@ -1338,13 +1486,27 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   width: min(520px, 100%);
 }
 .cms-merge-confirm__desc {
-  margin: 0 0 24px;
+  margin: 0 0 14px;
   color: var(--cms-muted);
-  font: 400 0.9375rem/1.65 var(--font-body, system-ui, sans-serif);
+  font: 400 0.9375rem/1.65 var(--font-body);
 }
 .cms-merge-confirm__desc strong,
 .cms-merge-confirm__desc code {
   color: var(--cms-ink);
+}
+/* "Tidak bisa dibatalkan" is the highest-value sentence at the moment of no
+   return, so it gets its own banded surface rather than another grey line. */
+.cms-merge-confirm__warn {
+  margin: 0 0 20px;
+  padding: 11px 13px;
+  border: 1px solid var(--cms-warning);
+  border-radius: var(--cms-radius-sm);
+  background: var(--cms-warning-soft);
+  color: var(--cms-muted);
+  font: 400 0.875rem/1.6 var(--font-body);
+}
+.cms-merge-confirm__warn strong {
+  color: var(--cms-warning);
 }
 .cms-merge-confirm__actions {
   display: flex;
@@ -1366,11 +1528,11 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-rename-link {
   padding: 0;
   border: 0;
-  border-bottom: 1px solid var(--cms-accent);
+  border-bottom: 1px solid var(--cms-signal-text);
   background: transparent;
-  color: var(--cms-accent);
+  color: var(--cms-signal-text);
   cursor: pointer;
-  font: 600 0.6875rem/1.4 var(--font-body, system-ui, sans-serif);
+  font: 600 0.6875rem/1.4 var(--font-body);
 }
 .cms-rename-link:hover {
   color: var(--cms-accent-strong);
@@ -1382,14 +1544,14 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-rename-modal__desc {
   margin: 0 0 18px;
   color: var(--cms-muted);
-  font: 400 0.9375rem/1.65 var(--font-body, system-ui, sans-serif);
+  font: 400 0.9375rem/1.65 var(--font-body);
 }
 .cms-rename-modal__desc code {
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: var(--cms-radius-sm);
   background: var(--cms-surface-3);
   color: var(--cms-muted);
-  font: 500 0.8125rem/1.4 var(--font-mono, monospace);
+  font: 500 0.8125rem/1.4 var(--font-mono);
 }
 .cms-rename-modal__field {
   display: grid;
@@ -1397,7 +1559,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 .cms-rename-modal__field label {
   color: var(--cms-muted);
-  font: 600 0.75rem/1.2 var(--font-body, system-ui, sans-serif);
+  font: 600 0.75rem/1.2 var(--font-body);
 }
 .cms-rename-modal__actions {
   display: flex;
@@ -1421,7 +1583,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-media-modal__intro {
   margin: 6px 0 20px;
   color: var(--cms-muted);
-  font: 400 0.875rem/1.6 var(--font-body, system-ui, sans-serif);
+  font: 400 0.875rem/1.6 var(--font-body);
 }
 .cms-upload-zone {
   display: flex;
@@ -1431,7 +1593,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   margin-bottom: 16px;
   padding: 14px;
   border: 1px dashed var(--cms-border-strong);
-  border-radius: 10px;
+  border-radius: var(--cms-radius);
   background: var(--cms-surface-2);
   transition:
     border-color 0.15s var(--cms-ease),
@@ -1455,7 +1617,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   align-items: center;
   gap: 8px;
   color: var(--cms-faint);
-  font: 450 0.8125rem/1.4 var(--font-body, system-ui, sans-serif);
+  font: 450 0.8125rem/1.4 var(--font-body);
 }
 .cms-upload-zone__hint svg {
   width: 16px;
@@ -1479,17 +1641,17 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-media-uploads h3 {
   margin: 0 0 12px;
   color: var(--cms-ink);
-  font: 600 0.9375rem/1.3 var(--font-body, system-ui, sans-serif);
+  font: 600 0.9375rem/1.3 var(--font-body);
   letter-spacing: -0.01em;
 }
 .cms-media-uploads h3 small {
   color: var(--cms-faint);
-  font: 400 0.75rem/1.3 var(--font-body, system-ui, sans-serif);
+  font: 400 0.75rem/1.3 var(--font-body);
 }
 
 .cms-media-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   gap: 10px;
 }
 .cms-media-option {
@@ -1498,7 +1660,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   min-width: 0;
   padding: 7px;
   border: 1px solid var(--cms-border);
-  border-radius: 9px;
+  border-radius: var(--cms-radius);
   background: var(--cms-surface);
   color: var(--cms-ink);
   text-align: left;
@@ -1521,7 +1683,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   width: 100%;
   aspect-ratio: 1.5;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--cms-radius-sm);
   background: var(--cms-surface-3);
 }
 .cms-media-option.is-broken {
@@ -1539,24 +1701,24 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   top: 13px;
   left: 13px;
   padding: 2px 7px;
-  border-radius: 5px;
+  border-radius: var(--cms-radius-sm);
   background: var(--cms-danger-soft);
   border: 1px solid var(--cms-danger);
   color: var(--cms-danger);
-  font: 600 0.625rem/1.4 var(--font-body, system-ui, sans-serif);
+  font: 600 0.625rem/1.4 var(--font-body);
 }
 .cms-media-option {
   position: relative;
 }
 .cms-media-option strong {
-  font: 600 0.75rem/1.25 var(--font-body, system-ui, sans-serif);
+  font: 600 0.75rem/1.25 var(--font-body);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .cms-media-option small {
   color: var(--cms-faint);
-  font: 500 0.625rem/1.35 var(--font-mono, monospace);
+  font: 500 0.625rem/1.35 var(--font-mono);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1570,11 +1732,11 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   min-height: 26px;
   padding: 0 8px;
   border: 1px solid var(--cms-border);
-  border-radius: 6px;
+  border-radius: var(--cms-radius-sm);
   background: var(--cms-surface-2);
   color: var(--cms-muted);
   cursor: pointer;
-  font: 500 0.6875rem/1 var(--font-body, system-ui, sans-serif);
+  font: 500 0.6875rem/1 var(--font-body);
   transition:
     background 0.15s var(--cms-ease),
     color 0.15s var(--cms-ease),
@@ -1593,13 +1755,13 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   margin: 0;
   padding: 24px 0;
   color: var(--cms-faint);
-  font: 400 0.875rem/1.5 var(--font-body, system-ui, sans-serif);
+  font: 400 0.875rem/1.5 var(--font-body);
 }
 
 .cms-media-note {
   display: block;
   color: var(--cms-faint);
-  font: 400 0.75rem/1.5 var(--font-body, system-ui, sans-serif);
+  font: 400 0.75rem/1.5 var(--font-body);
 }
 .cms-media-uploads .cms-media-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1636,7 +1798,22 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-media-option:focus-visible,
 .cms-media-option__actions button:focus-visible,
 .cms-notice button:focus-visible,
-.cms-error button:focus-visible {
+.cms-error button:focus-visible,
+/* The only control that unblocks a locked post — it was absent from this list
+   and declared no outline of its own, so it was invisible to keyboard focus. */
+.cms-rename-link:focus-visible,
+/* The MDX toolbar's 8 icon buttons and the editor body carried no author focus
+   style: confirmed `:focus-visible` with outline:none and box-shadow:none. */
+.cms-dashboard .mdxeditor-toolbar button:focus-visible,
+.cms-dashboard .mdxeditor-toolbar [role="combobox"]:focus-visible,
+/* The editor body IS the focusable control, so it needs a ring of its own. The
+   library ships `._contentEditable_*:focus { outline: none }` at (0,2,0) and
+   its stylesheet loads after this one, so a bare
+   `.cms-wysiwyg__content:focus-visible` loses on source order and the editor
+   ends up with no visible focus at all. Raising the specificity back is the
+   fix — not !important. */
+.cms-wysiwyg .cms-wysiwyg__content:focus-visible,
+.cms-wysiwyg .mdxeditor-root-contenteditable:focus-within {
   outline: 2px solid var(--cms-accent);
   outline-offset: 2px;
 }
@@ -1646,8 +1823,18 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   .cms-topbar {
     grid-template-columns: 1fr auto;
   }
+  .cms-topbar__actions {
+    grid-column: 2;
+  }
+  /* The save/publish line used to be `display: none` here. It is the page's
+     only aria-live region, so at 1024px, on every phone, and at 200% browser
+     zoom on any screen, the owner lost both the visible status AND every
+     announcement of it. It now wraps to its own full-width row. */
   .cms-save-status {
-    display: none;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+    padding-block: 0 8px;
   }
 }
 
@@ -1673,7 +1860,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
     padding: 10px 15px 11px;
     border-block: 1px solid var(--cms-border);
     background: var(--cms-surface);
-    font: 500 0.6875rem/1.4 var(--font-body, system-ui, sans-serif);
+    font: 500 0.6875rem/1.4 var(--font-body);
   }
   .cms-mobile-workspace .cms-new-post__form {
     grid-column: 1 / -1;

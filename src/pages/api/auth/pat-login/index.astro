@@ -14,6 +14,10 @@ const safeNext = "/admin";
 const secure = Astro.url.protocol === "https:";
 const requestMethod = Astro.request.method;
 
+// Module-scope so the deployment warning is logged once per isolate, not on
+// every failed attempt.
+let legacyWarned = false;
+
 if (requestMethod !== "POST") {
   return new Response("Method Not Allowed", {
     status: 405,
@@ -37,6 +41,23 @@ const submittedUsername =
 const submittedPassword =
   typeof form?.get("password") === "string" ? (form.get("password") as string) : null;
 
+// A half-configured pair is a deployment mistake, not a wrong password.
+// The username/password scheme is all-or-nothing — `configuredOwnerCredentials`
+// returns null unless BOTH are set — and when it falls back to the legacy secret
+// the submitted password is silently compared against CMS_OWNER_SECRET instead.
+// The owner then types their real password, gets a flat 401, and has no way to
+// tell that the fix is `wrangler secret put`, not a re-typed password.
+const usingLegacySecret = !ownerCredentials && Boolean(legacyOwnerSecret);
+if (usingLegacySecret && !legacyWarned) {
+  legacyWarned = true;
+  console.warn(
+    "[cms-auth] CMS_OWNER_USERNAME / CMS_OWNER_PASSWORD are not both set on this Worker, " +
+      "so the legacy CMS_OWNER_SECRET scheme is active and the submitted password is " +
+      "compared against that secret instead. Fix: `wrangler secret put CMS_OWNER_USERNAME` " +
+      "and `wrangler secret put CMS_OWNER_PASSWORD` (no redeploy needed).",
+  );
+}
+
 let authenticated = false;
 if (ownerCredentials && submittedUsername && submittedPassword) {
   authenticated =
@@ -50,10 +71,17 @@ if (ownerCredentials && submittedUsername && submittedPassword) {
 }
 
 if (!authenticated) {
-  return new Response("Username atau password salah. Coba lagi.", {
-    status: 401,
-    headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
-  });
+  return new Response(
+    usingLegacySecret
+      ? "Username atau password salah. Catatan pengelola: Worker ini masih memakai " +
+        "skema kunci tunggal (CMS_OWNER_SECRET), jadi password yang diketik dibandingkan " +
+        "dengan kunci itu — bukan dengan CMS_OWNER_PASSWORD."
+      : "Username atau password salah. Coba lagi.",
+    {
+      status: 401,
+      headers: { "Cache-Control": "no-store", "Content-Type": "text/plain" },
+    },
+  );
 }
 
 const sessionId = await createAdminSession(pat);

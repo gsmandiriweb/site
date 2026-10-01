@@ -21,7 +21,7 @@ the deployed commit SHA to a signed callback so the CMS marks revisions **Publis
 
 ## 1. Secrets checklist
 
-### 1.1 Cloudflare Worker secrets — ✅ set (2026-08-07)
+### 1.1 Cloudflare Worker secrets — ⚠️ INCOMPLETE (verified 2026-09-25)
 
 Set with `wrangler secret put <NAME> --name site` (value via stdin). Never commit values.
 
@@ -35,9 +35,48 @@ Set with `wrangler secret put <NAME> --name site` (value via stdin). Never commi
 
 The generated values are saved locally in the gitignored `.env`
 (`CMS_OWNER_USERNAME`, `CMS_OWNER_PASSWORD`, `CMS_DEPLOY_CALLBACK_SECRET`,
-`CMS_GITHUB_PAT`). The legacy single-key secret (`CMS_OWNER_SECRET`) is still
-honored until `CMS_OWNER_USERNAME`/`CMS_OWNER_PASSWORD` are set on the Worker,
-but new installs should set the username/password pair.
+`CMS_GITHUB_PAT`).
+
+> **`.env` is a local-development file. It is NOT a deployment mechanism.**
+> Astro's dev server reads it; the deployed Worker does not. Worker secrets come
+> only from `wrangler secret put` (or the Cloudflare dashboard). A value present
+> in `.env` and absent on the Worker is the single most common cause of a
+> `/admin` login that "works locally but 401s in production".
+
+#### Verified state (2026-09-25)
+
+`CMS_OWNER_USERNAME` and `CMS_OWNER_PASSWORD` are **not** set on the Worker, so
+`configuredOwnerCredentials()` returns `null` and `/api/auth/pat-login` falls
+through to the legacy `CMS_OWNER_SECRET` branch
+(`src/pages/api/auth/pat-login/index.astro`). Observed against production:
+
+| Attempt                                       | Result                                    |
+| --------------------------------------------- | ----------------------------------------- |
+| `.env` username + `.env` password             | `401` — the credentials never left `.env` |
+| any username + `CMS_OWNER_SECRET` as password | `303` — the legacy secret is live         |
+
+**To fix**, set both on the Worker (takes effect on the next request, no redeploy
+needed — the legacy branch disables itself as soon as the pair is complete):
+
+```bash
+npx wrangler secret put CMS_OWNER_USERNAME --name site   # value: owner
+npx wrangler secret put CMS_OWNER_PASSWORD --name site   # value: <strong password>
+```
+
+Requires `CLOUDFLARE_API_TOKEN` in the environment, or an interactive
+`wrangler login`. Then re-verify — the pair should give `303` and the legacy
+secret should give `401`:
+
+```bash
+curl -si -X POST https://site.gsmandiri-web.workers.dev/api/auth/pat-login \
+  -H 'Origin: https://site.gsmandiri-web.workers.dev' \
+  -d 'username=owner&password=<the new password>' | head -1
+```
+
+⚠️ Rotate `CMS_OWNER_PASSWORD` off the placeholder in `.env` before setting it —
+it is currently a 6-digit value, and this account can push commits to the
+repository through a GitHub PAT. After the pair is set, the plaintext
+`CMS_OWNER_SECRET` in `.env` stops being the only thing guarding `/admin`.
 
 ### 1.2 GitHub Actions secrets — ⚠️ pending (set in the UI)
 

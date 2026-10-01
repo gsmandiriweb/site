@@ -1,17 +1,21 @@
-<!-- Direction committed via new-work: "Blueprint Field" (assigned index 6/7 by concept-seed, key bsm-bangun-saranamakmur). Carbonize/verify tokens after the first build lands. -->
+<!-- Direction committed via new-work: "Steel Yard".
+     Renamed 2026-09-25. This file previously read "Blueprint Field" and specified a
+     warm-paper / blueprint-indigo palette that never shipped: src/styles/global.css
+     has been the production design system, and the admin dashboard carried a third,
+     unrelated cool-slate world. The values below are the ones in the code. -->
 
 ---
 
-name: Bangun Sarana Makmur — Blueprint Field
+name: Bangun Sarana Makmur — Steel Yard
 description: A structural drafting sheet for a Surabaya building-materials distributor; BRC fencing is the proof, the blueprint grid is the page.
 colors:
-paper: "#F2EFE6"
-paper-deep: "#E7E2D4"
-ink: "#15212E"
-ink-muted: "#54606B"
-blueprint: "#1B3A6B"
-blueprint-deep: "#102A50"
-steel: "#8FA3B8"
+paper: "#14161A"
+paper-deep: "#1D2025"
+ink: "#F5F5F4"
+ink-muted: "#AEB4BA"
+blueprint: "#C9B48A"
+blueprint-deep: "#A99570"
+steel: "#828A93"
 signal: "#E8551E"
 signal-deep: "#C8430F"
 signal-darker: "#A8360B"
@@ -137,6 +141,11 @@ Corners are gently squared (radius 4–8px on controls, 14px on large specimen p
 - **Hover / Focus:** deepens to signal-darker; focus-visible shows a 2px ink outline offset 2px.
 - **Ghost:** transparent, ink text, 1px steel border; used for secondary actions.
 
+> **Measured note (2026-09-25):** primary buttons use signal-deep `#C8430F`, not
+> the bright `#E8551E`, because the near-white label needs 4.5:1 and bright orange
+> only reaches 3.50:1. Orange as _text_ goes deeper still (`#AD3D0D` light,
+> `#F0764A` dark) to clear 4.5:1 on paper.
+
 ### Chips / Spec Tags
 
 - **Style:** paper-deep fill, ink-muted mono label, 1px steel border, 4px radius.
@@ -179,3 +188,13 @@ A product figure rendered as an engineering drawing: the real photo sits inside 
 - **Don't** drop the grid for "balanced" off-grid placement; the mesh is the layout law.
 - **Don't** rest shadows on flat surfaces; shadows answer state, not resting style.
 - **Don't** import a corporate template look, glassmorphism, gradient text, or a luxury-showroom palette — the brief rejects all four.
+
+### Surfaces
+
+- **The storefront** (`src/styles/global.css`): dark-first, full expression of the world.
+- **The login page** (`src/pages/admin/login.astro`): scoped inline styles, same palette.
+- **The CMS dashboard** (`src/styles/cms-dashboard.css`): _the same paper with less
+  ink._ It is an Operate surface, so it is light-first, quieter in hue, and on a
+  tighter type scale — but it uses the same three faces, the same 4/8/14 radii, the
+  same bronze-for-chrome / orange-for-action split, and the same `bsm-theme`
+  key. It is not a separate design world.

@@ -1,3 +1,9 @@
+// `ready` is a dashboard-only state (a revision PR awaiting owner approval),
+// never a file value. The content schema's status enum is draft | published |
+// archived, so `ready` must be coerced to `draft` on the way out or the commit
+// would fail validation. The dashboard therefore no longer offers it as a
+// Status option — the select would have been a control that silently did
+// nothing, and the badge would have reverted to "Draf" on the next reload.
 export type DraftStatus = "draft" | "ready" | "published" | "archived";
 
 export type DraftPost = {
@@ -134,6 +140,8 @@ function yamlOptionalText(value: string | undefined): string {
 }
 
 export function serializeDraftMarkdown(post: DraftPost): string {
+  // See DraftStatus: `ready` is dashboard-only and coerced to `draft`, because
+  // the content schema has no such value.
   const status = post.status === "ready" ? "draft" : post.status;
   return `---
 id: ${yamlScalar(post.id)}
