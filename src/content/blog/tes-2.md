@@ -5,7 +5,7 @@ title: "Tes 3"
 kicker: ""
 excerpt: "test"
 publishedAt: 2026-09-04
-status: draft
+status: published
 aliases: []
 image: ""
 imageAlt: ""
