@@ -11,11 +11,11 @@ Artikel disimpan sebagai file Markdown di `src/content/blog/<slug>.md`. GitHub a
 
 ```bash
 # Scaffold a new post (fills in id, slug, date, status)
-bun scripts/new-post.mjs "Judul Artikel Baru"          # → status: published
-bun scripts/new-post.mjs "Draf Artikel" --draft        # → status: draft (invisible)
+node scripts/new-post.mjs "Judul Artikel Baru"          # → status: published
+node scripts/new-post.mjs "Draf Artikel" --draft        # → status: draft (invisible)
 
 # Edit src/content/blog/<slug>.md, then validate before pushing:
-bun scripts/check-posts.mjs
+node scripts/check-posts.mjs
 
 # Commit + push to main → auto-deploy → live at /blog/<slug>
 ```
@@ -41,9 +41,9 @@ draft: false # legacy alias status: draft (boleh dihilangkan)
 
 Aturan yang paling sering menjegal:
 
-- **Tanpa `status: published` artikel tidak muncul di mana pun** — build lolos, halaman tetap tidak ada. Selalu cek output `bun scripts/check-posts.mjs`.
+- **Tanpa `status: published` artikel tidak muncul di mana pun** — build lolos, halaman tetap tidak ada. Selalu cek output `node scripts/check-posts.mjs`.
 - **Nama file harus sama dengan `slug`.** `Cara Memilih Pagar.md` dengan `slug: cara-memilih-pagar` = gagal build. Gunakan scaffolder; jangan biarkan GitHub memberi nama file dari judul (berisi spasi/huruf kapital).
-- **`id` tidak boleh diketik tangan.** Gunakan `bun scripts/new-post.mjs` atau dashboard.
+- **`id` tidak boleh diketik tangan.** Gunakan `node scripts/new-post.mjs` atau dashboard.
 - **Gambar featured (cover):** simpan di `src/images/blog/<slug>/cover.jpg` dan isi `image` + `imageAlt`. Referensi lama dengan nama file saja (mis. `atap-upvc.jpeg`) masih jalan untuk post yang sudah ada.
 
 ## Gambar di dalam isi artikel (body images)
@@ -57,7 +57,7 @@ Referensi Markdown memakai bentuk `../../images/…` — relatif terhadap file p
 
 - File disimpan di `src/images/blog/<slug>/` (satu folder per artikel — kontrak ADR 0011).
 - Saat build, gambar otomatis dioptimalkan (astro:assets → `/_astro/*` + `/_image`), sama seperti featured image.
-- **Build GAGAL (ImageNotFound) jika referensi body tidak bisa di-resolve** — ini pengaman CI Anda: referensi yang salah tidak akan ter-deploy. `bun scripts/check-posts.mjs` memeriksanya lebih dulu secara lokal — selalu jalankan sebelum push.
+- **Build GAGAL (ImageNotFound) jika referensi body tidak bisa di-resolve** — ini pengaman CI Anda: referensi yang salah tidak akan ter-deploy. `node scripts/check-posts.mjs` memeriksanya lebih dulu secara lokal — selalu jalankan sebelum push.
 - Format yang diterima: JPEG, PNG, WebP. Maks 5 MB, maks 8000 px tepi terpanjang.
 - Lewat dashboard: Media → "Upload image to article body" auto-menyisipkan `![alt](../../images/…)` di akhir artikel; pindahkan dengan mode "Markdown source".
 - URL eksternal (https://…) juga boleh; hanya referensi lokal yang dipaksa resolve.
@@ -80,8 +80,8 @@ Referensi Markdown memakai bentuk `../../images/…` — relatif terhadap file p
 
 ## Referensi cepat
 
-- Scaffolder: `bun scripts/new-post.mjs "Judul" [--draft]`
-- Validator: `bun scripts/check-posts.mjs`
+- Scaffolder: `node scripts/new-post.mjs "Judul" [--draft]`
+- Validator: `node scripts/check-posts.mjs`
 - Skema post: `src/content.config.ts`
 - Rules build: `src/utils/blog.ts` (`validateBlogRoutes`)
 - Kontrak media: `docs/adr/0011-media-contract.md`

@@ -5,6 +5,7 @@ dist/
 
 # cloudflare local state
 .wrangler/
+.cloudflare/
 
 # dependencies
 node_modules/

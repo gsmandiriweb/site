@@ -104,18 +104,17 @@ repo-secrets permission (403), so these must be added in the dashboard:
 ## 2. First deploy / manual redeploy
 
 ```bash
-bun install
-bun run build                 # emits dist/client + dist/server + dist/server/wrangler.json
-bunx wrangler deploy --config dist/server/wrangler.json
+npm install
+npm run build                 # emits dist/client + dist/server + dist/server/wrangler.json
+npx wrangler deploy --config dist/server/wrangler.json
 ```
 
 - Auth: `wrangler login` (OAuth) or `CLOUDFLARE_API_TOKEN` env var.
 - The deploy updates the existing `site` Worker; assets are content-addressed, so
   only changed files upload.
-- Smoke-test locally first: `bun run build && bunx wrangler dev`.
+- Smoke-test locally first: `npm run build && npx wrangler dev`.
 
-**Automatic path** (normal operation): push/merge to `main` → `deploy.yml` builds with
-bun, deploys, and reports the SHA via the signed callback. No manual step.
+**Automatic path** (normal operation): push/merge to `main` → `deploy.yml` builds with npm, deploys, and reports the SHA via the signed callback. No manual step.
 
 ---
 
@@ -127,7 +126,7 @@ bun, deploys, and reports the SHA via the signed callback. No manual step.
 curl -s -o /dev/null -w '%{http_code}\n' https://site.gsmandiri-web.workers.dev/          # 200
 curl -s  https://site.gsmandiri-web.workers.dev/ | grep -o 'HARGA PABRIK[^<]*' | head -1 # current hero
 curl -s -o /dev/null -w '%{http_code}\n' https://site.gsmandiri-web.workers.dev/admin/login
-bunx wrangler deployments list --name site   # latest deployment is the newest row (list is oldest-first)
+npx wrangler deployments list --name site   # latest deployment is the newest row (list is oldest-first)
 ```
 
 > Right after a deploy the edge may serve a stale HTML once (`Cache-Control: public,

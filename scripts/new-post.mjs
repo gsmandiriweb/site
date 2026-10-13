@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Scaffolds a new blog post as a Markdown file in src/content/blog/.
 //
-//   bun scripts/new-post.mjs "Judul Artikel Baru" [--draft]
+//   node scripts/new-post.mjs "Judul Artikel Baru" [--draft]
 //
 // Generates the stable `id`, slug from the title, today's date, and a valid
 // frontmatter block that matches src/content.config.ts exactly. With --draft the
@@ -36,7 +36,7 @@ function slugify(raw) {
 }
 
 if (!title) {
-  console.error('Usage: bun scripts/new-post.mjs "Judul Artikel" [--draft]');
+  console.error('Usage: node scripts/new-post.mjs "Judul Artikel" [--draft]');
   process.exit(1);
 }
 
@@ -71,7 +71,7 @@ const frontmatter = [
   "- Featured image: upload lewat dashboard CMS (Media) atau taruh di",
   "  src/images/blog/<slug>/cover.jpg lalu isi kolom image + imageAlt.",
   "- Gambar isi memakai bentuk relatif ../../images/… (lihat docs/blog-authoring.md).",
-  "- Jalankan bun scripts/check-posts.mjs sebelum push.",
+  "- Jalankan node scripts/check-posts.mjs sebelum push.",
   "",
 ].join("\n");
 
@@ -82,5 +82,5 @@ console.log(
   `Next steps (${isDraft ? "draft — invisible on the site" : "published — visible after deploy"}):`,
 );
 console.log("  1. Edit the file (title, excerpt, body, optional image fields).");
-console.log("  2. Run `bun scripts/check-posts.mjs` to validate before pushing.");
+console.log("  2. Run `node scripts/check-posts.mjs` to validate before pushing.");
 console.log("  3. Commit and push to main — the Cloudflare deploy publishes it.");

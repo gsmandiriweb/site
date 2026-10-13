@@ -92,12 +92,12 @@ callback (`{commitSha, status}`) so the CMS marks merged revisions as Published.
 ### Manual first deployment (Wrangler CLI)
 
 ```bash
-bun install
-bun run build
-bunx wrangler deploy --config dist/server/wrangler.json
+npm install
+npm run build
+npx wrangler deploy --config dist/server/wrangler.json
 ```
 
-For a local smoke test before pushing: `bun run build && bunx wrangler dev`.
+For a local smoke test before pushing: `npm run build && npx wrangler dev`.
 
 ### Cloudflare dashboard (Workers Builds, Git-connected) — optional
 

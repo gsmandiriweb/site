@@ -4,7 +4,7 @@
 // plus the ADR 0011 image-reference contract that the build does NOT catch for
 // body images. Run before pushing:
 //
-//   bun scripts/check-posts.mjs
+//   node scripts/check-posts.mjs
 //
 // Exit code 0 = safe to push. Errors are contract violations that will break
 // the build or publish a broken page; warnings are footguns worth fixing.
@@ -109,7 +109,7 @@ for (const filename of entries) {
 
   if (!ID_PATTERN.test(String(data.id ?? ""))) {
     error(
-      `${label}: \`id\` must be a UUID or 26-char nanoID — run \`bun scripts/new-post.mjs\` to generate one.`,
+      `${label}: \`id\` must be a UUID or 26-char nanoID — run \`node scripts/new-post.mjs\` to generate one.`,
     );
   }
   if (!SLUG_PATTERN.test(slug)) {
