@@ -39,11 +39,11 @@ jobs:
         run: npm ci
 
       - name: Build site
-        run: npm run build
+        run: npx cf build
 
       - name: Deploy Worker and Assets
         id: deploy
-        run: npx wrangler deploy --config dist/server/wrangler.json
+        run: npx cf deploy --prebuilt --mode production
 
       - name: Report deployment result
         if: ${{ always() }}

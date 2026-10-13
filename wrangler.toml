@@ -1,17 +1,13 @@
 # Cloudflare Workers + Assets configuration for the BSM site.
 #
-# Deploy flow:  `astro build`  (writes dist/client + dist/server, and a
-#               generated dist/server/wrangler.json that wires the built server
-#               entry + static assets together with the bindings below)
-#                then  `wrangler deploy`  (reads dist/server/wrangler.json)
+# Deploys go through `cf` (the Cloudflare CLI) via `cloudflare.config.ts`:
+#   `npx cf build` then `npx cf deploy --prebuilt --mode production`
+# (see .github/workflows/deploy.yml). `cf` ignores this file entirely.
 #
-# IMPORTANT: do NOT set `main`/`assets` here. @astrojs/cloudflare supplies them
-# from the build output. Setting them manually makes `astro build` fail, because
-# the entry does not exist yet when the adapter validates this config at the
-# start of the build.
+# This file is KEPT only for the Wrangler commands `cf` cannot do yet:
+#   `wrangler secret put <NAME> --name site` and `wrangler tail site`.
 #
-# Use Workers + Assets (not classic Cloudflare *Pages*): the Astro 7 adapter
-# emits a split output (static assets in dist/client, worker in dist/server).
+# IMPORTANT: do NOT set `main`/`assets` here.
 
 name = "site"
 compatibility_date = "2026-04-15"
@@ -23,8 +19,8 @@ compatibility_date = "2026-04-15"
 compatibility_flags = ["nodejs_compat"]
 
 # Bindings injected by @astrojs/cloudflare for on-demand rendering
-# (CMS sessions). The SESSION KV MUST exist or `wrangler deploy` fails.
-# Create it once and paste its id:
+# (CMS sessions). The SESSION KV MUST exist or `cf deploy` fails.
+# Create it once and paste its id here AND in cloudflare.config.ts:
 #
 #   npx wrangler kv namespace create SESSION
 kv_namespaces = [{ binding = "SESSION", id = "21a01da3e6264da0a9f7e7dc42c1e874" }]

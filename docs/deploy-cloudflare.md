@@ -4,11 +4,11 @@
 > verification flow, see [`deploy-runbook.md`](./deploy-runbook.md). This guide
 > has the full background and troubleshooting detail.
 
-This site is an Astro 7 static site with the `@astrojs/cloudflare` adapter. The
-adapter emits a **split build**: static assets in `dist/client/`, the Worker in
-`dist/server/`. Deploy it as a **Cloudflare Worker + Assets** — not classic
-Cloudflare Pages, which expects a flat `dist/_worker.js` and will not serve
-this output.
+This site is an Astro 7 static site with the `@astrojs/cloudflare` adapter,
+deployed with the `cf` CLI (the Cloudflare CLI) from `cloudflare.config.ts`.
+The adapter emits Build Output in `.cloudflare/output/` (static assets +
+Worker). Deploy it as a **Cloudflare Worker + Assets** — not classic
+Cloudflare Pages.
 
 The CMS is GitHub-native (ADRs 0008–0013): authors edit in the `/admin`
 dashboard, each revision becomes a branch + pull request (`cms/<slug>/r<N>`),
@@ -30,26 +30,26 @@ site: "https://site.gsmandiri-web.workers.dev", // or your custom domain
 
 The adapter requires a `SESSION` KV binding for the on-demand CMS routes
 (sessions + the deployed-SHA confirmation). Create it once and copy the id into
-`wrangler.toml`:
+`cloudflare.config.ts` (and keep `wrangler.toml` in sync — it is retained only
+for `wrangler secret put` / `wrangler tail`, which `cf` cannot do yet):
 
 ```bash
 npx wrangler kv namespace create SESSION
-# → copy the "id" value and paste it into wrangler.toml:
-#   kv_namespaces = [{ binding = "SESSION", id = "xxxx" }]
+# → copy the "id" value and paste it into cloudflare.config.ts:
+#   SESSION: bindings.kv({ id: "xxxx" })
 ```
 
-> `wrangler.toml` deliberately contains **only** `name`, `compatibility_date`,
-> `compatibility_flags` and bindings. `compatibility_flags = ["nodejs_compat"]`
+> `cloudflare.config.ts` deliberately declares **only** worker name,
+> compatibility, and bindings. `compatibilityFlags = ["nodejs_compat"]`
 > is **required** — Astro's server runtime uses Node globals (`Buffer`,
 > `process`, …) that workerd only exposes with this flag; without it every
 > request 500s with `Buffer is not defined`.
->
-> Do **not** add `main` or `assets` — `@astrojs/cloudflare` injects them from
-> the build output into the generated `dist/server/wrangler.json`.
 
 ## 3. Set the CMS secrets
 
-Set these as encrypted Worker secrets. Never commit values to `wrangler.toml`.
+Set these as encrypted Worker secrets. Never commit values to
+`cloudflare.config.ts` (secrets are only _declared_ there via
+`bindings.secret()`).
 
 ```bash
 wrangler secret put CMS_OWNER_USERNAME
@@ -86,29 +86,30 @@ variables → Actions):
 ## 4. Deploy
 
 The normal path is automatic: `.github/workflows/deploy.yml` runs on **every
-push to `main`**, builds the site, deploys with Wrangler, then POSTs a signed
+push to `main`**, builds the site with `cf build`, deploys the same build with
+`cf deploy --prebuilt --mode production`, then POSTs a signed
 callback (`{commitSha, status}`) so the CMS marks merged revisions as Published.
 
-### Manual first deployment (Wrangler CLI)
+### Manual first deployment (`cf` CLI)
 
 ```bash
 npm install
-npm run build
-npx wrangler deploy --config dist/server/wrangler.json
+npx cf build
+npx cf deploy --prebuilt --mode production
 ```
 
-For a local smoke test before pushing: `npm run build && npx wrangler dev`.
+For a local smoke test before pushing: `npx cf build && npx cf deploy --dry-run`
+(builds and validates without uploading; needs no credentials).
 
 ### Cloudflare dashboard (Workers Builds, Git-connected) — optional
 
 1. Cloudflare dashboard → **Compute → Workers & Pages → Create application →
    Import a repository** → select `gsmandiriweb/site`.
 2. Framework preset: leave blank / "Astro" if offered; set:
-   - **Build command:** `npx astro build`
-   - **Deploy command:** `npx wrangler deploy --config dist/server/wrangler.json`
+   - **Build command:** `npx cf build`
+   - **Deploy command:** `npx cf deploy --prebuilt --mode production`
    - **Root directory:** `/` (repo root)
-3. The `SESSION` KV binding is wired via `wrangler.toml` and baked into the
-   generated `dist/server/wrangler.json`.
+3. The `SESSION` KV binding is wired via `cloudflare.config.ts`.
 4. Add `CMS_OWNER_USERNAME`, `CMS_OWNER_PASSWORD`, `CMS_GITHUB_PAT`,
    `CMS_DEPLOY_CALLBACK_URL`, and `CMS_DEPLOY_CALLBACK_SECRET` as encrypted
    Worker secrets.
@@ -126,14 +127,11 @@ For a local smoke test before pushing: `npm run build && npx wrangler dev`.
 
 ## Troubleshooting
 
-- **`The provided Wrangler config main field (.../dist/server/entry.mjs)`
-  doesn't point to an existing file** → `wrangler.toml` still declares
-  `main`/`assets`. Remove them; the adapter supplies them.
 - **`CMS authentication is not configured`** → add `CMS_OWNER_USERNAME`,
   `CMS_OWNER_PASSWORD`, and `CMS_GITHUB_PAT` Worker secrets, then redeploy.
 - **`CMS session storage is unavailable`** → check that the `SESSION` KV id in
-  `wrangler.toml` matches a real namespace and that the Worker has access to it.
-- **`kv namespace SESSION ... has no id`** → paste the KV id into `wrangler.toml`.
+  `cloudflare.config.ts` matches a real namespace and that the Worker has access to it.
+- **`kv namespace SESSION ... has no id`** → paste the KV id into `cloudflare.config.ts`.
 - **PR creation returns 422** → the revision branch already exists or conflicts.
   Reconcile the PR; revision branches are written once per revision.
 - **Callback returns 401** → timestamp too old or HMAC mismatch; callbacks must
@@ -143,5 +141,5 @@ For a local smoke test before pushing: `npm run build && npx wrangler dev`.
 - **404 on `/_astro/*` or unstyled page** → make sure `base` is removed and
   deploy the current build.
 - **HTTP 500 on every route with `Buffer is not defined`** → ensure
-  `nodejs_compat` is present in `wrangler.toml`.
+  `nodejs_compat` is present in `cloudflare.config.ts`.
 - **Hydration mismatches** → disable Cloudflare **Auto Minify** under Speed.

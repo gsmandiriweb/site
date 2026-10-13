@@ -95,9 +95,9 @@ repo-secrets permission (403), so these must be added in the dashboard:
 
 ### 1.3 Infrastructure (already provisioned)
 
-- `SESSION` KV namespace: id `21a01da3e6264da0a9f7e7dc42c1e874` (in `wrangler.toml`)
+- `SESSION` KV namespace: id `21a01da3e6264da0a9f7e7dc42c1e874` (in `cloudflare.config.ts`)
 - `site` Worker exists in the `gsmandiri-web` account (deploys update it)
-- `nodejs_compat` compatibility flag in `wrangler.toml` (**required** — no `main`/`assets` keys; the Astro adapter injects them)
+- `nodejs_compat` compatibility flag in `cloudflare.config.ts` (**required**)
 
 ---
 
@@ -105,14 +105,14 @@ repo-secrets permission (403), so these must be added in the dashboard:
 
 ```bash
 npm install
-npm run build                 # emits dist/client + dist/server + dist/server/wrangler.json
-npx wrangler deploy --config dist/server/wrangler.json
+npx cf build                          # emits .cloudflare/output/
+npx cf deploy --prebuilt --mode production
 ```
 
-- Auth: `wrangler login` (OAuth) or `CLOUDFLARE_API_TOKEN` env var.
+- Auth: `cf auth login` (OAuth) or `CLOUDFLARE_API_TOKEN` env var.
 - The deploy updates the existing `site` Worker; assets are content-addressed, so
   only changed files upload.
-- Smoke-test locally first: `npm run build && npx wrangler dev`.
+- Smoke-test locally first: `npx cf deploy --dry-run` (builds + validates, uploads nothing).
 
 **Automatic path** (normal operation): push/merge to `main` → `deploy.yml` builds with npm, deploys, and reports the SHA via the signed callback. No manual step.
 
@@ -154,8 +154,7 @@ max-age=0, must-revalidate`); re-request or add a query param to bypass.
 | `CMS authentication is not configured`  | Add `CMS_OWNER_USERNAME` + `CMS_OWNER_PASSWORD` + `CMS_GITHUB_PAT` Worker secrets, redeploy |
 | Merged but not Published                | Callback secrets differ — compare Worker vs GitHub value                                    |
 | Callback 401                            | HMAC/timestamp mismatch; callback must be freshly signed                                    |
-| Every route 500 `Buffer is not defined` | `nodejs_compat` missing from `wrangler.toml`                                                |
-| `main` field error at deploy            | `main`/`assets` present in `wrangler.toml` — remove them                                    |
+| Every route 500 `Buffer is not defined` | `nodejs_compat` missing from `cloudflare.config.ts`                                         |
 
 Full troubleshooting and the optional Cloudflare dashboard (Workers Builds) setup:
 see [`docs/deploy-cloudflare.md`](./deploy-cloudflare.md).

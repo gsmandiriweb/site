@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 // Cloudflare deployment.
 // `site` is the real production origin: the `site` Worker in the gsmandiri-web
-// account serves this repository (see wrangler.toml `name`). Cloudflare serves
+// account serves this repository (see `name` in cloudflare.config.ts). Cloudflare serves
 // at the root, so no `base` subpath is needed.
 //
 // `output` stays 'static' (default). Only the CMS control-plane routes opt out with
