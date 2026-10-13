@@ -895,8 +895,13 @@ export default function CmsDashboard({
       setNotice(null);
       return;
     }
-    if (post.dirty || hasUncommittedMarkdown) {
-      setActionError("Kirim revisi artikel ini dulu sebelum berpindah ke artikel lain.");
+    // Dirty visual-editor drafts are persisted per post (component state +
+    // localStorage), so switching articles never loses them — sending a
+    // revision first must not be required. Only uncommitted Sumber Markdown
+    // edits live in component state and would be discarded by the reset
+    // below, so just those block the switch.
+    if (hasUncommittedMarkdown) {
+      setActionError("Terapkan suntingan Sumber Markdown dulu sebelum berpindah ke artikel lain.");
       return;
     }
     setSelectedPost(key);

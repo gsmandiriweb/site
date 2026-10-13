@@ -12,9 +12,7 @@ import { bindings, defineConfig } from "cf/config";
  * Never commit values here.
  *
  * Deliberately NOT declared (read defensively by the code, so the Worker runs
- * without them):
- * - CMS_OWNER_USERNAME / CMS_OWNER_PASSWORD — pending, see deploy-runbook §1.1.
- *   Declare them here only AFTER setting them on the Worker.
+ * without it):
  * - CMS_GITHUB_API_URL — optional, the code defaults to https://api.github.com.
  */
 
@@ -27,6 +25,8 @@ export default defineConfig({
       SESSION: bindings.kv({
         id: "21a01da3e6264da0a9f7e7dc42c1e874",
       }),
+      CMS_OWNER_USERNAME: bindings.secret(),
+      CMS_OWNER_PASSWORD: bindings.secret(),
       CMS_OWNER_SECRET: bindings.secret(),
       CMS_GITHUB_PAT: bindings.secret(),
       CMS_DEPLOY_CALLBACK_URL: bindings.secret(),
