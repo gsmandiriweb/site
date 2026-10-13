@@ -1,69 +1,61 @@
 /* ============================================================
-   BSM Editorial CMS — "Steel Yard, less ink".
+   BSM Editorial CMS — Linear-like operate surfaces.
 
-   The admin is the storefront's drafting sheet with the ink
-   pulled back: same warm paper, same blueprint-bronze, same
-   signal orange, same three faces, same squared radii. It is an
-   Operate surface, so the differences from the public site are
-   deliberate and narrow — a light base theme (the storefront is
-   dark-first), less hue in chrome, and a tighter type scale.
-   What it is NOT is a third design world: it used to be a
-   cool-slate "Tools" console with a denim accent, zero DESIGN.md
-   colours, 12 different corner radii, and a font stack whose three
-   custom properties were never defined on this page — so Archivo,
-   Hanken Grotesk and JetBrains Mono downloaded on every load and
-   not one glyph rendered. The `bsm-theme` key is now shared with
-   /admin/login and means the same thing on both.
+   Restrained neutrals plus one indigo accent (#5e6ad2): the same
+   language as /admin/login. Compact workhorse type (Inter-first
+   system stack; JetBrains Mono only for code/data), 6/4/10 radii,
+   1px hairline chrome, flat by rest with depth as a state response.
+   Status hues stay semantic (green/amber/red) and were kept at
+   their contrast-checked values.
 
-   Tokens:  --cms-bg        app canvas (drafting paper)
+   The `bsm-theme` key is shared with /admin/login and means the
+   same thing on both. Default theme is light; dark under
+   html[data-theme="dark"].
+
+   Tokens:  --cms-bg        app canvas
             --cms-surface   cards, panels
             --cms-surface-2 inset wells, hover fills
             --cms-surface-3 pressed / control tracks
-            --cms-accent    blueprint-bronze (chrome + focus, never a CTA)
-            --cms-signal    safety orange — primary actions ONLY
+            --cms-accent    indigo (chrome + focus + links)
+            --cms-signal    indigo fill — primary actions ONLY
             --cms-success / --cms-warning / --cms-danger  status only
    ============================================================ */
 :root {
   color-scheme: light;
 
-  --cms-bg: #f3efe5;
-  --cms-surface: #faf8f2;
-  --cms-surface-2: #e9e3d4;
-  --cms-surface-3: #ded7c5;
+  --cms-bg: #f4f5f7;
+  --cms-surface: #ffffff;
+  --cms-surface-2: #eceef1;
+  --cms-surface-3: #dfe2e8;
 
-  --cms-border: #ddd6c4;
-  --cms-border-strong: #c3bba6;
+  --cms-border: rgba(8, 9, 10, 0.1);
+  --cms-border-strong: rgba(8, 9, 10, 0.2);
 
-  --cms-ink: #17212b;
-  --cms-muted: #6b6558;
-  /* Secondary text (field hints, sidebar meta, media filenames) at 12px needs
-     4.5:1, not 3:1. #6b6558 clears it on --cms-bg (5.04), --cms-surface-2
-     (4.52) and --cms-surface. */
-  --cms-faint: #6b6558;
+  --cms-ink: #08090a;
+  --cms-muted: #5f6b7a;
+  /* Secondary text at 12px needs 4.5:1. #5f6b7a clears it on --cms-bg,
+     --cms-surface-2 and --cms-surface. */
+  --cms-faint: #5f6b7a;
 
-  /* Bronze is the drafting-pen colour: chrome, active states, focus. */
-  --cms-accent: #694b1f;
-  --cms-accent-strong: #4f3815;
-  --cms-on-accent: #fcfaf4;
-  --cms-accent-soft: #694b1f14;
+  /* Indigo is the working colour: chrome, active states, focus, links. */
+  --cms-accent: #5e6ad2;
+  --cms-accent-strong: #4c58b8;
+  --cms-on-accent: #ffffff;
+  --cms-accent-soft: #5e6ad214;
   /* Solid, not an 18%-alpha halo: the old ring measured 1.30:1 against the
-     field it surrounded. Bronze measures 6.96:1 on paper. */
+     field it surrounded. Indigo measures ~4.9:1 on the canvas. */
   --cms-accent-ring: 0 0 0 2px var(--cms-accent);
 
-  /* Safety orange, per DESIGN.md's "The Orange Is a Button Rule": the primary
-     action fill and nothing else. signal-deep (#c8430f) rather than the bright
-     #e8551e, because the near-white label needs 4.5:1 and bright orange only
-     reaches 3.50:1. */
-  --cms-signal: #c8430f;
-  --cms-signal-strong: #a8360b;
-  --cms-on-signal: #fcfaf4;
-  --cms-signal-soft: #c8430f14;
-  /* Orange as TEXT needs to go deeper still: #c8430f is 4.29:1 on paper, so
-     links and spec marks use this. */
-  --cms-signal-text: #ad3d0d;
+  /* Primary action fill and nothing else. White label on #5e6ad2 ≈ 5:1. */
+  --cms-signal: #5e6ad2;
+  --cms-signal-strong: #4c58b8;
+  --cms-on-signal: #ffffff;
+  --cms-signal-soft: #5e6ad214;
+  /* Indigo as TEXT goes deeper for 4.5:1 on white. */
+  --cms-signal-text: #4a56b8;
 
   /* WCAG 1.4.11 non-text contrast for control boundaries. */
-  --cms-control-border: #8d8674;
+  --cms-control-border: #868ea0;
 
   --cms-success: #1d6b45;
   --cms-success-soft: #1d6b4519;
@@ -80,10 +72,10 @@
   --cms-shadow-lg: 0 24px 60px -12px rgba(23, 33, 43, 0.18);
   --cms-overlay: rgba(23, 28, 36, 0.46);
 
-  /* Drafting sheet, not pill: 4 / 8 / 14, matching DESIGN.md. */
-  --cms-radius: 8px;
+  /* Compact radii: 6 / 4 / 10. */
+  --cms-radius: 6px;
   --cms-radius-sm: 4px;
-  --cms-radius-lg: 14px;
+  --cms-radius-lg: 10px;
   --cms-ease: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* One left rule for the editor card, and one width for the whole column.
@@ -105,29 +97,29 @@
 html[data-theme="dark"] {
   color-scheme: dark;
 
-  --cms-bg: #0b0d0f;
-  --cms-surface: #14161a;
-  --cms-surface-2: #1d2025;
-  --cms-surface-3: #272b31;
+  --cms-bg: #08090a;
+  --cms-surface: #101216;
+  --cms-surface-2: #171b21;
+  --cms-surface-3: #20262e;
 
-  --cms-border: #2b2f36;
-  --cms-border-strong: #3d434c;
+  --cms-border: rgba(255, 255, 255, 0.08);
+  --cms-border-strong: rgba(255, 255, 255, 0.16);
 
-  --cms-ink: #f4f1e9;
-  --cms-muted: #9aa0a8;
-  --cms-faint: #9aa0a8;
+  --cms-ink: #f7f8f8;
+  --cms-muted: #a0a8b8;
+  --cms-faint: #a0a8b8;
 
-  --cms-accent: #c9b48a;
-  --cms-accent-strong: #ddcba8;
-  --cms-on-accent: #17140d;
-  --cms-accent-soft: #c9b48a1f;
+  --cms-accent: #8f9aea;
+  --cms-accent-strong: #aab3f5;
+  --cms-on-accent: #0b0d12;
+  --cms-accent-soft: #8f9aea1f;
   --cms-accent-ring: 0 0 0 2px var(--cms-accent);
 
-  --cms-signal: #c8430f;
-  --cms-signal-strong: #e8551e;
-  --cms-on-signal: #fcfaf4;
-  --cms-signal-soft: #c8430f26;
-  --cms-signal-text: #f0764a;
+  --cms-signal: #5e6ad2;
+  --cms-signal-strong: #6c78dc;
+  --cms-on-signal: #ffffff;
+  --cms-signal-soft: #5e6ad226;
+  --cms-signal-text: #a3acf0;
 
   --cms-control-border: #6e7681;
 
@@ -151,8 +143,8 @@ html[data-theme="dark"] {
    never imports — so all three downloaded on every dashboard load and none
    rendered. Same stacks, same order, same fallbacks as the public site. */
 body:has([data-cms-dashboard]) {
-  --font-display: "Archivo", "Arial Narrow", sans-serif;
-  --font-body: "Hanken Grotesk", system-ui, sans-serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 
   margin: 0;
@@ -181,6 +173,15 @@ body:has([data-cms-dashboard]) {
   font-family: inherit;
 }
 
+/* Browser surfaces carry the world too: selection and caret in indigo. */
+.cms-dashboard ::selection {
+  background: rgba(94, 106, 210, 0.32);
+}
+.cms-dashboard input,
+.cms-dashboard textarea {
+  caret-color: var(--cms-accent);
+}
+
 .cms-dashboard {
   min-height: 100vh;
   background: var(--cms-bg);
@@ -201,9 +202,8 @@ body:has([data-cms-dashboard]) {
   min-height: 56px;
   padding: 0 20px;
   background: var(--cms-surface);
-  /* The blueprint rule: a 2px bronze line under the header, the one place the
-     region colour is allowed to run at full strength in this surface. */
-  border-bottom: 2px solid var(--cms-accent);
+  /* Hairline chrome under the header: 1px border, never a colour rule. */
+  border-bottom: 1px solid var(--cms-border);
   /* Two rows below 1041px (the save status wraps to its own line), so the bar
      must be allowed to grow rather than clip its second row. */
   row-gap: 0;
@@ -226,14 +226,14 @@ body:has([data-cms-dashboard]) {
 .cms-brand__mark {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--cms-radius);
-  background: var(--cms-accent-soft);
-  border: 1px solid var(--cms-border);
-  color: var(--cms-accent);
-  font: 700 0.6875rem/1 var(--font-mono);
-  letter-spacing: 0.08em;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--cms-signal);
+  color: var(--cms-on-signal);
+  font: 700 0.8125rem/1 var(--font-body);
+  letter-spacing: 0;
+  box-shadow: 0 2px 8px rgba(94, 106, 210, 0.4);
 }
 .cms-brand strong,
 .cms-brand small {
@@ -261,7 +261,7 @@ body:has([data-cms-dashboard]) {
 .cms-save-status span {
   width: 8px;
   height: 8px;
-  /* A drafting dot, not a notification pip: square like the sheet. */
+  /* Status dot: square with a 2px radius. */
   border-radius: 2px;
   background: var(--cms-success);
   box-shadow: 0 0 0 4px var(--cms-success-soft);
@@ -291,7 +291,7 @@ body:has([data-cms-dashboard]) {
   min-height: 32px;
   padding: 0 11px;
   border: 1px solid var(--cms-border);
-  /* Squared per DESIGN.md ("drafting-sheet, not pill"). */
+  /* Compact control radius. */
   border-radius: var(--cms-radius-sm);
   background: transparent;
   color: var(--cms-muted);
@@ -861,9 +861,9 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   margin-top: 0;
 }
 
-/* Per DESIGN.md's label spec: mono, 500, tracked, uppercase — the drafting
-   sheet's field voice. The hint beside it drops back to the body face, because
-   it is a sentence explaining the field, not a spec key. */
+/* Field labels: mono, 500, tracked, uppercase. The hint beside them drops
+   back to the body face, because it is a sentence explaining the field,
+   not a spec key. */
 .cms-field-label {
   display: flex;
   justify-content: space-between;
@@ -1143,7 +1143,8 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 /* ---------- Buttons ---------- */
 /* (0,2,0) on purpose. The bare `.cms-dashboard button` reset above sits at
    (0,1,1) and would otherwise win the family, which is how the CTA was
-   rendering in Hanken Groteske while this rule asked for JetBrains Mono. */
+   rendering in the inherited body face while this rule asked for the control
+   voice. */
 .cms-dashboard .cms-ui-button {
   display: inline-flex;
   justify-content: center;
@@ -1154,8 +1155,8 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   border: 1px solid transparent;
   border-radius: var(--cms-radius-sm);
   cursor: pointer;
-  /* Mono, tracked, uppercase — the control voice from DESIGN.md. */
-  font: 600 0.6875rem/1 var(--font-mono);
+  /* Tracked uppercase micro-labels in the workhorse face. */
+  font: 600 0.6875rem/1 var(--font-body);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   transition:
@@ -1181,10 +1182,9 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   height: 15px;
 }
 
-/* The primary action is safety orange (DESIGN.md: "The Orange Is a Button
-   Rule"). signal-deep rather than bright #e8551e, because the near-white label
-   needs 4.5:1 and bright orange only reaches 3.50:1. Bronze is deliberately
-   NOT the CTA colour here — it is the pen, used for chrome and focus. */
+/* The primary action is indigo fill and nothing else. White on #5e6ad2
+   clears 4.5:1; bright indigo tints do not, so hover/active go through
+   the strong token, never a lighter fill. */
 .cms-ui-button--default {
   background: var(--cms-signal);
   color: var(--cms-on-signal);
