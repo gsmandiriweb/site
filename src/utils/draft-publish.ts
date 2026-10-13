@@ -762,6 +762,35 @@ export async function mergeDraftPullRequest(
     }
   }
 
+  // Revision PRs are created as drafts while they await owner approval.
+  // GitHub refuses to merge a draft PR ("Pull request is still a draft"), so
+  // approval promotes it to ready-for-review before merging. A PR already
+  // marked ready on GitHub skips this step.
+  const preMerge = await githubJson<GitHubPull & { draft?: unknown }>(
+    await githubRequest(apiUrl, pat, `/pulls/${pull.prNumber}`),
+  );
+  if (preMerge.draft === true) {
+    const readyResponse = await githubRequest(
+      apiUrl,
+      pat,
+      `/pulls/${pull.prNumber}/ready_for_review`,
+      { method: "POST" },
+    );
+    if (!readyResponse.ok) {
+      const payload = (await readyResponse.json().catch(() => null)) as {
+        message?: unknown;
+      } | null;
+      const message =
+        payload && typeof payload.message === "string" && payload.message
+          ? payload.message
+          : `GitHub mengembalikan HTTP ${readyResponse.status}.`;
+      throw new DraftActionError(
+        `GitHub tidak bisa menyiapkan revisi untuk digabungkan: ${message}`,
+        409,
+      );
+    }
+  }
+
   const mergeResponse = await githubRequest(apiUrl, pat, `/pulls/${pull.prNumber}/merge`, {
     method: "PUT",
     body: JSON.stringify({
