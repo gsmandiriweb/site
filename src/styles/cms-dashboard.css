@@ -261,8 +261,8 @@ body:has([data-cms-dashboard]) {
 .cms-save-status span {
   width: 8px;
   height: 8px;
-  /* Status dot: square with a 2px radius. */
-  border-radius: 2px;
+  /* Round status dot with a soft halo. */
+  border-radius: 50%;
   background: var(--cms-success);
   box-shadow: 0 0 0 4px var(--cms-success-soft);
 }
@@ -353,9 +353,9 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   gap: 10px;
   width: 100%;
   min-height: 54px;
-  padding: 8px 10px;
+  padding: 9px 12px;
   border: 0;
-  border-radius: var(--cms-radius-sm);
+  border-radius: var(--cms-radius);
   background: transparent;
   color: var(--cms-muted);
   text-align: left;
@@ -398,11 +398,10 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   flex: none;
   width: 7px;
   height: 7px;
-  /* Square status mark, matching the save-status dot and the sheet. A 7px
-     circle is too small to carry a draft/ready/live distinction on its own
-     anyway — the adjacent text is the real channel, and only the unsent
-     "hollow ring" modifier is doing non-colour work. */
-  border-radius: 1px;
+  /* Round status dot with a soft halo; the adjacent text carries the
+     draft/ready/live distinction, and the unsent "hollow ring" modifier
+     is doing the non-colour work. */
+  border-radius: 50%;
   background: var(--cms-faint);
   box-shadow: 0 0 0 3px var(--cms-surface);
 }
@@ -598,8 +597,8 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   gap: 12px;
   margin-bottom: 18px;
   padding: 12px 16px;
-  border: 1px solid var(--cms-danger);
-  border-radius: var(--cms-radius-sm);
+  border: 1px solid var(--cms-border-strong);
+  border-radius: var(--cms-radius);
   background: var(--cms-danger-soft);
 }
 .cms-local-banner > svg {
@@ -630,13 +629,16 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   margin-top: clamp(48px, 12vh, 120px);
   padding: 48px 24px;
   border: 1px dashed var(--cms-border);
-  border-radius: var(--cms-radius);
+  border-radius: var(--cms-radius-lg);
   text-align: center;
 }
 .cms-empty-state__icon {
-  width: 40px;
-  height: 40px;
-  color: var(--cms-faint);
+  width: 60px;
+  height: 60px;
+  padding: 16px;
+  border-radius: 50%;
+  background: var(--cms-accent-soft);
+  color: var(--cms-accent);
 }
 .cms-empty-state h2 {
   margin: 0;
@@ -663,7 +665,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   margin-bottom: 18px;
   padding: 11px 14px;
   border: 1px solid;
-  border-radius: var(--cms-radius-sm);
+  border-radius: var(--cms-radius);
   font: 400 0.8125rem/1.5 var(--font-body);
 }
 .cms-notice {
@@ -729,13 +731,13 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   overflow: hidden;
   border-radius: var(--cms-radius);
 }
-/* Flat at rest (the Flat Sheet Rule). The card used to carry a resting shadow
-   because its 1px border measured 1.17:1 against the page and was invisible
-   without it; the border is now a real hairline, so the shadow is not load
-   bearing. Depth stays a response to state. */
+/* The card rests with a whisper shadow: offset plus soft blur, quiet enough
+   to keep chrome flat while lifting the work surface off the canvas. */
 .cms-editor-card.cms-ui-card {
-  border-color: var(--cms-border-strong);
-  box-shadow: none;
+  border-color: var(--cms-border);
+  box-shadow:
+    0 1px 2px rgba(8, 9, 10, 0.05),
+    0 16px 40px -24px rgba(8, 9, 10, 0.18);
 }
 
 .cms-section-tabs {
@@ -1153,7 +1155,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   min-height: 36px;
   padding: 0 14px;
   border: 1px solid transparent;
-  border-radius: var(--cms-radius-sm);
+  border-radius: var(--cms-radius);
   cursor: pointer;
   /* Tracked uppercase micro-labels in the workhorse face. */
   font: 600 0.6875rem/1 var(--font-body);
@@ -1188,6 +1190,7 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-ui-button--default {
   background: var(--cms-signal);
   color: var(--cms-on-signal);
+  box-shadow: 0 2px 10px rgba(94, 106, 210, 0.35);
 }
 .cms-ui-button--default:hover:not(:disabled) {
   background: var(--cms-signal-strong);
@@ -1256,9 +1259,9 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   align-items: center;
   width: fit-content;
   min-height: 22px;
-  padding: 0 9px;
+  padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: var(--cms-radius-sm);
+  border-radius: 999px;
   font: 600 0.6875rem/1 var(--font-mono);
   letter-spacing: 0.01em;
   white-space: nowrap;
