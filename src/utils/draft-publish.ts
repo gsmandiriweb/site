@@ -132,7 +132,7 @@ export async function computeContentFingerprint(markdown: string): Promise<strin
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-function githubHeaders(pat: string, includeJson = false): HeadersInit {
+function githubHeaders(pat: string, includeJson = false): Record<string, string> {
   return {
     Accept: "application/vnd.github+json",
     Authorization: `Bearer ${pat}`,
@@ -763,27 +763,36 @@ export async function mergeDraftPullRequest(
   }
 
   // Revision PRs are created as drafts while they await owner approval.
-  // GitHub refuses to merge a draft PR ("Pull request is still a draft"), so
-  // approval promotes it to ready-for-review before merging. A PR already
-  // marked ready on GitHub skips this step.
-  const preMerge = await githubJson<GitHubPull & { draft?: unknown }>(
+  // GitHub refuses to merge a draft PR, so approval promotes it to
+  // ready-for-review before merging. A PR already marked ready on GitHub
+  // skips this step. Promotion uses GraphQL: the REST ready-for-review
+  // endpoint answers 404 for this token while GraphQL succeeds.
+  const preMerge = await githubJson<GitHubPull & { draft?: unknown; node_id?: unknown }>(
     await githubRequest(apiUrl, pat, `/pulls/${pull.prNumber}`),
   );
   if (preMerge.draft === true) {
-    const readyResponse = await githubRequest(
-      apiUrl,
-      pat,
-      `/pulls/${pull.prNumber}/ready_for_review`,
-      { method: "POST" },
+    if (typeof preMerge.node_id !== "string" || !preMerge.node_id) {
+      throw new DraftActionError("GitHub tidak mengembalikan identitas revisi.", 502);
+    }
+    const readyResponse = await fetch(`${apiUrl}/graphql`, {
+      method: "POST",
+      headers: { ...githubHeaders(pat, true) },
+      body: JSON.stringify({
+        query:
+          "mutation($id:ID!){ markPullRequestReadyForReview(input:{pullRequestId:$id}){ pullRequest{ number } } }",
+        variables: { id: preMerge.node_id },
+      }),
+    });
+    const readyPayload = (await readyResponse.json().catch(() => null)) as {
+      errors?: Array<{ message?: unknown }>;
+    } | null;
+    const readyError = readyPayload?.errors?.find(
+      (entry) => entry && typeof entry.message === "string" && entry.message,
     );
-    if (!readyResponse.ok) {
-      const payload = (await readyResponse.json().catch(() => null)) as {
-        message?: unknown;
-      } | null;
+    if (!readyResponse.ok || readyError) {
       const message =
-        payload && typeof payload.message === "string" && payload.message
-          ? payload.message
-          : `GitHub mengembalikan HTTP ${readyResponse.status}.`;
+        (readyError?.message as string | undefined) ??
+        `GitHub mengembalikan HTTP ${readyResponse.status}.`;
       throw new DraftActionError(
         `GitHub tidak bisa menyiapkan revisi untuk digabungkan: ${message}`,
         409,
