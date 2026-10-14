@@ -341,6 +341,68 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+/* Batch-publish selection: the eyebrow row doubles as the mode switch, and
+   checkboxes ride inside the post rows (open PRs only). Native checkboxes
+   with accent-color keep the control honest and theme-aware. */
+.cms-sidebar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cms-sidebar__pick {
+  border: 0;
+  border-radius: var(--cms-radius-sm);
+  background: transparent;
+  color: var(--cms-muted);
+  font: 500 0.75rem/1 var(--font-body);
+  cursor: pointer;
+  padding: 5px 10px;
+  transition:
+    background 0.15s var(--cms-ease),
+    color 0.15s var(--cms-ease);
+}
+.cms-sidebar__pick:hover {
+  background: var(--cms-surface-2);
+  color: var(--cms-ink);
+}
+.cms-sidebar__pick[aria-pressed="true"] {
+  color: var(--cms-accent);
+}
+.cms-batch-check {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--cms-accent);
+  cursor: pointer;
+}
+.cms-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--cms-border);
+  border-radius: var(--cms-radius);
+  background: var(--cms-surface-2);
+  font-size: 0.8125rem;
+  color: var(--cms-muted);
+}
+.cms-batch-bar > span {
+  margin-right: auto;
+}
+.cms-batch-cancel {
+  border: 0;
+  border-radius: var(--cms-radius-sm);
+  background: transparent;
+  color: var(--cms-muted);
+  font: 500 0.8125rem/1 var(--font-body);
+  cursor: pointer;
+  padding: 6px 8px;
+}
+.cms-batch-cancel:hover {
+  color: var(--cms-ink);
+}
 
 .cms-post-list {
   display: grid;
@@ -1095,6 +1157,24 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 .cms-pr-link:hover {
   color: var(--cms-accent-strong);
   border-bottom-color: var(--cms-accent-strong);
+}
+
+/* Scheduled-publish row: datetime input plus schedule/cancel action, or the
+   stored schedule as a badge. Wraps on narrow cards instead of clipping. */
+.cms-schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.cms-schedule-row .cms-ui-input {
+  flex: 1 1 200px;
+  width: auto;
+  color-scheme: light;
+}
+html[data-theme="dark"] .cms-schedule-row .cms-ui-input {
+  color-scheme: dark;
 }
 
 .cms-slug {

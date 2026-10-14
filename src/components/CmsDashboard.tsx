@@ -56,6 +56,7 @@ type DraftPullRequest = {
   headSha: string;
   status: "open" | "merged" | "closed";
   updatedAt: string;
+  scheduledAt?: string | null;
 };
 
 type GithubState = {
@@ -465,6 +466,10 @@ export default function CmsDashboard({
   // that states the consequence (auto-deploy to the live site) before the
   // irreversible action, dismissible without page-level blocking.
   const [isMergeConfirmOpen, setMergeConfirmOpen] = useState(false);
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchSelected, setBatchSelected] = useState<PostKey[]>([]);
+  const [scheduleInput, setScheduleInput] = useState("");
+  const [scheduleBusy, setScheduleBusy] = useState(false);
   // Locked-post rename (legacy filename → valid slug): the dialog targets one
   // locked post at a time; "renaming" marks the POST in flight.
   const [renameTarget, setRenameTarget] = useState<PostKey>("");
@@ -627,6 +632,16 @@ export default function CmsDashboard({
         live?: boolean;
         deployed?: DeployInfo | null;
         posts?: Array<{ storageSlug: string; needsRename?: boolean }>;
+        results?: Array<{
+          storageSlug: string;
+          ok: boolean;
+          revision?: number;
+          prNumber?: number;
+          error?: string;
+        }>;
+        scheduledAt?: string | null;
+        scheduleCarried?: string | null;
+        prNumber?: number;
         error?: string;
       };
     },
@@ -828,8 +843,11 @@ export default function CmsDashboard({
         [selectedPost]: { ...current[selectedPost], dirty: false },
       }));
       setSaveLabel("Revisi terkirim · PR dibuka");
+      const carried = result.scheduleCarried
+        ? ` Jadwal ikut ke revisi r${result.pullRequest.revision}.`
+        : "";
       setNotice(
-        `Revisi r${result.pullRequest.revision} dikirim (PR #${result.pullRequest.prNumber}). Setujui di tab Terbit untuk menerbitkan.`,
+        `Revisi r${result.pullRequest.revision} dikirim (PR #${result.pullRequest.prNumber}). Setujui di tab Terbit untuk menerbitkan.${carried}`,
       );
       // Close the loop on the workflow: the approval control lives in the
       // Terbit tab, so take the editor there instead of asking them to find it.
@@ -881,6 +899,81 @@ export default function CmsDashboard({
     }
   };
 
+  // Batch publish: merge every selected open revision in order, then report
+  // per post. One post's failure never aborts the rest; each merge pushes to
+  // main, so CI deploys serialize behind the workflow concurrency group and
+  // the deploy poller flips each post as its callback lands.
+  const mergeBatch = async () => {
+    if (batchSelected.length < 1 || isBusy) return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const slugs = batchSelected.map((key) => posts[key]?.storageSlug ?? key);
+      const result = await request("/api/cms/drafts/pr/merge-many", "POST", {
+        storageSlugs: slugs,
+      });
+      const results = result.results ?? [];
+      const merged = results.filter((entry) => entry.ok);
+      const failed = results.filter((entry) => !entry.ok);
+      for (const slug of slugs) void refreshPostState(slug);
+      setBatchSelected([]);
+      setBatchMode(false);
+      const parts: string[] = [];
+      if (merged.length > 0)
+        parts.push(
+          `${merged.length} revisi digabungkan (${merged.map((entry) => `PR #${entry.prNumber}`).join(", ")}).`,
+        );
+      for (const entry of failed) parts.push(`${entry.storageSlug}: ${entry.error ?? "gagal"}.`);
+      if (parts.length < 1) parts.push("Tidak ada revisi yang digabungkan.");
+      parts.push("Auto-deploy berjalan — jadi Terbit saat situs live.");
+      setNotice(parts.join(" "));
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Tidak dapat menggabungkan revisi. Coba lagi.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const formatScheduleDisplay = (iso: string) =>
+    new Date(iso).toLocaleString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Jakarta",
+    });
+
+  // Writes (or with null, clears) the scheduled-publish time on the post's
+  // open revision PR, then refreshes so the badge follows the label.
+  const submitSchedule = async (iso: string | null) => {
+    setScheduleBusy(true);
+    setActionError(null);
+    try {
+      const result = await request("/api/cms/schedule/set", "POST", {
+        storageSlug: post.storageSlug,
+        scheduledAt: iso,
+      });
+      await refreshPostState(post.storageSlug);
+      if (result.scheduledAt) {
+        setScheduleInput("");
+        setNotice(
+          `Terbit terjadwal ${formatScheduleDisplay(result.scheduledAt)} WIB. Berjalan otomatis — bisa dibatalkan kapan saja sebelum waktunya.`,
+        );
+      } else {
+        setNotice("Jadwal terbit dibatalkan.");
+      }
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Tidak dapat menjadwalkan terbit. Coba lagi.",
+      );
+    } finally {
+      setScheduleBusy(false);
+    }
+  };
+
   const selectPost = (key: PostKey) => {
     if (selectedPost === key) return;
     const target = posts[key];
@@ -910,6 +1003,7 @@ export default function CmsDashboard({
     setIsMarkdown(false);
     setMarkdownDraft("");
     setMarkdownBaseline("");
+    setScheduleInput("");
     setActionError(null);
     setNotice(null);
   };
@@ -1372,7 +1466,21 @@ export default function CmsDashboard({
       </header>
 
       <aside className="cms-sidebar" aria-label="Navigasi editorial">
-        <div className="cms-sidebar__eyebrow">Artikel</div>
+        <div className="cms-sidebar__head">
+          <div className="cms-sidebar__eyebrow">Artikel</div>
+          <button
+            type="button"
+            className="cms-sidebar__pick"
+            aria-pressed={batchMode}
+            title="Pilih beberapa artikel untuk digabungkan sekaligus"
+            onClick={() => {
+              setBatchMode((current) => !current);
+              setBatchSelected([]);
+            }}
+          >
+            {batchMode ? "Batal" : "Pilih"}
+          </button>
+        </div>
         {persistenceMode === "connecting" && (
           <div className="cms-connecting-hint" role="status">
             <LoaderCircle className="cms-spin" aria-hidden="true" />
@@ -1401,6 +1509,7 @@ export default function CmsDashboard({
                 ? publicationStateFor(entry, githubStates[key])
                 : "draft";
               const showDate = state === "draft" || state === "live";
+              const openPr = githubStates[key]?.pullRequest?.status === "open";
               return (
                 <button
                   key={key}
@@ -1410,6 +1519,22 @@ export default function CmsDashboard({
                   aria-current={isSelected ? "true" : undefined}
                   onClick={() => selectPost(key)}
                 >
+                  {batchMode && openPr && !locked && (
+                    <input
+                      type="checkbox"
+                      className="cms-batch-check"
+                      checked={batchSelected.includes(key)}
+                      aria-label={`Pilih ${entry.title || key} untuk terbit massal`}
+                      onClick={(event) => event.stopPropagation()}
+                      onChange={() => {
+                        setBatchSelected((current) =>
+                          current.includes(key)
+                            ? current.filter((item) => item !== key)
+                            : [...current, key],
+                        );
+                      }}
+                    />
+                  )}
                   <span
                     className={`cms-post-dot cms-post-dot--${publicationDot[state]}${state === "edited" ? " cms-post-dot--dirty" : ""}`}
                     aria-hidden="true"
@@ -1441,6 +1566,31 @@ export default function CmsDashboard({
               );
             })}
         </div>
+        {batchMode && (
+          <div className="cms-batch-bar">
+            <span>{batchSelected.length} dipilih</span>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={batchSelected.length < 1 || isBusy}
+              onClick={() => void mergeBatch()}
+            >
+              {isBusy
+                ? "Menggabungkan…"
+                : `Gabungkan${batchSelected.length > 0 ? ` (${batchSelected.length})` : ""}`}
+            </Button>
+            <button
+              type="button"
+              className="cms-batch-cancel"
+              onClick={() => {
+                setBatchMode(false);
+                setBatchSelected([]);
+              }}
+            >
+              Batal
+            </button>
+          </div>
+        )}
         <div className="cms-new-post">
           {!showNewPostForm ? (
             <button
@@ -1834,6 +1984,59 @@ export default function CmsDashboard({
                           <ArrowUpRight data-icon="inline-end" />
                         </a>
                       )}
+                    </section>
+
+                    <section className="cms-field-group">
+                      <span className="cms-field-label">
+                        Jadwal terbit <span>Opsional · gabungkan otomatis pada waktunya (WIB)</span>
+                      </span>
+                      {draftPullRequest?.scheduledAt ? (
+                        <div className="cms-schedule-row">
+                          <Badge variant="default">
+                            Terjadwal {formatScheduleDisplay(draftPullRequest.scheduledAt)}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={scheduleBusy || isBusy}
+                            onClick={() => void submitSchedule(null)}
+                          >
+                            {scheduleBusy ? "Membatalkan…" : "Batalkan"}
+                          </Button>
+                        </div>
+                      ) : draftPullRequest?.status === "open" ? (
+                        <div className="cms-schedule-row">
+                          <Input
+                            type="datetime-local"
+                            aria-label="Waktu terbit terjadwal"
+                            value={scheduleInput}
+                            onChange={(event) => setScheduleInput(event.target.value)}
+                          />
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={scheduleBusy || isBusy || !scheduleInput}
+                            onClick={() => {
+                              const time = new Date(scheduleInput);
+                              if (Number.isNaN(time.valueOf())) {
+                                setActionError("Waktu jadwal tidak valid.");
+                                return;
+                              }
+                              void submitSchedule(time.toISOString());
+                            }}
+                          >
+                            {scheduleBusy ? "Menjadwalkan…" : "Jadwalkan"}
+                          </Button>
+                        </div>
+                      ) : (
+                        <p className="cms-source-note">
+                          Kirim revisi dulu untuk menjadwalkan penerbitan.
+                        </p>
+                      )}
+                      <p className="cms-source-note">
+                        Berjalan otomatis hingga ~5 menit setelah jadwal (tick + deploy). Jadwal
+                        ikut ke revisi baru bila ada revisi susulan.
+                      </p>
                     </section>
 
                     <section className="cms-field-group">
