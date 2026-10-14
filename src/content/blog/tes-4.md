@@ -7,8 +7,8 @@ excerpt: "testing saja"
 publishedAt: 2026-10-13
 status: published
 aliases: []
-image: ""
-imageAlt: ""
+image: pagar-brc-panel-perspektif.jpg
+imageAlt: "tes"
 date: 2026-10-13
 draft: true
 ---
