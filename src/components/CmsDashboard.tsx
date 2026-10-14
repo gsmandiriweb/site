@@ -1267,6 +1267,11 @@ export default function CmsDashboard({
     onActivate(nextIndex);
   };
 
+  // An open PR offers approval; otherwise a dirty post (including a
+  // merged/published one with fresh local edits) offers a new revision.
+  // Gating the revision button on edits alone would strand merged+dirty
+  // posts with no way out — the status dropdown promises that changing
+  // status plus a revision unpublishes, so the button must exist there.
   const nextAction: {
     label: string;
     variant: "default";
@@ -1284,16 +1289,14 @@ export default function CmsDashboard({
           // deliberate, designed step.
           onClick: () => setMergeConfirmOpen(true),
         }
-      : isMerged
-        ? null
-        : isAuthenticated && persistenceMode === "github"
-          ? {
-              label: "Kirim revisi & buka PR",
-              variant: "default",
-              disabled: isBusy || hasUncommittedMarkdown,
-              onClick: () => void createPullRequest(),
-            }
-          : null;
+      : isAuthenticated && persistenceMode === "github" && (hasLocalEdits || !isMerged)
+        ? {
+            label: "Kirim revisi & buka PR",
+            variant: "default",
+            disabled: isBusy || hasUncommittedMarkdown,
+            onClick: () => void createPullRequest(),
+          }
+        : null;
 
   const deployedShort = deployed?.commitSha ? deployed.commitSha.slice(0, 7) : null;
   const deployedDate = deployed?.deployedAt ? new Date(deployed.deployedAt).toLocaleString() : null;
