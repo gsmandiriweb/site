@@ -1,7 +1,11 @@
 import { configuredGitHubPat, readAdminSession, runtimeEnv } from "./admin-session.ts";
 import {
   DraftActionError,
+  formatScheduleLabel,
   isSafeStorageSlug,
+  isValidScheduleInstant,
+  SCHEDULE_LABEL_PREFIX,
+  scheduledAtFromLabels,
   serializeDraftMarkdown,
   validateDraftPost,
   validateMutationOrigin,
@@ -30,6 +34,7 @@ export type DraftPullRequest = {
   status: "open" | "merged" | "closed";
   updatedAt: string;
   contentFingerprint?: string;
+  scheduledAt?: string | null;
 };
 
 type GitHubPull = {
@@ -40,6 +45,7 @@ type GitHubPull = {
   title?: unknown;
   body?: unknown;
   head?: { ref?: unknown; sha?: unknown };
+  labels?: Array<{ name?: unknown }>;
 };
 
 function storagePath(storageSlug: string): string {
@@ -55,7 +61,7 @@ function revisionFromBranch(branch: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
-function apiUrlFor(env: Awaited<ReturnType<typeof runtimeEnv>>): string {
+export function apiUrlFor(env: Awaited<ReturnType<typeof runtimeEnv>>): string {
   return import.meta.env.DEV
     ? (env.CMS_GITHUB_API_URL ?? "https://api.github.com")
     : "https://api.github.com";
@@ -193,6 +199,7 @@ function toDraftPullRequest(
     status: pullStatus(pull),
     updatedAt: new Date().toISOString(),
     contentFingerprint: fingerprint,
+    scheduledAt: scheduledAtFromLabels(pull.labels),
   };
 }
 
@@ -211,6 +218,44 @@ async function listRevisionPulls(
   return pulls.filter(
     (pull) => typeof pull.head?.ref === "string" && pull.head.ref.startsWith(prefix),
   );
+}
+
+export type ScheduledRevision = {
+  storageSlug: string;
+  revision: number;
+  prNumber: number;
+  scheduledAt: string;
+};
+
+// Every open revision PR carrying a schedule label, oldest-due first. The
+// schedule ticker merges from this list; the dashboard reads schedules off
+// the per-post PR state instead.
+export async function listScheduledRevisions(
+  apiUrl: string,
+  pat: string,
+): Promise<ScheduledRevision[]> {
+  const response = await githubRequest(
+    apiUrl,
+    pat,
+    `/pulls?state=open&base=${DEFAULT_BRANCH}&sort=updated&direction=asc&per_page=100`,
+  );
+  const pulls = await githubJson<GitHubPull[]>(response);
+  const out: ScheduledRevision[] = [];
+  for (const pull of pulls) {
+    const ref = typeof pull.head?.ref === "string" ? pull.head.ref : null;
+    const match = ref ? /^cms\/([^/]+)\/r(\d+)$/.exec(ref) : null;
+    if (!match || typeof pull.number !== "number") continue;
+    if (!isSafeStorageSlug(match[1])) continue;
+    const scheduledAt = scheduledAtFromLabels(pull.labels);
+    if (!scheduledAt) continue;
+    out.push({
+      storageSlug: match[1],
+      revision: Number(match[2]),
+      prNumber: pull.number,
+      scheduledAt,
+    });
+  }
+  return out.sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
 }
 
 // Reads the current `main` content of a blog post so the editor can load the
@@ -489,11 +534,13 @@ export async function verifyImageReferences(
 }
 
 export async function currentDraftPullRequest(
-  request: Request,
+  // A null request is the unattended context (schedule ticker): session and
+  // origin checks are skipped because the caller authenticated another way.
+  request: Request | null,
   storageSlug: string,
   revision?: number,
 ): Promise<DraftPullRequest | null> {
-  if (!(await readAdminSession(request)))
+  if (request && !(await readAdminSession(request)))
     throw new DraftActionError("Autentikasi diperlukan.", 401);
   if (!isSafeStorageSlug(storageSlug))
     throw new DraftActionError("Identitas draf tidak valid.", 400);
@@ -571,11 +618,42 @@ async function supersedeOlderPullRequests(
   }
 }
 
+// Sets (or clears, with null) the scheduled-publish label on a revision PR.
+// Self-contained: reads the current label set first so non-schedule labels
+// survive the PUT, which replaces the whole set. Returns the canonical ISO
+// now stored, or null when cleared.
+export async function setPullScheduleLabel(
+  apiUrl: string,
+  pat: string,
+  prNumber: number,
+  iso: string | null,
+): Promise<string | null> {
+  if (iso !== null && !isValidScheduleInstant(iso)) {
+    throw new DraftActionError("Jadwal terbit tidak valid.", 400);
+  }
+  const current = await githubJson<Array<{ name?: unknown }>>(
+    await githubRequest(apiUrl, pat, `/issues/${prNumber}/labels`),
+  );
+  const names = (Array.isArray(current) ? current : [])
+    .map((entry) => (entry && typeof entry.name === "string" ? entry.name : null))
+    .filter((name): name is string => Boolean(name))
+    .filter((name) => !name.startsWith(SCHEDULE_LABEL_PREFIX));
+  const normalized = iso ? new Date(iso).toISOString() : null;
+  if (normalized) names.push(formatScheduleLabel(normalized));
+  const updated = await githubJson<Array<{ name?: unknown }>>(
+    await githubRequest(apiUrl, pat, `/issues/${prNumber}/labels`, {
+      method: "PUT",
+      body: JSON.stringify(names),
+    }),
+  );
+  return scheduledAtFromLabels(Array.isArray(updated) ? updated : []);
+}
+
 export async function createDraftPullRequest(
   request: Request,
   storageSlug: string,
   value: unknown,
-): Promise<DraftPullRequest> {
+): Promise<{ pullRequest: DraftPullRequest; scheduleCarried: string | null }> {
   if (!(await readAdminSession(request)))
     throw new DraftActionError("Autentikasi diperlukan.", 401);
   validateMutationOrigin(request);
@@ -615,7 +693,8 @@ export async function createDraftPullRequest(
     .filter((reference): reference is string => Boolean(reference));
 
   const existing = await findPullRequestByHead(apiUrl, pat, storageSlug, revision, branch);
-  if (existing && (existing.status === "open" || existing.status === "merged")) return existing;
+  if (existing && (existing.status === "open" || existing.status === "merged"))
+    return { pullRequest: existing, scheduleCarried: null };
 
   // ADR 0011 dangling-reference gate: a broken PR cannot be created. Images must
   // have been uploaded to the pending revision branch (or resolve in the legacy
@@ -688,7 +767,20 @@ export async function createDraftPullRequest(
 
   await supersedeOlderPullRequests(apiUrl, pat, storageSlug, created.number, created.html_url);
 
-  return toDraftPullRequest(storageSlug, revision, created, fingerprint);
+  // A schedule on the superseded open revision carries forward: closing the
+  // old PR would otherwise silently cancel an unattended publish the author
+  // arranged. Only open revisions carry (a schedule on an already-merged PR
+  // fired already and must not leak onto fresh work).
+  let scheduleCarried: string | null = null;
+  if (latest && latest.status === "open" && latest.scheduledAt) {
+    await setPullScheduleLabel(apiUrl, pat, created.number, latest.scheduledAt);
+    scheduleCarried = latest.scheduledAt;
+  }
+
+  return {
+    pullRequest: toDraftPullRequest(storageSlug, revision, created, fingerprint),
+    scheduleCarried,
+  };
 }
 
 async function readFileAtRef(
@@ -717,12 +809,16 @@ async function readFileAtRef(
 // ancestor of `main` — the ancestry check in isCommitDeployed keeps working and
 // the dashboard can flip the revision to Published on its own after deploy.
 export async function mergeDraftPullRequest(
-  request: Request,
+  // Null request: unattended merge (schedule ticker). The endpoint verified
+  // the shared schedule secret instead of an admin session.
+  request: Request | null,
   storageSlug: string,
 ): Promise<DraftPullRequest> {
-  if (!(await readAdminSession(request)))
-    throw new DraftActionError("Autentikasi diperlukan.", 401);
-  validateMutationOrigin(request);
+  if (request) {
+    if (!(await readAdminSession(request)))
+      throw new DraftActionError("Autentikasi diperlukan.", 401);
+    validateMutationOrigin(request);
+  }
   if (!isSafeStorageSlug(storageSlug))
     throw new DraftActionError("Identitas draf tidak valid.", 400);
   const pat = await configuredGitHubPat();
@@ -864,9 +960,7 @@ export async function renameLegacyPost(
     throw new DraftActionError(`File "${currentName}.md" tidak ditemukan di repositori.`, 404);
 
   // One commit: delete the old path, add the new one (the contents API's
-  // delete-then-create in a tree commit). Encode the source back to base64 for
-  // the create call.
-  const encoded = encodeBase64(source);
+  // delete-then-create in a tree commit).
 
   // Build a single tree commit: base tree = main, one deletion + one addition.
   const baseRef = await githubJson<{ object?: { sha?: unknown } }>(

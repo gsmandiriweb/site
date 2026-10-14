@@ -11,6 +11,7 @@ const DEPLOYED_TTL_SECONDS = 30 * 24 * 60 * 60;
 const CALLBACK_MAX_AGE_SECONDS = 5 * 60;
 const GITHUB_API_VERSION = "2022-11-28";
 const GITHUB_REPOSITORY = "gsmandiriweb/site";
+const API_URL = "https://api.github.com";
 const SHA_PATTERN = /^[0-9a-f]{40}$/i;
 
 export class DeployActionError extends Error {
@@ -78,6 +79,12 @@ async function verifyCallbackSignature(
 
 // Verifies the signed workflow callback and records the deployed commit as the
 // "live" boundary. A `failed` status leaves the previous confirmation in place.
+// Out-of-order guard: rapid successive merges (batch publish, scheduled
+// bursts) deploy concurrently and their callbacks can land out of order, so
+// only a commit equal to or newer than the stored one may move the boundary.
+// A stale callback keeps the previous confirmation and reports it. When the
+// ordering cannot be checked (no PAT, API failure), this fails open to the
+// plain overwrite so deploys are never blocked by telemetry.
 export async function recordDeployCallback(
   request: Request,
   body: string,
@@ -106,9 +113,46 @@ export async function recordDeployCallback(
   if (!commitSha || !SHA_PATTERN.test(commitSha)) {
     throw new DeployActionError("Deployment callback requires a valid commitSha.", 400);
   }
+  const previous = await deployedCommit();
+  if (
+    previous &&
+    previous.commitSha !== commitSha &&
+    (await isNewerCommit(previous.commitSha, commitSha)) === false
+  ) {
+    return previous;
+  }
   const info: DeployInfo = { commitSha, deployedAt: new Date().toISOString() };
   await writeCmsState(DEPLOYED_SHA_KEY, info, DEPLOYED_TTL_SECONDS);
   return info;
+}
+
+// Is `commitSha` strictly newer than `baseSha` (an ancestor check via the
+// compare API)? Returns null when the ordering cannot be determined, in
+// which case callers fail open.
+async function isNewerCommit(baseSha: string, commitSha: string): Promise<boolean | null> {
+  const env = await runtimeEnv();
+  const pat = env.CMS_GITHUB_PAT ?? null;
+  if (!pat) return null;
+  try {
+    const response = await fetch(
+      `${API_URL}/repos/${GITHUB_REPOSITORY}/compare/${baseSha}...${commitSha}`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": GITHUB_API_VERSION,
+          "User-Agent": "bsm-cms",
+          Authorization: `Bearer ${pat}`,
+        },
+      },
+    );
+    if (!response.ok) return null;
+    const payload = (await response.json()) as { status?: unknown };
+    if (payload.status === "identical") return null;
+    if (payload.status === "ahead") return true;
+    return false;
+  } catch {
+    return null;
+  }
 }
 
 // Is `commitSha` an ancestor of (or equal to) the currently deployed commit?

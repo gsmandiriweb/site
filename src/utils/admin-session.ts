@@ -15,6 +15,7 @@ export type RuntimeEnv = {
   CMS_OWNER_SECRET?: string;
   CMS_DEPLOY_CALLBACK_URL?: string;
   CMS_DEPLOY_CALLBACK_SECRET?: string;
+  CMS_SCHEDULE_SECRET?: string;
   CMS_GITHUB_API_URL?: string;
 };
 
@@ -47,6 +48,7 @@ export async function runtimeEnv(): Promise<RuntimeEnv> {
       workerEnv.CMS_DEPLOY_CALLBACK_URL ?? developmentEnv("CMS_DEPLOY_CALLBACK_URL"),
     CMS_DEPLOY_CALLBACK_SECRET:
       workerEnv.CMS_DEPLOY_CALLBACK_SECRET ?? developmentEnv("CMS_DEPLOY_CALLBACK_SECRET"),
+    CMS_SCHEDULE_SECRET: workerEnv.CMS_SCHEDULE_SECRET ?? developmentEnv("CMS_SCHEDULE_SECRET"),
     CMS_GITHUB_API_URL: workerEnv.CMS_GITHUB_API_URL ?? developmentEnv("CMS_GITHUB_API_URL"),
   };
 }
@@ -163,4 +165,11 @@ export async function configuredOwnerSecret(): Promise<string | null> {
 export async function configuredGitHubPat(): Promise<string | null> {
   const env = await runtimeEnv();
   return env.CMS_GITHUB_PAT ?? developmentEnv("CMS_GITHUB_PAT") ?? null;
+}
+
+// Shared secret for the unattended schedule ticker (GitHub Actions cron).
+// Unlike the owner credentials this never touches a browser session.
+export async function configuredScheduleSecret(): Promise<string | null> {
+  const env = await runtimeEnv();
+  return env.CMS_SCHEDULE_SECRET ?? developmentEnv("CMS_SCHEDULE_SECRET") ?? null;
 }

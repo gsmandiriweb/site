@@ -1,0 +1,35 @@
+name: Scheduled publishing tick
+
+# Unattended half of scheduled publishing: every 5 minutes, ask the Worker to
+# merge any revision PR whose schedule label is due. Merges push to main, so
+# the Deploy workflow handles build/deploy/callback from there. This job is
+# intentionally curl-only (no checkout, no dependencies): all logic lives in
+# the Worker. Requires the CMS_SCHEDULE_SECRET repo secret (same value as the
+# Worker secret); without it the tick answers 503 and this run fails loudly.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CMS_SCHEDULE_SECRET: ${{ secrets.CMS_SCHEDULE_SECRET }}
+    steps:
+      - name: Run the schedule tick
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CMS_SCHEDULE_SECRET:-}" ]]; then
+            echo "::error::CMS_SCHEDULE_SECRET is not set (repo Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          curl --fail-with-body --retry 3 --retry-delay 5 -X POST \
+            https://site.gsmandiri-web.workers.dev/api/cms/schedule/tick \
+            -H 'Content-Type: application/json' \
+            -H "x-bsm-schedule-secret: $CMS_SCHEDULE_SECRET" \
+            --data '{}'

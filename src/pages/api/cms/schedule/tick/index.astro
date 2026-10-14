@@ -1,0 +1,27 @@
+---
+import { jsonResponse } from "../../../../../utils/cms-drafts.ts";
+import { DraftActionError } from "../../../../../utils/cms-drafts.ts";
+import { runScheduledTick, verifyTickSecret } from "../../../../../utils/schedule.ts";
+
+// Unattended entry point for the GitHub Actions schedule cron: merge every
+// revision PR whose schedule label is due. Authenticated by the shared
+// schedule secret header (no admin session exists out of band); merges push
+// to main, so the normal CI deploy + signed callback + Terbit flip follow.
+export const prerender = false;
+
+if (Astro.request.method !== "POST") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "POST", "Cache-Control": "no-store" },
+  });
+}
+
+try {
+  await verifyTickSecret(Astro.request);
+  return jsonResponse(await runScheduledTick());
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Unable to run the schedule tick.";
+  const status = error instanceof DraftActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---

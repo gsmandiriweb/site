@@ -1,0 +1,63 @@
+---
+import { DraftActionError, jsonResponse } from "../../../../../../utils/cms-drafts.ts";
+import { isSafeStorageSlug } from "../../../../../../utils/cms-drafts.ts";
+import { validateMutationOrigin } from "../../../../../../utils/cms-drafts.ts";
+import { readAdminSession } from "../../../../../../utils/admin-session.ts";
+import { mergeDraftPullRequest } from "../../../../../../utils/draft-publish.ts";
+
+// Batch publish: approve-and-merge one open revision PR per post, in order.
+// Each item runs the exact single-merge path (fingerprint guard,
+// ready-for-review promotion, merge commit); one post's failure never aborts
+// the rest. Every merge pushes to main, so CI deploys serialize behind the
+// workflow's concurrency group and each posts its own callback.
+export const prerender = false;
+
+const BATCH_LIMIT = 10;
+
+if (Astro.request.method !== "POST") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "POST", "Cache-Control": "no-store" },
+  });
+}
+
+const body = await Astro.request.json().catch(() => null);
+const rawSlugs = body && Array.isArray(body.storageSlugs) ? body.storageSlugs : null;
+
+try {
+  if (!(await readAdminSession(Astro.request)))
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
+  validateMutationOrigin(Astro.request);
+  const storageSlugs = Array.isArray(rawSlugs)
+    ? [...new Set(rawSlugs.filter((slug) => isSafeStorageSlug(slug)))]
+    : [];
+  if (storageSlugs.length < 1) throw new DraftActionError("Pilih minimal satu artikel.", 400);
+  if (storageSlugs.length > BATCH_LIMIT)
+    throw new DraftActionError(`Maksimal ${BATCH_LIMIT} artikel sekaligus.`, 400);
+
+  const results = [];
+  for (const storageSlug of storageSlugs) {
+    try {
+      const pullRequest = await mergeDraftPullRequest(Astro.request, storageSlug);
+      results.push({
+        storageSlug,
+        ok: true as const,
+        revision: pullRequest.revision,
+        prNumber: pullRequest.prNumber,
+      });
+    } catch (error) {
+      results.push({
+        storageSlug,
+        ok: false as const,
+        error: error instanceof Error ? error.message : "Tidak dapat menggabungkan revisi.",
+      });
+    }
+  }
+  return jsonResponse({ results });
+} catch (error) {
+  const message =
+    error instanceof Error ? error.message : "Unable to merge the GitHub pull requests.";
+  const status = error instanceof DraftActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---

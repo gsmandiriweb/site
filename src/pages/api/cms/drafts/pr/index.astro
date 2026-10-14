@@ -31,9 +31,12 @@ try {
     });
   }
   const value = body && "post" in body ? body.post : null;
-  return jsonResponse({
-    pullRequest: await createDraftPullRequest(Astro.request, storageSlug, value),
-  });
+  const { pullRequest, scheduleCarried } = await createDraftPullRequest(
+    Astro.request,
+    storageSlug,
+    value,
+  );
+  return jsonResponse({ pullRequest, scheduleCarried });
 } catch (error) {
   const message = error instanceof Error ? error.message : "Unable to create the GitHub pull request.";
   const status = error instanceof DraftActionError ? error.status : 500;

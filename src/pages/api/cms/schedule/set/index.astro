@@ -1,0 +1,61 @@
+---
+import { jsonResponse } from "../../../../../utils/cms-drafts.ts";
+import { DraftActionError } from "../../../../../utils/cms-drafts.ts";
+import { isSafeStorageSlug } from "../../../../../utils/cms-drafts.ts";
+import { isValidScheduleInstant } from "../../../../../utils/cms-drafts.ts";
+import { validateMutationOrigin } from "../../../../../utils/cms-drafts.ts";
+import { readAdminSession } from "../../../../../utils/admin-session.ts";
+import { configuredGitHubPat } from "../../../../../utils/admin-session.ts";
+import { runtimeEnv } from "../../../../../utils/admin-session.ts";
+import {
+  apiUrlFor,
+  currentDraftPullRequest,
+  setPullScheduleLabel,
+} from "../../../../../utils/draft-publish.ts";
+
+// Sets or clears the scheduled-publish time on the post's open revision PR
+// (`scheduledAt: string | null`). Scheduling requires an open revision to
+// attach to — send one first. Past instants are accepted and fire on the
+// next tick ("publish ASAP").
+export const prerender = false;
+
+if (Astro.request.method !== "POST") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "POST", "Cache-Control": "no-store" },
+  });
+}
+
+const body = await Astro.request.json().catch(() => null);
+const storageSlug = body && typeof body.storageSlug === "string" ? body.storageSlug : "";
+const hasSchedule = body && "scheduledAt" in body;
+const scheduledAt = body && typeof body.scheduledAt === "string" ? body.scheduledAt : null;
+
+try {
+  if (!(await readAdminSession(Astro.request)))
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
+  validateMutationOrigin(Astro.request);
+  if (!isSafeStorageSlug(storageSlug))
+    throw new DraftActionError("Identitas draf tidak valid.", 400);
+  if (!hasSchedule) throw new DraftActionError("Jadwal terbit tidak valid.", 400);
+  if (scheduledAt !== null && !isValidScheduleInstant(scheduledAt))
+    throw new DraftActionError("Jadwal terbit tidak valid.", 400);
+
+  const pat = await configuredGitHubPat();
+  if (!pat) throw new DraftActionError("Akses GitHub CMS belum dikonfigurasi.", 503);
+  const env = await runtimeEnv();
+  const apiUrl = apiUrlFor(env);
+
+  const pull = await currentDraftPullRequest(Astro.request, storageSlug);
+  if (!pull || pull.status !== "open")
+    throw new DraftActionError("Kirim revisi dulu sebelum menjadwalkan terbit.", 409);
+
+  const stored = await setPullScheduleLabel(apiUrl, pat, pull.prNumber, scheduledAt);
+  return jsonResponse({ prNumber: pull.prNumber, scheduledAt: stored });
+} catch (error) {
+  const message =
+    error instanceof Error ? error.message : "Unable to schedule publication.";
+  const status = error instanceof DraftActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---

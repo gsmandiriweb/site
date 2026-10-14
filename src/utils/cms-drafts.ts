@@ -171,3 +171,37 @@ export function jsonResponse(data: unknown, status = 200): Response {
     },
   });
 }
+
+// Scheduled publishing: the schedule lives on the open revision PR as a
+// label (`cms-schedule:<UTC ISO>`), never in a separate store — it survives
+// browser closes, is visible on GitHub itself, and dies with the PR when a
+// revision is superseded (the creator re-applies it; see createDraftPullRequest).
+export const SCHEDULE_LABEL_PREFIX = "cms-schedule:";
+
+export function formatScheduleLabel(iso: string): string {
+  return `${SCHEDULE_LABEL_PREFIX}${iso}`;
+}
+
+// Returns the scheduled ISO instant carried by a PR label list, or null.
+// Invalid instants are ignored (a malformed label must never block a merge).
+export function scheduledAtFromLabels(
+  labels: Array<{ name?: unknown }> | undefined,
+): string | null {
+  if (!Array.isArray(labels)) return null;
+  for (const entry of labels) {
+    if (!entry || typeof entry.name !== "string") continue;
+    if (!entry.name.startsWith(SCHEDULE_LABEL_PREFIX)) continue;
+    const iso = entry.name.slice(SCHEDULE_LABEL_PREFIX.length);
+    const time = Date.parse(iso);
+    if (Number.isNaN(time)) continue;
+    return new Date(time).toISOString();
+  }
+  return null;
+}
+
+// Strict ISO-8601 instant validation for the schedule writer endpoint.
+// Past instants are accepted ("publish ASAP" on the next tick); only
+// malformed input is rejected.
+export function isValidScheduleInstant(value: unknown): value is string {
+  return typeof value === "string" && !Number.isNaN(Date.parse(value));
+}

@@ -25,13 +25,14 @@ the deployed commit SHA to a signed callback so the CMS marks revisions **Publis
 
 Set with `wrangler secret put <NAME> --name site` (value via stdin). Never commit values.
 
-| Secret                       | Purpose                                                                       |
-| ---------------------------- | ----------------------------------------------------------------------------- |
-| `CMS_OWNER_USERNAME`         | Owner username for `/admin/login` (e.g. `owner`)                              |
-| `CMS_OWNER_PASSWORD`         | Owner password for `/admin/login` (long random value)                         |
-| `CMS_GITHUB_PAT`             | GitHub PAT, repo **Contents r/w + Pull requests r/w** (server-side mutations) |
-| `CMS_DEPLOY_CALLBACK_URL`    | `https://site.gsmandiri-web.workers.dev/api/cms/deploy/callback`              |
-| `CMS_DEPLOY_CALLBACK_SECRET` | HMAC key — **must match** the GitHub Actions secret byte-for-byte             |
+| Secret                       | Purpose                                                                                                                                                          |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CMS_OWNER_USERNAME`         | Owner username for `/admin/login` (e.g. `owner`)                                                                                                                 |
+| `CMS_OWNER_PASSWORD`         | Owner password for `/admin/login` (long random value)                                                                                                            |
+| `CMS_GITHUB_PAT`             | GitHub PAT, repo **Contents r/w + Pull requests r/w** (server-side mutations)                                                                                    |
+| `CMS_DEPLOY_CALLBACK_URL`    | `https://site.gsmandiri-web.workers.dev/api/cms/deploy/callback`                                                                                                 |
+| `CMS_DEPLOY_CALLBACK_SECRET` | HMAC key — **must match** the GitHub Actions secret byte-for-byte                                                                                                |
+| `CMS_SCHEDULE_SECRET`        | Shared secret for the schedule ticker (`schedule.yml` → `/api/cms/schedule/tick`). Generate with `openssl rand -hex 32`; same value as the GitHub Actions secret |
 
 The generated values are saved locally in the gitignored `.env`
 (`CMS_OWNER_USERNAME`, `CMS_OWNER_PASSWORD`, `CMS_DEPLOY_CALLBACK_SECRET`,
@@ -89,6 +90,7 @@ repo-secrets permission (403), so these must be added in the dashboard:
 | `CLOUDFLARE_ACCOUNT_ID`      | `d2856251d33378b2df9c712b9bee40d6`                                                                             |
 | `CMS_DEPLOY_CALLBACK_URL`    | `https://site.gsmandiri-web.workers.dev/api/cms/deploy/callback`                                               |
 | `CMS_DEPLOY_CALLBACK_SECRET` | Copy from `.env` — identical to the Worker secret                                                              |
+| `CMS_SCHEDULE_SECRET`        | Generate with `openssl rand -hex 32` — identical to the Worker secret (feeds `schedule.yml` → tick endpoint)   |
 
 > If `CMS_DEPLOY_CALLBACK_SECRET` differs between the Worker and GitHub, merges deploy
 > fine but revisions stay stuck at "Merged" instead of flipping to "Published".
