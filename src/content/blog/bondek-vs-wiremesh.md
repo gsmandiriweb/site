@@ -1,5 +1,5 @@
 ---
-id: "5445c8c9-b8a3-8e25-9d16-7f0a2b9e6c31"
+id: 5445c8c9-b8a3-8e25-9d16-7f0a2b9e6c31
 slug: bondek-vs-wiremesh
 title: "Bondek vs Wiremesh: Solusi Lantai Cor yang Tepat"
 kicker: "Struktur & Lantai"
@@ -10,6 +10,7 @@ aliases: []
 image: bondek.png
 imageAlt: "Bondek untuk lantai cor beton"
 date: 2026-06-27
+draft: false
 ---
 
 Bondek dan wiremesh sama-sama dipakai untuk lantai beton cor, tapi perannya berbeda. Mengacaukan keduanya bisa menambah biaya dan memperlambat proyek.
@@ -24,8 +25,8 @@ Wiremesh adalah jaring kawat dilas yang dipakai sebagai tulangan bagi lantai. Ia
 
 ## Kapan mana?
 
-- Butuh lantai cepat tanpa bekisting bawah → **Bondek**.
-- Lantai dasar / jalan / plat tipis dengan bekisting konvensional → **Wiremesh**.
-- Proyek bertingkat butuh efisiensi waktu → kombinasikan keduanya sesuai desain struktur.
+* Butuh lantai cepat tanpa bekisting bawah → **Bondek**.
+* Lantai dasar / jalan / plat tipis dengan bekisting konvensional → **Wiremesh**.
+* Proyek bertingkat butuh efisiensi waktu → kombinasikan keduanya sesuai desain struktur.
 
 Selalu minta gambar penulangan dari perencana agar volume bondek dan wiremesh tepat, lalu bandingkan penawaran per meter sebelum membeli.
