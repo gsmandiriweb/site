@@ -5,7 +5,13 @@ name: Scheduled publishing tick
 # the Deploy workflow handles build/deploy/callback from there. This job is
 # intentionally curl-only (no checkout, no dependencies): all logic lives in
 # the Worker. Requires the CMS_SCHEDULE_SECRET repo secret (same value as the
-# Worker secret); without it the tick answers 503 and this run fails loudly.
+# Worker secret).
+#
+# A missing secret means "scheduling is not set up yet", not "something broke":
+# the run warns and skips. A secret that IS set but rejected (401) or a tick
+# that errors still fails the run, because that is a real fault. The dashboard
+# surfaces the setup gap where it matters — the schedule control answers
+# "Penjadwalan belum dikonfigurasi." when the Worker lacks the secret.
 on:
   schedule:
     - cron: "*/5 * * * *"
@@ -17,6 +23,10 @@ jobs:
   tick:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # One tick at a time: a slow tick must not stack on the next schedule.
+    concurrency:
+      group: bsm-schedule-tick
+      cancel-in-progress: false
     env:
       CMS_SCHEDULE_SECRET: ${{ secrets.CMS_SCHEDULE_SECRET }}
     steps:
@@ -25,8 +35,8 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${CMS_SCHEDULE_SECRET:-}" ]]; then
-            echo "::error::CMS_SCHEDULE_SECRET is not set (repo Settings → Secrets and variables → Actions)."
-            exit 1
+            echo "::warning::CMS_SCHEDULE_SECRET is not set — scheduled publishing is idle (repo Settings → Secrets and variables → Actions)."
+            exit 0
           fi
           curl --fail-with-body --retry 3 --retry-delay 5 -X POST \
             https://site.gsmandiri-web.workers.dev/api/cms/schedule/tick \
