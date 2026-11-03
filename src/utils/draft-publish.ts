@@ -5,10 +5,12 @@ import {
   isSafeStorageSlug,
   isValidScheduleInstant,
   SCHEDULE_LABEL_PREFIX,
+  scheduleIsPending,
   scheduledAtFromLabels,
   serializeDraftMarkdown,
   validateDraftPost,
   validateMutationOrigin,
+  withFrontmatterStatus,
 } from "./cms-drafts.ts";
 import { imageAsset } from "./images.ts";
 import {
@@ -803,7 +805,32 @@ async function readFileAtRef(
   return decodeBase64(file.content);
 }
 
-// ADR 0009/0012 owner merge: the dashboard owner approves and merges the open
+export type MergeOptions = {
+  // Manual "terbitkan sekarang" from the dashboard: publishes ahead of a
+  // pending schedule the author arranged. The ticker never sets it.
+  overrideSchedule?: boolean;
+};
+
+// Reports the `status` field a pending revision actually carries, so the
+// dashboard can tell whether approving it would make the article visible. The
+// public site renders only `status: published` (utils/blog.ts), so a revision
+// authored as draft merges into an article nobody can see — the failure mode
+// behind "scheduled but never posted".
+export async function readRevisionStatus(
+  pull: DraftPullRequest | null,
+): Promise<"draft" | "published" | "archived" | null> {
+  if (!pull || pull.status !== "open" || !isSafeStorageSlug(pull.storageSlug)) return null;
+  const pat = await configuredGitHubPat();
+  if (!pat) return null;
+  const env = await runtimeEnv();
+  const apiUrl = apiUrlFor(env);
+  const content = await readFileAtRef(apiUrl, pat, storagePath(pull.storageSlug), pull.branch);
+  if (content === null) return null;
+  const match = /^status\s*:\s*["']?([a-z]+)["']?/m.exec(content);
+  const value = match?.[1];
+  return value === "draft" || value === "published" || value === "archived" ? value : null;
+}
+
 // revision PR through the CMS, so publishing never requires opening GitHub. The
 // merge creates a merge commit (never a squash) so the PR head SHA becomes an
 // ancestor of `main` — the ancestry check in isCommitDeployed keeps working and
@@ -813,6 +840,7 @@ export async function mergeDraftPullRequest(
   // the shared schedule secret instead of an admin session.
   request: Request | null,
   storageSlug: string,
+  options: MergeOptions = {},
 ): Promise<DraftPullRequest> {
   if (request) {
     if (!(await readAdminSession(request)))
@@ -833,6 +861,18 @@ export async function mergeDraftPullRequest(
       pull.status === "merged"
         ? `Revisi r${pull.revision} sudah digabungkan.`
         : `Revisi r${pull.revision} ditutup; kirim revisi baru untuk menerbitkan.`,
+      409,
+    );
+  }
+
+  // A pending schedule is a promise about when the article goes live, so a
+  // manual approval must not silently break it. "Setujui & gabungkan" used to
+  // publish immediately while the panel said "Terjadwal" — the button is now a
+  // deliberate early publish (options.overrideSchedule) and the API refuses the
+  // ambiguous case instead of trusting the caller.
+  if (!options.overrideSchedule && scheduleIsPending(pull.scheduledAt)) {
+    throw new DraftActionError(
+      `Artikel terjadwal terbit ${pull.scheduledAt}. Batalkan jadwal dulu, atau terbitkan sekarang secara eksplisit.`,
       409,
     );
   }
@@ -1015,4 +1055,154 @@ export async function renameLegacyPost(
     );
 
   return { storageSlug: nextName };
+}
+
+// ---------------------------------------------------------------------------
+// Taking an article down
+//
+// Two distinct intents, because they have different consequences and the
+// dashboard must not blur them: "jadikan draf" keeps the file and only changes
+// what the public site renders (`status`), while "hapus" removes the file from
+// main. Both are applied to `main` directly — they are un-publishing actions,
+// and routing them through a revision PR would mean the article stays live
+// until someone approves it, which is the opposite of the request.
+// ---------------------------------------------------------------------------
+
+// Closes every open revision PR for a post, which also drops any schedule
+// label riding on it (the ticker lists open PRs only). Best effort per PR: a
+// PR that GitHub refuses to close must not block taking the article down.
+async function closeRevisionPullRequests(
+  apiUrl: string,
+  pat: string,
+  storageSlug: string,
+  options: { deleteBranches?: boolean } = {},
+): Promise<number[]> {
+  const pulls = await listRevisionPulls(apiUrl, pat, storageSlug);
+  const closed: number[] = [];
+  for (const pull of pulls) {
+    if (pullStatus(pull) !== "open" || typeof pull.number !== "number") continue;
+    const response = await githubRequest(apiUrl, pat, `/pulls/${pull.number}`, {
+      method: "PATCH",
+      body: JSON.stringify({ state: "closed" }),
+    });
+    if (!response.ok) continue;
+    closed.push(pull.number);
+    const branch = typeof pull.head?.ref === "string" ? pull.head.ref : "";
+    if (options.deleteBranches && branch) {
+      // A merged branch is kept (its commits are the history); only the
+      // unmerged revision is deleted, and only when it is being discarded
+      // together with the article.
+      await githubRequest(apiUrl, pat, `/git/refs/heads/${branch}`, {
+        method: "DELETE",
+      }).catch(() => undefined);
+    }
+  }
+  return closed;
+}
+
+async function readMainFile(
+  apiUrl: string,
+  pat: string,
+  storageSlug: string,
+): Promise<{ content: string; sha: string } | null> {
+  const response = await githubRequest(
+    apiUrl,
+    pat,
+    `/contents/${storagePath(storageSlug)}?ref=${DEFAULT_BRANCH}`,
+  );
+  if (response.status === 404) return null;
+  const file = await githubJson<{ content?: unknown; encoding?: unknown; sha?: unknown }>(response);
+  if (file.encoding !== "base64" || typeof file.content !== "string") return null;
+  if (typeof file.sha !== "string") return null;
+  return { content: decodeBase64(file.content), sha: file.sha };
+}
+
+export type RemoveResult = {
+  storageSlug: string;
+  action: "draft" | "deleted";
+  closedPullRequests: number[];
+};
+
+// "Tarik dari situs": rewrites `status: draft` on main so the article stops
+// being rendered, and closes any open revision PR so a pending schedule cannot
+// put it back on the site minutes later. Nothing is deleted, so re-publishing
+// is just a new revision.
+export async function unpublishPost(request: Request, storageSlug: string): Promise<RemoveResult> {
+  validateMutationOrigin(request);
+  if (!(await readAdminSession(request)))
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
+  if (!isSafeStorageSlug(storageSlug))
+    throw new DraftActionError("Identitas draf tidak valid.", 400);
+
+  const pat = await configuredGitHubPat();
+  if (!pat) throw new DraftActionError("Akses GitHub CMS belum dikonfigurasi.", 503);
+  const env = await runtimeEnv();
+  const apiUrl = apiUrlFor(env);
+
+  const file = await readMainFile(apiUrl, pat, storageSlug);
+  if (!file)
+    throw new DraftActionError(
+      `File artikel "${storageSlug}.md" belum ada di main. Kirim revisi lalu hapus artikelnya bila tidak dipakai.`,
+      404,
+    );
+
+  const markdown = withFrontmatterStatus(file.content, "draft");
+  if (markdown !== file.content) {
+    await githubJson(
+      await githubRequest(apiUrl, pat, `/contents/${storagePath(storageSlug)}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          message: `cms: unpublish ${storageSlug} (status: draft)`,
+          content: encodeBase64(markdown),
+          sha: file.sha,
+          branch: DEFAULT_BRANCH,
+        }),
+      }),
+    );
+  }
+
+  const closedPullRequests = await closeRevisionPullRequests(apiUrl, pat, storageSlug);
+  return { storageSlug, action: "draft", closedPullRequests };
+}
+
+// "Hapus artikel": deletes the Markdown file from main and discards its open
+// revision PRs (branches included). The post's media folder under
+// `src/images/blog/<slug>/` is deliberately left in place — images are shared
+// through the same repository pool other posts may reference, and an orphaned
+// folder is inert, while a wrong deletion is not recoverable from the CMS.
+export async function deletePost(request: Request, storageSlug: string): Promise<RemoveResult> {
+  validateMutationOrigin(request);
+  if (!(await readAdminSession(request)))
+    throw new DraftActionError("Autentikasi diperlukan.", 401);
+  if (!isSafeStorageSlug(storageSlug))
+    throw new DraftActionError("Identitas draf tidak valid.", 400);
+
+  const pat = await configuredGitHubPat();
+  if (!pat) throw new DraftActionError("Akses GitHub CMS belum dikonfigurasi.", 503);
+  const env = await runtimeEnv();
+  const apiUrl = apiUrlFor(env);
+
+  const file = await readMainFile(apiUrl, pat, storageSlug);
+  const closedPullRequests = await closeRevisionPullRequests(apiUrl, pat, storageSlug, {
+    deleteBranches: true,
+  });
+  if (!file) {
+    // A post that only exists as a pending revision: closing the PRs is the
+    // whole deletion, and there is nothing on main to remove.
+    if (closedPullRequests.length > 0)
+      return { storageSlug, action: "deleted", closedPullRequests };
+    throw new DraftActionError(`Artikel "${storageSlug}" tidak ditemukan di repositori.`, 404);
+  }
+
+  await githubJson(
+    await githubRequest(apiUrl, pat, `/contents/${storagePath(storageSlug)}`, {
+      method: "DELETE",
+      body: JSON.stringify({
+        message: `cms: delete ${storageSlug}.md`,
+        sha: file.sha,
+        branch: DEFAULT_BRANCH,
+      }),
+    }),
+  );
+  return { storageSlug, action: "deleted", closedPullRequests };
 }

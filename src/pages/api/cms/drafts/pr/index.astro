@@ -4,8 +4,10 @@ import {
   createDraftPullRequest,
   currentDraftPullRequest,
   readMainPostSource,
+  readRevisionStatus,
 } from "../../../../../utils/draft-publish.ts";
 import { isCommitDeployed } from "../../../../../utils/deploy.ts";
+import { configuredScheduleSecret } from "../../../../../utils/admin-session.ts";
 
 export const prerender = false;
 
@@ -22,7 +24,14 @@ try {
     const sourceMarkdown = await readMainPostSource(Astro.request, storageSlug);
     const live =
       pullRequest?.status === "merged" ? await isCommitDeployed(pullRequest.headSha) : false;
-    return jsonResponse({ pullRequest, sourceMarkdown, live });
+    // Whether the unattended ticker can authenticate at all. Without the shared
+    // secret a schedule is a label nobody ever reads, so the dashboard must be
+    // able to say "this will not fire" instead of promising a publish.
+    const scheduleTickerReady = Boolean(await configuredScheduleSecret());
+    // What the pending revision would render as, so the dashboard can ask for a
+    // publishable revision before it promises a schedule.
+    const revisionStatus = await readRevisionStatus(pullRequest);
+    return jsonResponse({ pullRequest, sourceMarkdown, live, scheduleTickerReady, revisionStatus });
   }
   if (Astro.request.method !== "POST") {
     return new Response("Method Not Allowed", {

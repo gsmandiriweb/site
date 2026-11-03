@@ -205,3 +205,49 @@ export function scheduledAtFromLabels(
 export function isValidScheduleInstant(value: unknown): value is string {
   return typeof value === "string" && !Number.isNaN(Date.parse(value));
 }
+
+/**
+ * True while a schedule is still in the future, i.e. the article is promised to
+ * the site at `scheduledAt` and that promise has not fallen due yet.
+ *
+ * Both halves of the publish decision read this one function: the manual merge
+ * guard refuses to publish early (which is how "Setujui & gabungkan" used to
+ * jump the queue), and the dashboard labels the article "Terjadwal" instead of
+ * "Menunggu persetujuan". A missing or malformed instant is never pending.
+ */
+export function scheduleIsPending(
+  scheduledAt: string | null | undefined,
+  now: number = Date.now(),
+): boolean {
+  if (!scheduledAt) return false;
+  const time = Date.parse(scheduledAt);
+  return !Number.isNaN(time) && time > now;
+}
+
+/**
+ * Rewrites the `status` frontmatter field of a Markdown article, adding the
+ * field when it is absent. Used by the "tarik dari situs" path: taking a live
+ * post off the site is a file-state change (the public site renders only
+ * `status: published`), and it must keep every other authored field untouched.
+ */
+export function withFrontmatterStatus(
+  markdown: string,
+  status: "draft" | "published" | "archived",
+): string {
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(markdown);
+  if (!frontmatter) {
+    throw new DraftActionError(
+      "Frontmatter tidak ditemukan di file artikel; status tidak bisa diubah.",
+      409,
+    );
+  }
+  const lines = frontmatter[1].split(/\r?\n/);
+  let replaced = false;
+  const nextLines = lines.map((line) => {
+    if (!/^status\s*:/.test(line)) return line;
+    replaced = true;
+    return `status: ${status}`;
+  });
+  if (!replaced) nextLines.push(`status: ${status}`);
+  return `---\n${nextLines.join("\n")}\n---${markdown.slice(frontmatter[0].length)}`;
+}

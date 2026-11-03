@@ -1,0 +1,37 @@
+---
+import { DraftActionError, jsonResponse } from "../../../../../utils/cms-drafts.ts";
+import { deletePost, unpublishPost } from "../../../../../utils/draft-publish.ts";
+
+// POST /api/cms/posts/remove — takes an article off the site.
+//
+// `mode: "draft"` rewrites `status: draft` on main (the file stays, the site
+// stops rendering it). `mode: "delete"` deletes the Markdown file from main and
+// discards its open revision PRs. Both close the open revision so a pending
+// schedule cannot undo the removal on the next tick.
+export const prerender = false;
+
+if (Astro.request.method !== "POST") {
+  return new Response("Method Not Allowed", {
+    status: 405,
+    headers: { Allow: "POST", "Cache-Control": "no-store" },
+  });
+}
+
+const body = await Astro.request.json().catch(() => null);
+const storageSlug = body && typeof body.storageSlug === "string" ? body.storageSlug : "";
+const mode = body && typeof body.mode === "string" ? body.mode : "";
+
+try {
+  if (mode !== "draft" && mode !== "delete")
+    throw new DraftActionError('Mode harus "draft" atau "delete".', 400);
+  return jsonResponse(
+    mode === "draft"
+      ? await unpublishPost(Astro.request, storageSlug)
+      : await deletePost(Astro.request, storageSlug),
+  );
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Tidak dapat mengubah artikel ini.";
+  const status = error instanceof DraftActionError ? error.status : 500;
+  return jsonResponse({ error: message }, status);
+}
+---

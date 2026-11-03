@@ -92,6 +92,10 @@
      hard to use, because the eye loses the line on return. */
   --cms-card-inset: 28px;
   --cms-column: 916px;
+  /* The publication rail. One width and one gap, shared by the workspace grid
+     and the main column's cap, so the two columns can never disagree. */
+  --cms-rail: 300px;
+  --cms-rail-gap: 28px;
 }
 
 html[data-theme="dark"] {
@@ -168,6 +172,11 @@ body:has([data-cms-dashboard]) {
 .cms-dashboard select {
   font: inherit;
   color: inherit;
+  /* Every field declares `width: 100%` plus its own padding, and this page has
+     no global border-box reset — so each one hung ~24px past the right padding
+     of the surface it sat in, which is why the fields never lined up with their
+     own labels on the right edge. One rule instead of twenty. */
+  box-sizing: border-box;
 }
 .cms-dashboard button {
   font-family: inherit;
@@ -493,23 +502,38 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   margin-top: 12px;
 }
 .cms-new-post__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
-  padding: 9px 10px;
-  border: 1px dashed var(--cms-border-strong);
-  border-radius: var(--cms-radius-sm);
-  background: transparent;
-  color: var(--cms-muted);
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--cms-border-strong);
+  border-radius: var(--cms-radius);
+  background: var(--cms-surface);
+  color: var(--cms-ink);
   cursor: pointer;
-  font: 500 0.8125rem/1 var(--font-body);
+  /* Sentence case in the control voice: this is the one action in the sidebar
+     that creates something, and it was set as a 13px centred string inside a
+     dashed box, which read as a disabled placeholder. */
+  font: 600 0.8125rem/1 var(--font-body);
+  letter-spacing: 0;
+  box-shadow: var(--cms-shadow-sm);
   transition:
     border-color 0.15s var(--cms-ease),
     color 0.15s var(--cms-ease),
     background 0.15s var(--cms-ease);
 }
+.cms-new-post__toggle svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
 .cms-new-post__toggle:hover {
-  border-color: var(--cms-accent);
-  color: var(--cms-accent);
-  background: var(--cms-accent-soft);
+  border-color: var(--cms-signal);
+  color: var(--cms-signal-text);
+  background: var(--cms-signal-soft);
 }
 .cms-new-post__form {
   padding: 12px;
@@ -549,12 +573,34 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
      column under the sidebar. */
   margin-left: 260px;
   /* The editor column is left-hung beside the sidebar and capped at
-     --cms-column, which is also the card's width. One number, so the card
-     fills it and the fields fill the card — no dead space to the right, and no
-     second cap to keep in sync. */
-  max-width: var(--cms-column);
+     --cms-column; the publication rail takes the space to its right, which
+     used to be empty canvas on anything wider than ~1400px. */
+  max-width: calc(var(--cms-column) + var(--cms-rail) + var(--cms-rail-gap));
   padding: 34px clamp(22px, 4vw, 56px) 120px;
 }
+
+/* One workspace, two arrangements. Below --cms-rail-bp the rail sits directly
+   under the title (a status you must scroll to find is not a status); above it,
+   it becomes the sticky right-hand column. Same DOM, no duplicated controls. */
+.cms-workspace {
+  display: grid;
+  grid-template-areas:
+    "heading"
+    "rail"
+    "card";
+  gap: 22px;
+  align-items: start;
+}
+.cms-heading {
+  grid-area: heading;
+}
+.cms-rail {
+  grid-area: rail;
+}
+.cms-editor-card {
+  grid-area: card;
+}
+
 .cms-mobile-workspace {
   display: none;
 }
@@ -581,12 +627,11 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
 }
 
 /* ---------- Page header ---------- */
+/* The title block. It no longer carries the publication badge or the publish
+   button: those moved to the rail, which is the single place a publish decision
+   is made and reported. */
 .cms-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 28px;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 /* The repo filename, demoted below the title it belongs to. */
 /* A dimension line under the title block, with the filename hung off it — the
@@ -625,13 +670,6 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   color: var(--cms-muted);
   font: 400 0.875rem/1.5 var(--font-body);
   max-width: 56ch;
-}
-.cms-heading__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
 }
 
 /* ---------- Connecting hint (slim, non-blocking — #46) ---------- */
@@ -1125,12 +1163,9 @@ html[data-theme="dark"] .cms-theme-toggle .cms-theme-toggle__dark {
   overflow: auto;
 }
 
-/* ---------- Puboolish tab: status + slug + deploy ---------- */
-.cms-deploy-line small {
-  color: var(--cms-muted);
-  font: 400 0.8125rem/1.5 var(--font-body);
-}
-
+/* ---------- Publish tab: visibility + slug + date ----------
+   The schedule and deploy read-outs moved to the publication rail, so this tab
+   holds only what the file itself says. */
 .cms-status-select {
   width: 100%;
   min-height: 36px;
@@ -1208,20 +1243,6 @@ html[data-theme="dark"] .cms-schedule-row .cms-ui-input {
   box-shadow: var(--cms-accent-ring);
 }
 
-.cms-deploy-line strong,
-.cms-deploy-line small {
-  display: block;
-}
-.cms-deploy-line strong {
-  color: var(--cms-ink);
-  font: 600 0.875rem/1.3 var(--font-body);
-}
-.cms-deploy-line small {
-  color: var(--cms-muted);
-  font: 400 0.8125rem/1.5 var(--font-body);
-  margin-top: 3px;
-}
-
 /* ---------- Buttons ---------- */
 /* (0,2,0) on purpose. The bare `.cms-dashboard button` reset above sits at
    (0,1,1) and would otherwise win the family, which is how the CTA was
@@ -1237,10 +1258,11 @@ html[data-theme="dark"] .cms-schedule-row .cms-ui-input {
   border: 1px solid transparent;
   border-radius: var(--cms-radius);
   cursor: pointer;
-  /* Tracked uppercase micro-labels in the workhorse face. */
-  font: 600 0.6875rem/1 var(--font-body);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  /* Sentence case, 13px/600. Buttons used to be 11px tracked uppercase, which
+     turned a primary action into a stencil — the tracked-mono voice belongs to
+     field labels and badges, not to the control that does the work. */
+  font: 600 0.8125rem/1 var(--font-body);
+  letter-spacing: 0;
   transition:
     background 0.15s var(--cms-ease),
     border-color 0.15s var(--cms-ease),
@@ -1318,10 +1340,12 @@ html[data-theme="dark"] .cms-schedule-row .cms-ui-input {
 .cms-ui-button--sm {
   min-height: 30px;
   padding: 0 10px;
+  font-size: 0.75rem;
 }
 .cms-ui-button--lg {
   min-height: 42px;
   padding: 0 18px;
+  font-size: 0.875rem;
 }
 .cms-ui-button--icon {
   width: 34px;
@@ -1655,6 +1679,213 @@ html[data-theme="dark"] .cms-schedule-row .cms-ui-input {
   min-width: 160px;
 }
 
+/* ---------- Publication rail ----------
+   The right-hand column owns the publish decision: state, the single next
+   action, the schedule, the deploy record, and removal. Cards stack with
+   hairline chrome and no shadow — the rail is a read-out, not a hero. */
+.cms-rail {
+  display: grid;
+  gap: 12px;
+  align-self: start;
+  min-width: 0;
+}
+.cms-rail__card {
+  display: grid;
+  gap: 10px;
+  /* The rail is a narrow sticky column with its own scroll container; a card
+     whose min-content is wider than the column (a nowrap badge beside an
+     eyebrow) would be clipped by that container instead of wrapping. */
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--cms-border);
+  border-radius: var(--cms-radius);
+  background: var(--cms-surface);
+}
+.cms-rail__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  min-height: 22px;
+}
+.cms-rail__eyebrow {
+  color: var(--cms-muted);
+  font: 600 0.6875rem/1.2 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.cms-rail__meta-value {
+  color: var(--cms-ink);
+  font: 500 0.75rem/1.2 var(--font-mono);
+  letter-spacing: 0;
+}
+.cms-rail__headline {
+  margin: 0;
+  color: var(--cms-ink);
+  font: 600 1rem/1.35 var(--font-display);
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.cms-rail__body {
+  margin: 0;
+  color: var(--cms-muted);
+  font: 400 0.8125rem/1.6 var(--font-body);
+}
+.cms-rail__note {
+  margin: 0;
+  color: var(--cms-muted);
+  font: 400 0.75rem/1.55 var(--font-body);
+}
+.cms-rail__action {
+  width: 100%;
+}
+/* The outline variant's hairline is too faint to read as a control on a card of
+   the same colour; a secondary action still has to look pressable. */
+.cms-rail .cms-ui-button--outline {
+  border-color: var(--cms-control-border);
+}
+.cms-rail__action--danger {
+  border-color: color-mix(in srgb, var(--cms-danger) 52%, transparent);
+  color: var(--cms-danger);
+}
+.cms-rail__action--danger:hover:not(:disabled) {
+  border-color: var(--cms-danger);
+  background: var(--cms-danger-soft);
+  color: var(--cms-danger);
+}
+/* The schedule block is separated by a rule, not a heading: it is part of the
+   same decision, one step later. */
+.cms-rail__block {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--cms-border);
+}
+.cms-rail .cms-field-label {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 7px;
+  margin: 0;
+}
+.cms-rail .cms-schedule-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 0;
+}
+.cms-rail .cms-schedule-row .cms-ui-input {
+  flex: none;
+  width: 100%;
+}
+.cms-rail .cms-pr-link {
+  margin-top: 2px;
+}
+/* A row of secondary rail controls (currently the cancel-schedule escape). */
+.cms-rail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cms-rail__actions .cms-ui-button {
+  flex: 1 1 auto;
+}
+.cms-rail__actions .cms-ui-button--ghost {
+  justify-content: flex-start;
+  padding-inline: 2px;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--cms-border-strong);
+}
+.cms-rail__actions .cms-ui-button--ghost:hover:not(:disabled) {
+  background: transparent;
+  text-decoration-color: currentColor;
+}
+.cms-rail__card--danger {
+  border-color: color-mix(in srgb, var(--cms-danger) 26%, var(--cms-border));
+}
+
+/* ---------- Remove-article dialog ---------- */
+.cms-remove-modal {
+  width: min(560px, 100%);
+}
+.cms-remove-modal__desc {
+  margin: 0;
+  color: var(--cms-muted);
+  font: 400 0.9375rem/1.65 var(--font-body);
+}
+.cms-remove-modal__options {
+  display: grid;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+/* Each option is a full-width target: on a phone this dialog is tapped, not
+   clicked, and a 14px radio is not a target. */
+.cms-remove-modal__options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 13px;
+  border: 1px solid var(--cms-border-strong);
+  border-radius: var(--cms-radius);
+  cursor: pointer;
+  transition:
+    border-color 0.15s var(--cms-ease),
+    background 0.15s var(--cms-ease);
+}
+.cms-remove-modal__options label:hover {
+  border-color: var(--cms-accent);
+}
+.cms-remove-modal__options label.is-selected {
+  border-color: var(--cms-accent);
+  background: var(--cms-accent-soft);
+}
+.cms-remove-modal__options input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--cms-accent);
+}
+.cms-remove-modal__options strong {
+  display: block;
+  color: var(--cms-ink);
+  font: 600 0.875rem/1.35 var(--font-body);
+}
+.cms-remove-modal__options small {
+  display: block;
+  margin-top: 3px;
+  color: var(--cms-muted);
+  font: 400 0.8125rem/1.55 var(--font-body);
+  overflow-wrap: anywhere;
+}
+.cms-remove-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+.cms-remove-modal__actions .cms-ui-button:first-child {
+  flex: 1;
+  min-width: 160px;
+}
+
+.cms-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* ---------- Media library ---------- */
 .cms-media-modal {
   width: min(800px, 100%);
@@ -1871,6 +2102,7 @@ html[data-theme="dark"] .cms-schedule-row .cms-ui-input {
 
 /* ---------- Focus ---------- */
 .cms-ui-button:focus-visible,
+.cms-remove-modal__options input:focus-visible,
 .cms-section-tabs button:focus-visible,
 .cms-segmented button:focus-visible,
 .cms-nav button:focus-visible,
@@ -1900,8 +2132,104 @@ html[data-theme="dark"] .cms-schedule-row .cms-ui-input {
   outline: 2px solid var(--cms-accent);
   outline-offset: 2px;
 }
+/* The radio is 16px, but the whole option row is the target, so the ring
+   follows the row instead of sitting inside it. */
+.cms-remove-modal__options label:has(input:focus-visible) {
+  border-color: var(--cms-accent);
+  box-shadow: var(--cms-accent-ring);
+}
 
 /* ---------- Responsive ---------- */
+/* Wide screens: the rail becomes the right-hand column the editor used to
+   leave empty. The switch is content-driven, not device-driven: below 1200px a
+   rail beside the editor would squeeze the writing column under ~560px, so the
+   rail takes the band under the title instead. */
+@media (width >= 1200px) {
+  .cms-workspace {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    column-gap: var(--cms-rail-gap);
+    grid-template-areas:
+      "heading rail"
+      "card rail";
+  }
+  .cms-rail {
+    position: sticky;
+    top: 76px;
+    /* Short viewports: the rail scrolls itself instead of pinning its bottom
+       cards off-screen, since a sticky box cannot be page-scrolled past. */
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+}
+
+@media (width >= 1500px) {
+  .cms-workspace {
+    grid-template-columns: minmax(0, 1fr) var(--cms-rail);
+  }
+}
+
+/* Tablet / small laptop: the rail keeps the publishing decision at the top but
+   stops being three stacked cards — the promised state and the action it needs
+   share one band, and the read-only cards sit beside them. */
+@media (width >= 780px) and (width < 1200px) {
+  .cms-rail {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    align-items: start;
+    column-gap: var(--cms-rail-gap);
+  }
+  .cms-rail__card:first-child {
+    grid-row: span 2;
+  }
+  .cms-rail .cms-schedule-row {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .cms-rail .cms-schedule-row .cms-ui-input {
+    flex: 1 1 190px;
+    width: auto;
+  }
+}
+
+/* Touch: the rail is the publish surface on phones too, so its controls get
+   pointer-sized targets rather than the desktop 30/36px heights. */
+@media (pointer: coarse) {
+  .cms-rail .cms-ui-button,
+  .cms-remove-modal__actions .cms-ui-button,
+  .cms-remove-modal__options label {
+    min-height: 44px;
+  }
+  .cms-remove-modal__options label {
+    align-items: center;
+  }
+}
+
+@media (width < 780px) {
+  /* Phone: the publish decision stays first (that is the whole point of the
+     rail) but stops being three full-height cards in a row — the read-only
+     cards pair up, and their explainer sentences step aside for the button. */
+  .cms-rail {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+  .cms-rail__card:first-child {
+    grid-column: 1 / -1;
+  }
+  .cms-rail__card {
+    padding: 13px;
+    gap: 8px;
+  }
+  .cms-rail__card--quiet .cms-rail__note,
+  .cms-rail__card--danger .cms-rail__note {
+    display: none;
+  }
+  .cms-rail__headline {
+    font-size: 0.9375rem;
+  }
+}
+
 @media (width <= 1040px) {
   .cms-topbar {
     grid-template-columns: 1fr auto;
@@ -1949,15 +2277,13 @@ html[data-theme="dark"] .cms-schedule-row .cms-ui-input {
     grid-column: 1 / -1;
   }
   .cms-heading {
-    display: block;
-    margin-bottom: 20px;
+    margin-bottom: 0;
   }
   .cms-heading h1 {
     font-size: 1.5rem;
   }
-  .cms-heading__actions {
-    justify-content: flex-start;
-    margin-top: 16px;
+  .cms-rail__card {
+    padding: 14px;
   }
   .cms-section-tabs {
     gap: 18px;

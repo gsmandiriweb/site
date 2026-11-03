@@ -16,3 +16,14 @@
 - New Worker secret + GitHub Actions secret: `CMS_SCHEDULE_SECRET` (shared tick auth). Past instants mean "publish ASAP" on the next tick — no special case.
 - Published expectation: live within ~5–7 min of the scheduled time (tick granularity + deploy), never the exact minute.
 - GitHub disables cron after 60 days of zero repo activity; the CMS repo merges regularly, so this is a runbook note, not a risk.
+
+## Amendment (2026-11-03) — the scheduled revision must be publishable, and early merge is explicit
+
+Scheduled publishing worked as designed on the GitHub side and still read as broken from the dashboard, for two reasons worth writing down:
+
+- **A schedule on a `status: draft` revision merged into an invisible article.** The public site renders only `status: published` (`utils/blog.ts:isPublicBlogEntry`), and the revision PR carried whatever the editor's Status select said — "Draf · tidak tampil di situs" by default. Merging it produced a merged PR, a deploy, a green callback, and no article on the site. Scheduling is therefore now a _single action_ that (1) saves the current article as a revision, opening the PR if none is open, authored as `status: published`; (2) attaches the schedule label to that PR. The revision, not the live file, is what changes state "right away" — the article stays absent from the site until the merge lands, which is the promise the editor actually made.
+- **The only approval button published immediately.** "Setujui & gabungkan" merged the PR on the spot, ahead of the schedule, with no indication it had overridden it. `mergeDraftPullRequest` now refuses a merge while a schedule is still pending (`scheduleIsPending`) unless the caller passes an explicit override, and the dashboard only passes it from a distinct "Terbitkan sekarang" action after a confirmation that names the schedule being cancelled.
+
+The dashboard also reports whether the ticker can authenticate at all (`scheduleTickerReady`, from whether `CMS_SCHEDULE_SECRET` is set): a schedule that nobody will ever read is a false promise, so the publication panel says so instead of showing a countdown.
+
+Removal is a separate pair of operations and is deliberately not a revision: `POST /api/cms/posts/remove` with `mode: "draft"` rewrites `status: draft` on `main` (the file stays, the site stops rendering it), and `mode: "delete"` deletes the Markdown file from `main`. Both close the post's open revision PRs — which also drops the schedule label — so a pending tick cannot put the article back minutes later. Post media under `src/images/blog/<slug>/` is left in place: it is inert without the file, and a wrong deletion is not recoverable from the CMS.

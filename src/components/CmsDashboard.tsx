@@ -9,13 +9,14 @@ import {
   Moon,
   Plus,
   Sun,
+  Trash2,
   Upload,
   WifiOff,
   X,
 } from "lucide-react";
 import { Badge, Button, Card, Input } from "./ui";
 import MarkdownWysiwyg from "./MarkdownWysiwyg";
-import { serializeDraftMarkdown } from "../utils/cms-drafts.ts";
+import { scheduleIsPending, serializeDraftMarkdown } from "../utils/cms-drafts.ts";
 import { isCoverMissing, resolveCover } from "../utils/cms-media.ts";
 
 // Posts are keyed by storage slug (the filename without .md): the repository
@@ -62,6 +63,13 @@ type DraftPullRequest = {
 type GithubState = {
   pullRequest: DraftPullRequest | null;
   live: boolean;
+  // Whether the Worker holds the shared ticker secret. A schedule with no
+  // ticker is a label nobody reads, and the dashboard says so out loud rather
+  // than promising a publish that will never happen.
+  tickerReady?: boolean;
+  // The `status` the open revision file carries. Only a `published` revision
+  // makes the article visible when it merges.
+  revisionStatus?: "draft" | "published" | "archived" | null;
 };
 
 type MediaAsset = {
@@ -185,7 +193,14 @@ function normalizeStoredPost(key: string, value: unknown): [PostKey, Post] | nul
 // sentence underneath it disagreed, and the louder one was wrong. Publication
 // state is derived from the PR and deploy state only; `archived` has no UI, so
 // it never reaches here.
-type PublicationState = "live" | "deploying" | "awaiting" | "edited" | "not-live" | "draft";
+type PublicationState =
+  | "live"
+  | "deploying"
+  | "scheduled"
+  | "awaiting"
+  | "edited"
+  | "not-live"
+  | "draft";
 
 const publicationCopy: Record<
   PublicationState,
@@ -203,7 +218,12 @@ const publicationCopy: Record<
   },
   awaiting: {
     label: "Menunggu persetujuan",
-    detail: "Revisi menunggu persetujuan owner di tab Terbit",
+    detail: "Revisi siap · belum terbit sampai disetujui",
+    tone: "warning",
+  },
+  scheduled: {
+    label: "Terjadwal",
+    detail: "Terbit otomatis pada waktu yang dijadwalkan",
     tone: "warning",
   },
   edited: {
@@ -229,6 +249,7 @@ const publicationCopy: Record<
 const publicationDot: Record<PublicationState, ContentStatus> = {
   live: "published",
   deploying: "ready",
+  scheduled: "ready",
   awaiting: "ready",
   "not-live": "ready",
   edited: "draft",
@@ -240,6 +261,11 @@ function publicationStateFor(entry: Post, state: GithubState | undefined): Publi
   const pullRequest = state?.pullRequest ?? null;
   if (live) return "live";
   if (pullRequest?.status === "merged") return "deploying";
+  // Scheduled outranks "awaiting": the revision still waits for a merge, but
+  // the merge is already promised to a time, and calling that "needs approval"
+  // is what made the editor click "Setujui" and publish early by accident.
+  if (pullRequest?.status === "open" && scheduleIsPending(pullRequest.scheduledAt))
+    return "scheduled";
   if (pullRequest?.status === "open") return "awaiting";
   if (entry.dirty) return "edited";
   // In the file, not on the site. Distinct from "draft" because the fix is not
@@ -470,6 +496,11 @@ export default function CmsDashboard({
   const [batchSelected, setBatchSelected] = useState<PostKey[]>([]);
   const [scheduleInput, setScheduleInput] = useState("");
   const [scheduleBusy, setScheduleBusy] = useState(false);
+  // Remove-article dialog: one dialog, two consequences (draft vs delete).
+  const [isRemoveOpen, setRemoveOpen] = useState(false);
+  const [removeMode, setRemoveMode] = useState<"draft" | "delete">("draft");
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   // Locked-post rename (legacy filename → valid slug): the dialog targets one
   // locked post at a time; "renaming" marks the POST in flight.
   const [renameTarget, setRenameTarget] = useState<PostKey>("");
@@ -492,6 +523,8 @@ export default function CmsDashboard({
   // First focus stop per dialog. The merge confirm opens on "Batal", not on the
   // destructive choice: a reflexive Enter must never publish to production.
   const mergeCancelRef = useRef<HTMLButtonElement | null>(null);
+  const removeDialogRef = useRef<HTMLElement | null>(null);
+  const removeDraftRef = useRef<HTMLInputElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const tabsRef = useRef<HTMLDivElement | null>(null);
   const sectionTabsRef = useRef<HTMLDivElement | null>(null);
@@ -544,6 +577,7 @@ export default function CmsDashboard({
     mergeCancelRef,
   );
   useDialogFocus(Boolean(renameTarget), renameDialogRef, () => setRenameTarget(""), renameInputRef);
+  useDialogFocus(isRemoveOpen, removeDialogRef, () => setRemoveOpen(false), removeDraftRef);
 
   // While no post is selected yet (boot, before drafts/repo listing land) the
   // editor renders a stable blank template instead of crashing on undefined.
@@ -570,7 +604,6 @@ export default function CmsDashboard({
   useEffect(() => {
     selectedStorageSlugRef.current = posts[selectedPost]?.storageSlug ?? selectedPost;
   }, [selectedPost, posts]);
-  const isMerged = draftPullRequest?.status === "merged";
   const isAwaitingApproval = draftPullRequest?.status === "open";
   // No PR/live record for this article at all (a local browser draft, or a repo
   // post whose state has not been fetched yet). Reporting a publication state
@@ -641,7 +674,11 @@ export default function CmsDashboard({
         }>;
         scheduledAt?: string | null;
         scheduleCarried?: string | null;
+        scheduleTickerReady?: boolean;
+        revisionStatus?: "draft" | "published" | "archived" | null;
         prNumber?: number;
+        action?: "draft" | "deleted";
+        closedPullRequests?: number[];
         error?: string;
       };
     },
@@ -670,6 +707,8 @@ export default function CmsDashboard({
       [storageSlug]: {
         pullRequest: result.pullRequest ?? null,
         live: Boolean(result.live),
+        tickerReady: Boolean(result.scheduleTickerReady),
+        revisionStatus: result.revisionStatus ?? null,
       },
     }));
     return result;
@@ -816,77 +855,98 @@ export default function CmsDashboard({
     }
   }, [isAuthenticated, isHydrated, posts]);
 
-  const createPullRequest = async () => {
+  // Saves the article's current state as a revision PR. `overrides` exists so
+  // the scheduling flow can send the revision it actually means to publish
+  // (`status: published`) without racing React state: the payload, the commit
+  // and the local copy all move together.
+  const createPullRequest = async (
+    overrides: Partial<Post> = {},
+  ): Promise<DraftPullRequest | null> => {
+    const payload = { ...post, ...overrides };
     // ADR 0011: alt text is required whenever a featured image is set — checked
     // locally for instant feedback; the server gate enforces it again.
-    if (post.image && !post.imageAlt.trim()) {
+    if (payload.image && !payload.imageAlt.trim()) {
       setActionError("Teks alt wajib untuk gambar sampul sebelum menyimpan revisi.");
-      return;
+      return null;
     }
     setBusy(true);
     setActionError(null);
     try {
       const result = await request("/api/cms/drafts/pr", "POST", {
         storageSlug: post.storageSlug,
-        post,
+        post: payload,
       });
       if (!result.pullRequest)
         throw new Error("GitHub tidak mengembalikan data revisi. Coba lagi.");
+      const pullRequest = result.pullRequest;
       setGithubStates((current) => ({
         ...current,
-        [post.storageSlug]: { pullRequest: result.pullRequest!, live: false },
+        [post.storageSlug]: {
+          ...current[post.storageSlug],
+          pullRequest,
+          live: false,
+          revisionStatus:
+            payload.status === "draft" || payload.status === "archived"
+              ? payload.status
+              : "published",
+        },
       }));
       // The revision PR now carries the work: clear the dirty flag so the repo
-      // source can overlay this post again until the next local edit (#45).
+      // source can overlay this post again until the next local edit (#45). The
+      // overridden fields are what was actually committed, so they land locally
+      // too (markDirty: false — they are in GitHub now).
       setPosts((current) => ({
         ...current,
-        [selectedPost]: { ...current[selectedPost], dirty: false },
+        [selectedPost]: { ...current[selectedPost], ...overrides, dirty: false },
       }));
       setSaveLabel("Revisi terkirim · PR dibuka");
       const carried = result.scheduleCarried
-        ? ` Jadwal ikut ke revisi r${result.pullRequest.revision}.`
+        ? ` Jadwal terbit ikut ke revisi r${pullRequest.revision}.`
         : "";
       setNotice(
-        `Revisi r${result.pullRequest.revision} dikirim (PR #${result.pullRequest.prNumber}). Setujui di tab Terbit untuk menerbitkan.${carried}`,
+        `Revisi r${pullRequest.revision} tersimpan di GitHub (PR #${pullRequest.prNumber}). Belum tampil di situs.${carried}`,
       );
-      // Close the loop on the workflow: the approval control lives in the
-      // Terbit tab, so take the editor there instead of asking them to find it.
-      setActiveTab("terbit");
+      return pullRequest;
     } catch (error) {
       setActionError(
         error instanceof Error
           ? error.message
           : "Tidak dapat mengirim revisi ke GitHub. Coba lagi.",
       );
+      return null;
     } finally {
       setBusy(false);
     }
   };
 
-  // ADR 0009/0012 owner merge: approving a revision merges its open PR to `main`
+  // ADR 0009/0012 owner merge: publishing merges the open revision PR to `main`
   // straight from the dashboard (GitHub stays optional). Auto-deploy then flips
   // the revision to Terbit via the deploy-confirmation poll — no GitHub visit.
-  const mergeRevision = async () => {
+  // `override` is "terbitkan sekarang": the only way to publish ahead of a
+  // schedule the author arranged, and the API refuses the ambiguous case.
+  const mergeRevision = async (override = false) => {
     if (!draftPullRequest) return;
     setBusy(true);
     setActionError(null);
     try {
       const result = await request("/api/cms/drafts/pr/merge", "POST", {
         storageSlug: post.storageSlug,
+        override,
       });
       if (!result.pullRequest)
         throw new Error("GitHub tidak mengembalikan data revisi. Coba lagi.");
+      const pullRequest = result.pullRequest;
       setGithubStates((current) => ({
         ...current,
-        [post.storageSlug]: { pullRequest: result.pullRequest!, live: false },
+        [post.storageSlug]: { pullRequest, live: false },
       }));
       setPosts((current) => ({
         ...current,
         [selectedPost]: { ...current[selectedPost], dirty: false },
       }));
-      setSaveLabel("Revisi digabungkan");
+      setSaveLabel("Revisi digabungkan · menunggu deploy");
       setNotice(
-        `Revisi r${result.pullRequest.revision} digabungkan (PR #${result.pullRequest.prNumber}). Auto-deploy berjalan — jadi Terbit saat situs live.`,
+        `Revisi r${pullRequest.revision} digabungkan (PR #${pullRequest.prNumber}). Auto-deploy berjalan — artikel tampil di situs dalam ±5 menit.`,
       );
     } catch (error) {
       setActionError(
@@ -936,41 +996,136 @@ export default function CmsDashboard({
     }
   };
 
+  // One line for the whole app: "Sen, 3 Nov 2026 · 13.00 WIB". Weekday first
+  // because a scheduled publish is a commitment to a day, not a timestamp.
   const formatScheduleDisplay = (iso: string) =>
-    new Date(iso).toLocaleString("id-ID", {
+    `${new Date(iso).toLocaleString("id-ID", {
+      weekday: "short",
       day: "numeric",
       month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
       timeZone: "Asia/Jakarta",
-    });
+    })} WIB`;
 
-  // Writes (or with null, clears) the scheduled-publish time on the post's
-  // open revision PR, then refreshes so the badge follows the label.
-  const submitSchedule = async (iso: string | null) => {
+  // Scheduling is ONE action, not three. It saves the revision (opening the PR
+  // if none is open, which is what makes the article a draft in GitHub right
+  // away), authors it as `status: published` so the merge actually makes it
+  // appear on the site, then attaches the time to that PR. Previously the
+  // editor had to send a revision, notice the schedule field was disabled, and
+  // then set a time on a revision whose file said `draft` — a merged article
+  // that the site filtered out. "Terjadwal" now means one thing: saved now,
+  // live at the stated time.
+  const schedulePublish = async (iso: string) => {
+    const time = new Date(iso);
+    if (Number.isNaN(time.valueOf())) {
+      setActionError("Waktu jadwal tidak valid.");
+      return;
+    }
     setScheduleBusy(true);
     setActionError(null);
     try {
+      // The revision this schedule will fire on must be one the site can
+      // render. `revisionStatus` is what the open PR's file actually says; an
+      // unknown one is treated as unusable so the schedule is never attached to
+      // a draft that would merge invisibly.
+      const revisionPublishable =
+        draftPullRequest?.status === "open" && githubState?.revisionStatus === "published";
+      const needsPublishableRevision =
+        hasLocalEdits || post.status !== "published" || !revisionPublishable;
+      const target = needsPublishableRevision
+        ? await createPullRequest({ status: "published", draft: false })
+        : draftPullRequest;
+      if (!target) return; // createPullRequest already surfaced the reason
+
       const result = await request("/api/cms/schedule/set", "POST", {
         storageSlug: post.storageSlug,
-        scheduledAt: iso,
+        scheduledAt: time.toISOString(),
       });
       await refreshPostState(post.storageSlug);
-      if (result.scheduledAt) {
-        setScheduleInput("");
-        setNotice(
-          `Terbit terjadwal ${formatScheduleDisplay(result.scheduledAt)} WIB. Berjalan otomatis — bisa dibatalkan kapan saja sebelum waktunya.`,
-        );
-      } else {
-        setNotice("Jadwal terbit dibatalkan.");
-      }
+      setScheduleInput("");
+      setNotice(
+        `Revisi r${target.revision} tersimpan di GitHub dan dijadwalkan terbit ${formatScheduleDisplay(
+          result.scheduledAt ?? time.toISOString(),
+        )}. Belum tampil di situs; tidak ada yang perlu diklik lagi.`,
+      );
     } catch (error) {
       setActionError(
         error instanceof Error ? error.message : "Tidak dapat menjadwalkan terbit. Coba lagi.",
       );
     } finally {
       setScheduleBusy(false);
+    }
+  };
+
+  const cancelSchedule = async () => {
+    setScheduleBusy(true);
+    setActionError(null);
+    try {
+      await request("/api/cms/schedule/set", "POST", {
+        storageSlug: post.storageSlug,
+        scheduledAt: null,
+      });
+      await refreshPostState(post.storageSlug);
+      setNotice("Jadwal terbit dibatalkan. Revisinya tetap tersimpan di GitHub.");
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Tidak dapat membatalkan jadwal. Coba lagi.",
+      );
+    } finally {
+      setScheduleBusy(false);
+    }
+  };
+
+  // Takes the article off the site: as a draft (file kept) or deleted outright.
+  const removePost = async () => {
+    setRemoveBusy(true);
+    setRemoveError(null);
+    try {
+      const result = await request("/api/cms/posts/remove", "POST", {
+        storageSlug: post.storageSlug,
+        mode: removeMode,
+      });
+      const closed = result.closedPullRequests?.length ?? 0;
+      const closedNote =
+        closed > 0
+          ? ` ${closed} PR revisi terbuka ditutup, jadi jadwal yang menempel ikut batal.`
+          : "";
+      if (removeMode === "delete") {
+        // The article no longer exists: drop it from every local map and land on
+        // whatever is left instead of an editor pointing at a missing file.
+        setPosts((current) => {
+          const { [selectedPost]: _removed, ...rest } = current;
+          return rest;
+        });
+        setRepoSlugs((current) => current.filter((slug) => slug !== post.storageSlug));
+        setGithubStates((current) => {
+          const { [post.storageSlug]: _stale, ...rest } = current;
+          return rest;
+        });
+        const nextKey = (Object.keys(posts) as PostKey[]).find((key) => key !== selectedPost) ?? "";
+        setSelectedPost(nextKey);
+        selectedStorageSlugRef.current = posts[nextKey]?.storageSlug ?? nextKey;
+        setNotice(`Artikel "${post.storageSlug}" dihapus dari repositori.${closedNote}`);
+      } else {
+        setPosts((current) => ({
+          ...current,
+          [selectedPost]: { ...current[selectedPost], status: "draft", dirty: false },
+        }));
+        setNotice(
+          `Artikel ditarik dari situs (status Draf). File tetap ada; terbitkan lagi dengan revisi baru.${closedNote}`,
+        );
+      }
+      setRemoveOpen(false);
+      void refreshPostState(post.storageSlug);
+      void fetchDeployStatus();
+    } catch (error) {
+      setRemoveError(
+        error instanceof Error ? error.message : "Tidak dapat mengubah artikel ini. Coba lagi.",
+      );
+    } finally {
+      setRemoveBusy(false);
     }
   };
 
@@ -1361,36 +1516,92 @@ export default function CmsDashboard({
     onActivate(nextIndex);
   };
 
-  // An open PR offers approval; otherwise a dirty post (including a
-  // merged/published one with fresh local edits) offers a new revision.
-  // Gating the revision button on edits alone would strand merged+dirty
-  // posts with no way out — the status dropdown promises that changing
-  // status plus a revision unpublishes, so the button must exist there.
-  const nextAction: {
-    label: string;
-    variant: "default";
-    disabled?: boolean;
-    onClick: () => void;
-  } | null = isMarkdown
-    ? null
-    : draftPullRequest?.status === "open"
-      ? {
-          label: "Setujui & gabungkan",
-          variant: "default",
-          disabled: isBusy || hasUncommittedMarkdown,
-          // The approval opens a themed confirmation card, not the merge
-          // itself: the consequence (auto-deploy to the live site) deserves a
-          // deliberate, designed step.
-          onClick: () => setMergeConfirmOpen(true),
-        }
-      : isAuthenticated && persistenceMode === "github" && (hasLocalEdits || !isMerged)
-        ? {
-            label: "Kirim revisi & buka PR",
-            variant: "default",
-            disabled: isBusy || hasUncommittedMarkdown,
-            onClick: () => void createPullRequest(),
-          }
-        : null;
+  // ---------- Publication rail ----------
+  // The right-hand panel owns the whole publish decision: what state the article
+  // is in, the single next action, and the schedule. It replaced a header badge
+  // plus a separate "Terbit" tab whose schedule field was invisible until a
+  // revision existed — which is how "Terjadwal" and "Setujui & gabungkan"
+  // ended up describing two different things at the same time.
+  const scheduledAt = draftPullRequest?.scheduledAt ?? null;
+  const scheduledPending = scheduleIsPending(scheduledAt);
+  const scheduleOverdue = Boolean(scheduledAt) && !scheduledPending;
+  const tickerReady = githubState?.tickerReady !== false;
+  const hasOpenRevision = draftPullRequest?.status === "open";
+  const isLockedOut = isLocked || isMarkdown;
+  const canSendRevision = isAuthenticated && persistenceMode === "github" && !isLocked;
+  const publishBusy = isBusy || scheduleBusy;
+
+  // One sentence about now, one about next. Anything longer is a paragraph the
+  // editor will skip at exactly the moment they need it.
+  const railMessage: { headline: string; body: string } = (() => {
+    if (isLocked)
+      return {
+        headline: "File perlu diganti nama",
+        body: "Nama file ini bukan slug yang valid, jadi artikel tidak bisa dikirim sampai diganti nama.",
+      };
+    if (hasLocalEdits && hasOpenRevision)
+      return {
+        headline: "Ada editan setelah revisi terakhir",
+        body: "Revisi yang sudah dibuka tidak ikut berubah. Kirim revisi baru untuk menggantinya; jadwal terbit ikut pindah.",
+      };
+    switch (publicationState) {
+      case "live":
+        return {
+          headline: "Live di situs",
+          body: "Artikel tampil di situs. Setiap editan butuh revisi baru untuk terlihat.",
+        };
+      case "deploying":
+        return {
+          headline: "Menunggu deploy",
+          body: "Revisi sudah masuk ke main. Situs sedang dibangun ulang (±5 menit), lalu artikel tampil.",
+        };
+      case "scheduled":
+        return {
+          headline: `Terbit ${formatScheduleDisplay(scheduledAt ?? "")}`,
+          body: tickerReady
+            ? "Tersimpan sebagai revisi di GitHub dan akan terbit otomatis pada waktu itu. Tidak ada yang perlu diklik. Selisih maksimal ±5 menit setelah jadwal."
+            : "Penjadwal otomatis belum aktif di server, jadi jadwal ini tidak akan berjalan sendiri. Aktifkan CMS_SCHEDULE_SECRET, atau terbitkan sekarang.",
+        };
+      case "awaiting":
+        return {
+          headline: "Revisi siap, belum terbit",
+          body: scheduleOverdue
+            ? `Jadwal ${formatScheduleDisplay(scheduledAt ?? "")} sudah lewat. Penjadwal berjalan tiap 5 menit — terbitkan sekarang bila tidak mau menunggu.`
+            : "Revisi tersimpan di GitHub dan belum tampil di situs. Terbitkan sekarang, atau pilih waktu terbit agar berjalan sendiri.",
+        };
+      case "not-live":
+        return {
+          headline: "Belum tampil di situs",
+          body: "File artikel berstatus Terbit, tetapi belum ada deploy yang membawanya. Kirim revisi untuk menerbitkannya.",
+        };
+      case "edited":
+        return {
+          headline: "Editan lokal",
+          body: "Perubahan ini baru ada di browser. Simpan sebagai revisi untuk meninjau, atau pilih waktu terbit di bawah untuk menyimpan sekaligus menjadwalkan.",
+        };
+      default:
+        return {
+          headline: "Draf lokal",
+          body: "Belum ada di GitHub. Simpan sebagai revisi untuk meninjau, atau pilih waktu terbit di bawah untuk menyimpan sekaligus menjadwalkan.",
+        };
+    }
+  })();
+
+  // At most one primary action, and it never publishes behind a schedule: while
+  // a schedule is pending the primary slot is empty on purpose (the promise is
+  // already made), and publishing early is an explicit secondary choice.
+  const primaryAction: { label: string; onClick: () => void } | null = (() => {
+    if (isLockedOut) return null;
+    if (hasLocalEdits && canSendRevision)
+      return { label: "Kirim revisi baru", onClick: () => void createPullRequest() };
+    if (hasOpenRevision && !scheduledPending)
+      return { label: "Setujui & terbitkan", onClick: () => setMergeConfirmOpen(true) };
+    if (!hasOpenRevision && canSendRevision)
+      return { label: "Simpan revisi ke GitHub", onClick: () => void createPullRequest() };
+    return null;
+  })();
+
+  const showEarlyPublish = hasOpenRevision && (scheduledPending || scheduleOverdue);
 
   const deployedShort = deployed?.commitSha ? deployed.commitSha.slice(0, 7) : null;
   const deployedDate = deployed?.deployedAt ? new Date(deployed.deployedAt).toLocaleString() : null;
@@ -1716,8 +1927,8 @@ export default function CmsDashboard({
               </div>
             )}
 
-            <div className="cms-heading">
-              <div>
+            <div className="cms-workspace">
+              <div className="cms-heading">
                 {/* The filename is a spec key, not an eyebrow: it sits BELOW the
                     title now. Above it, a 12px mono string at 3.1:1 was the first
                     thing read in the heading, which put a filename above the
@@ -1726,374 +1937,415 @@ export default function CmsDashboard({
                 <p>{contentDetail}</p>
                 <div className="cms-kicker">{post.storageSlug}.md</div>
               </div>
-              <div className="cms-heading__actions">
-                <Badge variant={publication.tone}>{publication.label}</Badge>
-                {nextAction && (
-                  <Button
-                    variant={nextAction.variant}
-                    disabled={nextAction.disabled}
-                    onClick={nextAction.onClick}
-                  >
-                    {isBusy ? <LoaderCircle className="cms-spin" data-icon="inline-start" /> : null}
-                    {nextAction.label}
-                  </Button>
-                )}
-              </div>
-            </div>
 
-            <Card className="cms-editor-card">
-              <div
-                className="cms-section-tabs"
-                ref={sectionTabsRef}
-                role="tablist"
-                aria-label="Bagian artikel"
-              >
-                {sectionTabs.map((tab) => (
-                  <button
-                    key={tab.value}
-                    id={`section-${tab.value}-tab`}
-                    className={activeTab === tab.value ? "is-active" : ""}
-                    role="tab"
-                    aria-selected={activeTab === tab.value}
-                    aria-controls={`section-${tab.value}-panel`}
-                    tabIndex={activeTab === tab.value ? 0 : -1}
-                    onClick={() => setActiveTab(tab.value)}
-                    onKeyDown={(event) =>
-                      moveTab(event, sectionTabsRef, (nextIndex) => {
-                        const next = sectionTabs[nextIndex];
-                        if (next) setActiveTab(next.value);
-                      })
-                    }
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-                <span
-                  className="cms-section-tabs__indicator"
-                  aria-hidden="true"
-                  style={{ left: sectionIndicator.left, width: sectionIndicator.width }}
-                />
-              </div>
-              <div className="cms-section-panels">
-                <section
-                  id="section-konten-panel"
-                  className={activeTab === "konten" ? "is-active" : ""}
-                  role="tabpanel"
-                  aria-labelledby="section-konten-tab"
-                >
-                  <div className="cms-panel-toolbar">
-                    <div
-                      className="cms-segmented"
-                      ref={tabsRef}
-                      role="group"
-                      aria-label="Mode editor"
+              {/* The publication rail. On a wide screen it is the right-hand
+                  column the editor column used to leave empty; below that it
+                  moves directly under the title, where a phone reader needs it
+                  most. Same DOM either way — one primary action, one schedule,
+                  no duplicated controls. */}
+              <aside className="cms-rail" aria-label="Publikasi artikel">
+                <section className="cms-rail__card">
+                  <div className="cms-rail__head">
+                    <span className="cms-rail__eyebrow">Publikasi</span>
+                    <Badge variant={publication.tone}>{publication.label}</Badge>
+                  </div>
+                  <h2 className="cms-rail__headline">{railMessage.headline}</h2>
+                  <p className="cms-rail__body">{railMessage.body}</p>
+
+                  {primaryAction && (
+                    <Button
+                      variant="default"
+                      className="cms-rail__action"
+                      disabled={publishBusy || hasUncommittedMarkdown}
+                      onClick={primaryAction.onClick}
                     >
-                      <button
-                        id="write-tab"
-                        className={!isMarkdown ? "is-active" : ""}
-                        onClick={closeMarkdown}
-                        aria-pressed={!isMarkdown}
-                      >
-                        Editor visual
-                      </button>
-                      <button
-                        id="markdown-tab"
-                        className={isMarkdown ? "is-active" : ""}
-                        onClick={openMarkdown}
-                        aria-pressed={isMarkdown}
-                      >
-                        Sumber Markdown
-                      </button>
-                      <span
-                        className="cms-segmented__indicator"
-                        aria-hidden="true"
-                        style={{ left: modeIndicator.left, width: modeIndicator.width }}
-                      />
-                    </div>
-                  </div>
-                  {!isMarkdown ? (
-                    <div id="write-editor" className="cms-writing-surface">
-                      <section className="cms-field-group">
-                        <label className="cms-field-label" htmlFor="post-kicker">
-                          Label kartu{" "}
-                          <span>
-                            Teks kecil di atas judul pada kartu blog · kosongkan bila tidak dipakai
-                          </span>
-                        </label>
-                        <Input
-                          id="post-kicker"
-                          value={post.kicker}
-                          onChange={(event) => updatePost({ kicker: event.target.value })}
-                        />
-                        <label className="cms-field-label" htmlFor="post-title">
-                          Judul <span>Judul utama yang tampil di daftar dan pratinjau</span>
-                        </label>
-                        <Input
-                          id="post-title"
-                          className="cms-title-input"
-                          value={post.title}
-                          onChange={(event) => updatePost({ title: event.target.value })}
-                        />
-                        <label className="cms-field-label" htmlFor="post-excerpt">
-                          Ringkasan <span>Ringkasan singkat yang tampil di daftar</span>
-                        </label>
-                        <textarea
-                          id="post-excerpt"
-                          className="cms-excerpt-input"
-                          value={post.excerpt}
-                          aria-label="Ringkasan artikel"
-                          onChange={(event) => updatePost({ excerpt: event.target.value })}
-                        />
-                      </section>
-                      <section className="cms-field-group">
-                        <span className="cms-field-label">
-                          Isi artikel <span>Rich text · disimpan lokal sampai revisi dikirim</span>
-                        </span>
-                        <MarkdownWysiwyg
-                          key={`${post.storageSlug}:${isHydrated ? "hydrated" : "boot"}`}
-                          markdown={post.body}
-                          onChange={(body) => {
-                            updatePost({ body });
-                          }}
-                        />
-                      </section>
-                    </div>
-                  ) : (
-                    <div id="markdown-editor" className="cms-markdown-panel">
-                      <section className="cms-field-group">
-                        <label className="cms-field-label" htmlFor="markdown-input">
-                          Sumber <span>Editan tersinkron kembali ke editor visual</span>
-                        </label>
-                        <textarea
-                          id="markdown-input"
-                          className="cms-markdown-input"
-                          value={markdownDraft}
-                          onChange={(event) => updateMarkdown(event.target.value)}
-                          aria-describedby="markdown-note"
-                          spellCheck={false}
-                        />
-                        <p id="markdown-note" className="cms-source-note">
-                          Isi artikel saat ini ditampilkan sebagai Markdown. Pertahankan blok
-                          frontmatter <code>---</code>; bidang yang didukung dinormalkan saat editan
-                          diterapkan.
-                        </p>
-                      </section>
-                    </div>
+                      {isBusy ? (
+                        <LoaderCircle className="cms-spin" data-icon="inline-start" />
+                      ) : null}
+                      {primaryAction.label}
+                    </Button>
                   )}
-                </section>
 
-                <section
-                  id="section-sampul-panel"
-                  className={activeTab === "sampul" ? "is-active" : ""}
-                  role="tabpanel"
-                  aria-labelledby="section-sampul-tab"
-                >
-                  <div className="cms-writing-surface">
-                    <section className="cms-field-group">
-                      <span className="cms-field-label">
-                        Gambar sampul <span>Opsional</span>
-                      </span>
-                      {coverMissing && (
-                        <p className="cms-field-error" role="alert">
-                          Gambar <code>{coverResolution.path}</code> tidak ditemukan di repo, jadi
-                          artikel ini akan terbit tanpa sampul. Unggah atau pilih gambar lain —
-                          sampul Anda yang lama tidak dihapus.
-                        </p>
-                      )}
-                      <figure className="cms-cover">
-                        {currentMedia ? (
-                          <img src={currentMedia.src} alt={currentMedia.alt} />
-                        ) : coverMissing ? (
-                          <div className="cms-cover__empty">
-                            Sampul tidak ditemukan — pilih gambar lain.
-                          </div>
-                        ) : (
-                          <div className="cms-cover__empty">Belum ada gambar sampul.</div>
-                        )}
-                        <figcaption>
-                          <span className="cms-cover__action">
-                            <button
-                              type="button"
-                              onClick={() => setMediaOpen(true)}
-                              aria-haspopup="dialog"
-                              aria-label={`Ganti gambar sampul${currentMedia ? `, pilihan saat ini ${currentMedia.label}` : ""}`}
-                            >
-                              Ganti gambar
-                            </button>
-                            <small id="media-picker-note">
-                              Unggah atau pilih dari gambar yang didukung repo.
-                            </small>
-                          </span>
-                        </figcaption>
-                      </figure>
-                      <label className="cms-field-label" htmlFor="post-image-alt">
-                        Teks alt <span>Wajib saat gambar sampul dipasang</span>
-                      </label>
-                      <Input
-                        id="post-image-alt"
-                        value={post.imageAlt}
-                        placeholder="Deskripsi singkat gambar untuk aksesibilitas…"
-                        onChange={(event) => updatePost({ imageAlt: event.target.value })}
-                      />
-                      {post.image && !post.imageAlt.trim() && (
-                        <p className="cms-field-error" role="alert">
-                          Teks alt wajib sebelum revisi bisa disimpan.
-                        </p>
-                      )}
-                    </section>
-                  </div>
-                </section>
+                  {showEarlyPublish && (
+                    <Button
+                      variant="outline"
+                      className="cms-rail__action"
+                      disabled={publishBusy || hasUncommittedMarkdown}
+                      onClick={() => setMergeConfirmOpen(true)}
+                    >
+                      Terbitkan sekarang
+                    </Button>
+                  )}
 
-                <section
-                  id="section-terbit-panel"
-                  className={activeTab === "terbit" ? "is-active" : ""}
-                  role="tabpanel"
-                  aria-labelledby="section-terbit-tab"
-                >
-                  <div className="cms-writing-surface">
-                    <section className="cms-field-group">
-                      <label className="cms-field-label" htmlFor="post-status">
-                        Status <span>Menentukan apakah artikel muncul di situs publik</span>
-                      </label>
-                      <select
-                        id="post-status"
-                        className="cms-status-select"
-                        value={post.status}
-                        onChange={(event) =>
-                          updatePost({
-                            status: event.target.value as "draft" | "published" | "archived",
-                          })
-                        }
-                      >
-                        <option value="draft">Draf · tidak tampil di situs</option>
-                        <option value="published">Terbit · tampil di situs</option>
-                        <option value="archived">Arsip · disembunyikan dari situs</option>
-                      </select>
-                      <p className="cms-source-note">
-                        Status tersimpan di file artikel. Mengubahnya di sini belum menerbitkan —
-                        kirim revisi, lalu setujui di tab ini.
-                      </p>
-                      {draftPullRequest?.status === "open" && (
-                        <a
-                          className="cms-pr-link"
-                          href={draftPullRequest.prUrl}
-                          target="_blank"
-                          rel="noreferrer"
+                  <div className="cms-rail__block">
+                    {scheduledAt ? (
+                      // The time is already the headline above; repeating it in a
+                      // pill made the card say the same sentence twice. Only the
+                      // way out is left here.
+                      <div className="cms-rail__actions">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={publishBusy || isLocked}
+                          onClick={() => void cancelSchedule()}
                         >
-                          Review PR #{draftPullRequest.prNumber}{" "}
-                          <ArrowUpRight data-icon="inline-end" />
-                        </a>
-                      )}
-                    </section>
-
-                    <section className="cms-field-group">
-                      <span className="cms-field-label">
-                        Jadwal terbit <span>Opsional · gabungkan otomatis pada waktunya (WIB)</span>
-                      </span>
-                      {draftPullRequest?.scheduledAt ? (
-                        <div className="cms-schedule-row">
-                          <Badge variant="default">
-                            Terjadwal {formatScheduleDisplay(draftPullRequest.scheduledAt)}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={scheduleBusy || isBusy}
-                            onClick={() => void submitSchedule(null)}
-                          >
-                            {scheduleBusy ? "Membatalkan…" : "Batalkan"}
-                          </Button>
-                        </div>
-                      ) : draftPullRequest?.status === "open" ? (
+                          {scheduleBusy ? "Membatalkan…" : "Batalkan jadwal terbit"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <label className="cms-field-label" htmlFor="schedule-at">
+                          Jadwalkan terbit <span>WIB</span>
+                        </label>
                         <div className="cms-schedule-row">
                           <Input
+                            id="schedule-at"
                             type="datetime-local"
-                            aria-label="Waktu terbit terjadwal"
                             value={scheduleInput}
+                            disabled={publishBusy || isLocked}
                             onChange={(event) => setScheduleInput(event.target.value)}
                           />
                           <Button
                             variant="secondary"
                             size="sm"
-                            disabled={scheduleBusy || isBusy || !scheduleInput}
-                            onClick={() => {
-                              const time = new Date(scheduleInput);
-                              if (Number.isNaN(time.valueOf())) {
-                                setActionError("Waktu jadwal tidak valid.");
-                                return;
-                              }
-                              void submitSchedule(time.toISOString());
-                            }}
+                            disabled={publishBusy || isLocked || !scheduleInput}
+                            onClick={() => void schedulePublish(scheduleInput)}
                           >
-                            {scheduleBusy ? "Menjadwalkan…" : "Jadwalkan"}
+                            {scheduleBusy ? "Menyiapkan…" : "Jadwalkan"}
                           </Button>
                         </div>
-                      ) : (
-                        <p className="cms-source-note">
-                          Kirim revisi dulu untuk menjadwalkan penerbitan.
+                        <p className="cms-rail__note">
+                          Menyimpan revisi sekarang dan menerbitkannya sendiri pada waktu itu.
                         </p>
-                      )}
-                      <p className="cms-source-note">
-                        Berjalan otomatis hingga ~5 menit setelah jadwal (tick + deploy). Jadwal
-                        ikut ke revisi baru bila ada revisi susulan.
-                      </p>
-                    </section>
-
-                    <section className="cms-field-group">
-                      <span className="cms-field-label">
-                        Deploy <span>Otomatis</span>
-                      </span>
-                      <div className="cms-deploy-line">
-                        <div>
-                          <strong>
-                            {deployedShort ? `Ter-deploy ${deployedShort}` : "Auto-deploy"}
-                          </strong>
-                          <small>
-                            {deployedDate ??
-                              "Setiap merge ke main menerbitkan situs; tidak ada langkah deploy manual."}
-                          </small>
-                        </div>
-                      </div>
-                    </section>
-
-                    <section className="cms-field-group">
-                      <label className="cms-field-label" htmlFor="post-slug">
-                        Slug URL <span>Slug yang stabil melindungi tautan lama</span>
-                      </label>
-                      <div className="cms-slug">
-                        <span>/blog/</span>
-                        <Input
-                          id="post-slug"
-                          value={post.slug}
-                          onChange={(event) => updatePost({ slug: event.target.value })}
-                        />
-                      </div>
-                      <label className="cms-field-label" htmlFor="post-published-at">
-                        Tanggal terbit{" "}
-                        <span>
-                          Menentukan urutan artikel di blog dan tanggal yang tampil di kartu
-                        </span>
-                      </label>
-                      <Input
-                        id="post-published-at"
-                        type="date"
-                        value={post.publishedAt || post.date}
-                        onChange={(event) => {
-                          const nextDate = event.target.value;
-                          // `date` is the legacy field older posts still carry and
-                          // `publishedAt` is what the site actually sorts by
-                          // (utils/blog.ts: blogPublishedAt). Editing one and
-                          // leaving the other stale is how a publication-date
-                          // change silently failed to reorder the blog, so both
-                          // move together.
-                          updatePost({ publishedAt: nextDate, date: nextDate });
-                        }}
-                      />
-                    </section>
+                      </>
+                    )}
                   </div>
                 </section>
-              </div>
-            </Card>
+
+                <section className="cms-rail__card cms-rail__card--quiet">
+                  <div className="cms-rail__head">
+                    <span className="cms-rail__eyebrow">Deploy</span>
+                    <strong className="cms-rail__meta-value">
+                      {deployedShort ? `Ter-deploy ${deployedShort}` : "Otomatis"}
+                    </strong>
+                  </div>
+                  <p className="cms-rail__note">
+                    {deployedDate ??
+                      "Setiap merge ke main langsung menerbitkan situs; tidak ada langkah deploy manual."}
+                  </p>
+                  {hasOpenRevision && draftPullRequest && (
+                    <a
+                      className="cms-pr-link"
+                      href={draftPullRequest.prUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Review PR #{draftPullRequest.prNumber}
+                      <ArrowUpRight data-icon="inline-end" />
+                    </a>
+                  )}
+                </section>
+
+                <section className="cms-rail__card cms-rail__card--danger">
+                  <span className="cms-rail__eyebrow">Hapus</span>
+                  <p className="cms-rail__note">
+                    Tarik artikel dari situs sebagai draf, atau hapus filenya dari repositori.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="cms-rail__action cms-rail__action--danger"
+                    disabled={publishBusy || isLocked}
+                    onClick={() => {
+                      setRemoveMode("draft");
+                      setRemoveError(null);
+                      setRemoveOpen(true);
+                    }}
+                  >
+                    <Trash2 data-icon="inline-start" aria-hidden="true" />
+                    Hapus artikel…
+                  </Button>
+                </section>
+              </aside>
+
+              <Card className="cms-editor-card">
+                <div
+                  className="cms-section-tabs"
+                  ref={sectionTabsRef}
+                  role="tablist"
+                  aria-label="Bagian artikel"
+                >
+                  {sectionTabs.map((tab) => (
+                    <button
+                      key={tab.value}
+                      id={`section-${tab.value}-tab`}
+                      className={activeTab === tab.value ? "is-active" : ""}
+                      role="tab"
+                      aria-selected={activeTab === tab.value}
+                      aria-controls={`section-${tab.value}-panel`}
+                      tabIndex={activeTab === tab.value ? 0 : -1}
+                      onClick={() => setActiveTab(tab.value)}
+                      onKeyDown={(event) =>
+                        moveTab(event, sectionTabsRef, (nextIndex) => {
+                          const next = sectionTabs[nextIndex];
+                          if (next) setActiveTab(next.value);
+                        })
+                      }
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                  <span
+                    className="cms-section-tabs__indicator"
+                    aria-hidden="true"
+                    style={{ left: sectionIndicator.left, width: sectionIndicator.width }}
+                  />
+                </div>
+                <div className="cms-section-panels">
+                  <section
+                    id="section-konten-panel"
+                    className={activeTab === "konten" ? "is-active" : ""}
+                    role="tabpanel"
+                    aria-labelledby="section-konten-tab"
+                  >
+                    <div className="cms-panel-toolbar">
+                      <div
+                        className="cms-segmented"
+                        ref={tabsRef}
+                        role="group"
+                        aria-label="Mode editor"
+                      >
+                        <button
+                          id="write-tab"
+                          className={!isMarkdown ? "is-active" : ""}
+                          onClick={closeMarkdown}
+                          aria-pressed={!isMarkdown}
+                        >
+                          Editor visual
+                        </button>
+                        <button
+                          id="markdown-tab"
+                          className={isMarkdown ? "is-active" : ""}
+                          onClick={openMarkdown}
+                          aria-pressed={isMarkdown}
+                        >
+                          Sumber Markdown
+                        </button>
+                        <span
+                          className="cms-segmented__indicator"
+                          aria-hidden="true"
+                          style={{ left: modeIndicator.left, width: modeIndicator.width }}
+                        />
+                      </div>
+                    </div>
+                    {!isMarkdown ? (
+                      <div id="write-editor" className="cms-writing-surface">
+                        <section className="cms-field-group">
+                          <label className="cms-field-label" htmlFor="post-kicker">
+                            Label kartu{" "}
+                            <span>
+                              Teks kecil di atas judul pada kartu blog · kosongkan bila tidak
+                              dipakai
+                            </span>
+                          </label>
+                          <Input
+                            id="post-kicker"
+                            value={post.kicker}
+                            onChange={(event) => updatePost({ kicker: event.target.value })}
+                          />
+                          <label className="cms-field-label" htmlFor="post-title">
+                            Judul <span>Judul utama yang tampil di daftar dan pratinjau</span>
+                          </label>
+                          <Input
+                            id="post-title"
+                            className="cms-title-input"
+                            value={post.title}
+                            onChange={(event) => updatePost({ title: event.target.value })}
+                          />
+                          <label className="cms-field-label" htmlFor="post-excerpt">
+                            Ringkasan <span>Ringkasan singkat yang tampil di daftar</span>
+                          </label>
+                          <textarea
+                            id="post-excerpt"
+                            className="cms-excerpt-input"
+                            value={post.excerpt}
+                            aria-label="Ringkasan artikel"
+                            onChange={(event) => updatePost({ excerpt: event.target.value })}
+                          />
+                        </section>
+                        <section className="cms-field-group">
+                          <span className="cms-field-label">
+                            Isi artikel{" "}
+                            <span>Rich text · disimpan lokal sampai revisi dikirim</span>
+                          </span>
+                          <MarkdownWysiwyg
+                            key={`${post.storageSlug}:${isHydrated ? "hydrated" : "boot"}`}
+                            markdown={post.body}
+                            onChange={(body) => {
+                              updatePost({ body });
+                            }}
+                          />
+                        </section>
+                      </div>
+                    ) : (
+                      <div id="markdown-editor" className="cms-markdown-panel">
+                        <section className="cms-field-group">
+                          <label className="cms-field-label" htmlFor="markdown-input">
+                            Sumber <span>Editan tersinkron kembali ke editor visual</span>
+                          </label>
+                          <textarea
+                            id="markdown-input"
+                            className="cms-markdown-input"
+                            value={markdownDraft}
+                            onChange={(event) => updateMarkdown(event.target.value)}
+                            aria-describedby="markdown-note"
+                            spellCheck={false}
+                          />
+                          <p id="markdown-note" className="cms-source-note">
+                            Isi artikel saat ini ditampilkan sebagai Markdown. Pertahankan blok
+                            frontmatter <code>---</code>; bidang yang didukung dinormalkan saat
+                            editan diterapkan.
+                          </p>
+                        </section>
+                      </div>
+                    )}
+                  </section>
+
+                  <section
+                    id="section-sampul-panel"
+                    className={activeTab === "sampul" ? "is-active" : ""}
+                    role="tabpanel"
+                    aria-labelledby="section-sampul-tab"
+                  >
+                    <div className="cms-writing-surface">
+                      <section className="cms-field-group">
+                        <span className="cms-field-label">
+                          Gambar sampul <span>Opsional</span>
+                        </span>
+                        {coverMissing && (
+                          <p className="cms-field-error" role="alert">
+                            Gambar <code>{coverResolution.path}</code> tidak ditemukan di repo, jadi
+                            artikel ini akan terbit tanpa sampul. Unggah atau pilih gambar lain —
+                            sampul Anda yang lama tidak dihapus.
+                          </p>
+                        )}
+                        <figure className="cms-cover">
+                          {currentMedia ? (
+                            <img src={currentMedia.src} alt={currentMedia.alt} />
+                          ) : coverMissing ? (
+                            <div className="cms-cover__empty">
+                              Sampul tidak ditemukan — pilih gambar lain.
+                            </div>
+                          ) : (
+                            <div className="cms-cover__empty">Belum ada gambar sampul.</div>
+                          )}
+                          <figcaption>
+                            <span className="cms-cover__action">
+                              <button
+                                type="button"
+                                onClick={() => setMediaOpen(true)}
+                                aria-haspopup="dialog"
+                                aria-label={`Ganti gambar sampul${currentMedia ? `, pilihan saat ini ${currentMedia.label}` : ""}`}
+                              >
+                                Ganti gambar
+                              </button>
+                              <small id="media-picker-note">
+                                Unggah atau pilih dari gambar yang didukung repo.
+                              </small>
+                            </span>
+                          </figcaption>
+                        </figure>
+                        <label className="cms-field-label" htmlFor="post-image-alt">
+                          Teks alt <span>Wajib saat gambar sampul dipasang</span>
+                        </label>
+                        <Input
+                          id="post-image-alt"
+                          value={post.imageAlt}
+                          placeholder="Deskripsi singkat gambar untuk aksesibilitas…"
+                          onChange={(event) => updatePost({ imageAlt: event.target.value })}
+                        />
+                        {post.image && !post.imageAlt.trim() && (
+                          <p className="cms-field-error" role="alert">
+                            Teks alt wajib sebelum revisi bisa disimpan.
+                          </p>
+                        )}
+                      </section>
+                    </div>
+                  </section>
+
+                  <section
+                    id="section-terbit-panel"
+                    className={activeTab === "terbit" ? "is-active" : ""}
+                    role="tabpanel"
+                    aria-labelledby="section-terbit-tab"
+                  >
+                    <div className="cms-writing-surface">
+                      <section className="cms-field-group">
+                        <label className="cms-field-label" htmlFor="post-status">
+                          Setelah terbit{" "}
+                          <span>Apakah artikel tampil di situs begitu revisinya masuk</span>
+                        </label>
+                        <select
+                          id="post-status"
+                          className="cms-status-select"
+                          value={post.status}
+                          onChange={(event) =>
+                            updatePost({
+                              status: event.target.value as "draft" | "published" | "archived",
+                            })
+                          }
+                        >
+                          <option value="draft">Draf · tersimpan, tidak tampil di situs</option>
+                          <option value="published">Terbit · tampil di situs</option>
+                          <option value="archived">
+                            Arsip · tidak tampil, disimpan sebagai arsip
+                          </option>
+                        </select>
+                        <p className="cms-source-note">
+                          Ini isi file artikel, bukan tombol terbit. Artikel baru tampil setelah
+                          revisinya digabungkan — lewat panel Publikasi, atau otomatis pada waktu
+                          terjadwal. Menjadwalkan terbit memilih <strong>Terbit</strong> sendiri.
+                        </p>
+                      </section>
+
+                      <section className="cms-field-group">
+                        <label className="cms-field-label" htmlFor="post-slug">
+                          Slug URL <span>Slug yang stabil melindungi tautan lama</span>
+                        </label>
+                        <div className="cms-slug">
+                          <span>/blog/</span>
+                          <Input
+                            id="post-slug"
+                            value={post.slug}
+                            onChange={(event) => updatePost({ slug: event.target.value })}
+                          />
+                        </div>
+                        <label className="cms-field-label" htmlFor="post-published-at">
+                          Tanggal terbit{" "}
+                          <span>
+                            Menentukan urutan artikel di blog dan tanggal yang tampil di kartu
+                          </span>
+                        </label>
+                        <Input
+                          id="post-published-at"
+                          type="date"
+                          value={post.publishedAt || post.date}
+                          onChange={(event) => {
+                            const nextDate = event.target.value;
+                            // `date` is the legacy field older posts still carry and
+                            // `publishedAt` is what the site actually sorts by
+                            // (utils/blog.ts: blogPublishedAt). Editing one and
+                            // leaving the other stale is how a publication-date
+                            // change silently failed to reorder the blog, so both
+                            // move together.
+                            updatePost({ publishedAt: nextDate, date: nextDate });
+                          }}
+                        />
+                      </section>
+                    </div>
+                  </section>
+                </div>
+              </Card>
+            </div>
           </>
         )}
       </main>
@@ -2175,16 +2427,24 @@ export default function CmsDashboard({
             aria-describedby="merge-confirm-desc"
           >
             <div className="cms-modal__body">
-              <h2 id="merge-confirm-title">Setujui & gabungkan revisi?</h2>
+              <h2 id="merge-confirm-title">
+                {scheduledPending ? "Terbitkan lebih awal?" : "Terbitkan artikel ini sekarang?"}
+              </h2>
               <p id="merge-confirm-desc" className="cms-merge-confirm__desc">
                 Revisi <strong>r{draftPullRequest.revision}</strong> (PR #
                 {draftPullRequest.prNumber}) akan digabungkan ke <code>main</code>, lalu auto-deploy
-                menerbitkannya di situs publik. Tindakan ini memicu deploy baru.
+                menampilkannya di situs publik dalam ±5 menit.
               </p>
+              {scheduledPending && (
+                <p className="cms-merge-confirm__warn">
+                  Artikel ini sudah dijadwalkan terbit{" "}
+                  <strong>{formatScheduleDisplay(scheduledAt ?? "")}</strong>. Menerbitkan sekarang
+                  membatalkan jadwal itu.
+                </p>
+              )}
               <p className="cms-merge-confirm__warn">
-                <strong>Tidak bisa dibatalkan.</strong> Konten otomatis akan tersimpan di branch
-                revisi — Anda tetap bisa menutup artikel ini lewat Status Arsip di revisi
-                berikutnya.
+                <strong>Tidak bisa dibatalkan.</strong> Konten tetap tersimpan di branch revisi,
+                jadi artikel masih bisa ditarik jadi draf atau dihapus setelahnya.
               </p>
               <div className="cms-merge-confirm__actions">
                 <Button
@@ -2192,11 +2452,11 @@ export default function CmsDashboard({
                   disabled={isBusy}
                   onClick={() => {
                     setMergeConfirmOpen(false);
-                    void mergeRevision();
+                    void mergeRevision(scheduledPending);
                   }}
                 >
                   {isBusy ? <LoaderCircle className="cms-spin" data-icon="inline-start" /> : null}
-                  Ya, gabungkan & terbitkan
+                  {scheduledPending ? "Ya, terbitkan sekarang" : "Ya, terbitkan"}
                 </Button>
                 <Button
                   ref={mergeCancelRef}
@@ -2204,6 +2464,94 @@ export default function CmsDashboard({
                   disabled={isBusy}
                   onClick={() => setMergeConfirmOpen(false)}
                 >
+                  Batal
+                </Button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {isRemoveOpen && (
+        <div
+          className="cms-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setRemoveOpen(false);
+          }}
+        >
+          <section
+            ref={removeDialogRef}
+            tabIndex={-1}
+            className="cms-modal cms-remove-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-title"
+            aria-describedby="remove-desc"
+          >
+            <div className="cms-modal__body">
+              <h2 id="remove-title">Hapus artikel ini?</h2>
+              <p id="remove-desc" className="cms-remove-modal__desc">
+                <code>{post.storageSlug}.md</code> bisa ditarik dari situs tanpa menghapus filenya,
+                atau dihapus permanen. Keduanya langsung berlaku dan menutup PR revisi yang masih
+                terbuka, termasuk jadwal terbit yang menempel di PR itu.
+              </p>
+
+              <fieldset className="cms-remove-modal__options">
+                <legend className="cms-visually-hidden">Cara menghapus artikel</legend>
+                <label className={removeMode === "draft" ? "is-selected" : ""}>
+                  <input
+                    ref={removeDraftRef}
+                    type="radio"
+                    name="remove-mode"
+                    value="draft"
+                    checked={removeMode === "draft"}
+                    onChange={() => setRemoveMode("draft")}
+                  />
+                  <span>
+                    <strong>Tarik dari situs, simpan filenya</strong>
+                    <small>
+                      Status di file diubah menjadi <code>draft</code>, jadi artikel hilang dari
+                      situs. Isi artikel tetap ada dan bisa diterbitkan lagi kapan saja.
+                    </small>
+                  </span>
+                </label>
+                <label className={removeMode === "delete" ? "is-selected" : ""}>
+                  <input
+                    type="radio"
+                    name="remove-mode"
+                    value="delete"
+                    checked={removeMode === "delete"}
+                    onChange={() => setRemoveMode("delete")}
+                  />
+                  <span>
+                    <strong>Hapus permanen</strong>
+                    <small>
+                      File <code>src/content/blog/{post.storageSlug}.md</code> dihapus dari main.
+                      Gambar di <code>src/images/blog/{post.storageSlug}/</code> tidak ikut dihapus.
+                      Pemulihan hanya lewat riwayat Git.
+                    </small>
+                  </span>
+                </label>
+              </fieldset>
+
+              {removeError && (
+                <p className="cms-field-error" role="alert">
+                  {removeError}
+                </p>
+              )}
+
+              <div className="cms-remove-modal__actions">
+                <Button
+                  variant={removeMode === "delete" ? "destructive" : "default"}
+                  disabled={removeBusy}
+                  onClick={() => void removePost()}
+                >
+                  {removeBusy ? (
+                    <LoaderCircle className="cms-spin" data-icon="inline-start" />
+                  ) : null}
+                  {removeMode === "delete" ? "Hapus permanen" : "Tarik dari situs"}
+                </Button>
+                <Button variant="ghost" disabled={removeBusy} onClick={() => setRemoveOpen(false)}>
                   Batal
                 </Button>
               </div>

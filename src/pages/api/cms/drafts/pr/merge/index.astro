@@ -5,6 +5,10 @@ import { mergeDraftPullRequest } from "../../../../../../utils/draft-publish.ts"
 // Owner merge (ADR 0009/0012): approves the article's open revision PR and
 // merges it to `main` from the dashboard, so publishing never requires opening
 // GitHub. Auto-deploy + deploy confirmation turn the revision into Published.
+//
+// `override: true` is the explicit "terbitkan sekarang" path: it is the only
+// way to publish ahead of a schedule the author arranged. Without it the merge
+// refuses a pending schedule instead of quietly jumping the queue.
 export const prerender = false;
 
 if (Astro.request.method !== "POST") {
@@ -16,10 +20,11 @@ if (Astro.request.method !== "POST") {
 
 const body = await Astro.request.json().catch(() => null);
 const storageSlug = body && typeof body.storageSlug === "string" ? body.storageSlug : "";
+const overrideSchedule = body && body.override === true;
 
 try {
   return jsonResponse({
-    pullRequest: await mergeDraftPullRequest(Astro.request, storageSlug),
+    pullRequest: await mergeDraftPullRequest(Astro.request, storageSlug, { overrideSchedule }),
   });
 } catch (error) {
   const message =
