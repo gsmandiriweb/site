@@ -7,8 +7,8 @@ excerpt: "This is for testing scheduled post"
 publishedAt: 2026-11-03
 status: published
 aliases: []
-image: ""
-imageAlt: ""
+image: blog/scheduled-post-test/cover.png
+imageAlt: "test"
 date: 2026-11-03
 draft: false
 ---
