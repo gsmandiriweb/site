@@ -279,7 +279,7 @@ const fmtBlogDate = (date: Date) =>
             <span class="field-note__index">BLOG / {String(i + 1).padStart(2, "0")}</span>
           </div>
           <div class="field-note__body">
-            <span class="field-note__meta">{post.data.kicker ?? "Panduan Material"} · {fmtBlogDate(blogPublishedAt(post))}</span>
+            <span class="field-note__meta">{post.data.kicker || "Panduan Material"} · {fmtBlogDate(blogPublishedAt(post))}</span>
             <h3>{post.data.title}</h3>
             {post.data.excerpt && <p>{post.data.excerpt}</p>}
             <span class="field-note__read">Baca artikel <span aria-hidden="true">→</span></span>

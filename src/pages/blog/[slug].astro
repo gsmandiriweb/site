@@ -49,7 +49,7 @@ const quote = quoteLink({ notes: `Saya baru membaca artikel: ${post.data.title}`
     <article class="section wrap" aria-labelledby="post-title">
     <a class="back-link" href={u("/blog")}>← Semua artikel</a>
     <header class="article-head" style="margin-top:1.5rem">
-      <span class="label">{post.data.kicker ?? "Artikel"} · {fmt(blogPublishedAt(post))}</span>
+      <span class="label">{post.data.kicker || "Artikel"} · {fmt(blogPublishedAt(post))}</span>
       <h1 class="display" id="post-title">{post.data.title}</h1>
     </header>
 

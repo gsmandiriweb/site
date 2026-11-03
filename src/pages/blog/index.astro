@@ -1,5 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
+import { Image } from "astro:assets";
+import { imageAsset } from "../../utils/images.ts";
 import { u } from "../../utils/url.ts";
 import { getCollection } from "astro:content";
 import { sortPublishedBlogs, blogPublishedAt } from "../../utils/blog.ts";
@@ -22,9 +24,32 @@ const fmt = (d: Date) => new Date(d).toLocaleDateString("id-ID", { day: "2-digit
   <section class="section wrap" style="padding-top:0">
     <div class="post-row">
       {
-        posts.map((post) => (
+        posts.map((post, index) => (
           <a class="post" href={u(`/blog/${post.data.slug ?? post.id}`)} aria-label={post.data.title}>
-            <span class="post__kicker">{post.data.kicker ?? "Artikel"} · {fmt(blogPublishedAt(post))}</span>
+            {/* The cover is the card's strongest signal of what the guide is
+                about, and every other blog surface already shows it (home
+                teaser, article head). A post without one keeps a labelled
+                plate instead of collapsing the grid. */}
+            <span class="post__image">
+              {post.data.image ? (
+                <Image
+                  src={imageAsset(post.data.image)}
+                  alt={post.data.imageAlt ?? post.data.title}
+                  width={720}
+                  height={420}
+                  format="webp"
+                  loading={index < 3 ? "eager" : "lazy"}
+                  fetchpriority={index === 0 ? "high" : undefined}
+                  decoding="async"
+                  class="post__img"
+                />
+              ) : (
+                <span class="post__placeholder" aria-hidden="true">
+                  BSM / {String(index + 1).padStart(2, "0")}
+                </span>
+              )}
+            </span>
+            <span class="post__kicker">{post.data.kicker || "Artikel"} · {fmt(blogPublishedAt(post))}</span>
             <span class="post__title">{post.data.title}</span>
             <span class="post__excerpt">{post.data.excerpt}</span>
           </a>
