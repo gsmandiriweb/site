@@ -170,7 +170,10 @@ export function validateMediaBytes(bytes: Uint8Array):
 // Reduces any user-supplied name to the CMS character set: lowercase ASCII,
 // digits, and single hyphens. Empty input falls back to "image".
 export function sanitizeMediaBaseName(raw: string): string {
-  const slugified = (raw || "image")
+  // The caller appends the real extension from the detected type, so a raw name
+  // that still carries one used to produce `01-foto.jpg.jpg`.
+  const withoutExtension = (raw || "").replace(/\.(?:jpe?g|png|webp)$/i, "");
+  const slugified = (withoutExtension || "image")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
@@ -200,6 +203,32 @@ export function mediaFolder(storageSlug: string): string {
 
 export function mediaRepoPath(reference: string): string {
   return `src/images/${reference.replace(/^\/?src\/images\//, "").replace(/^\/+/, "")}`;
+}
+
+/**
+ * Where a post's media actually lives in the repository (ADR 0011).
+ *
+ * `mediaFolder()` is relative to `src/images/` because that is the reference
+ * form the site, the dashboard and the dangling-reference gate speak, but the
+ * GitHub contents API addresses the repository root. Uploading to
+ * `mediaFolder()` alone therefore dropped every CMS image into a stray
+ * `blog/<slug>/` at the repo root — a path nothing ever reads — while the gate
+ * happily resolved the reference against `src/images/blog/<slug>/` (and fell
+ * back to the legacy pool, so the PR opened anyway). One function, so the
+ * uploader and the gate cannot disagree again.
+ */
+export function mediaRepoFolder(storageSlug: string): string {
+  return mediaRepoPath(mediaFolder(storageSlug));
+}
+
+/**
+ * The inverse of `mediaRepoPath`: a repository path back to the reference form
+ * (`blog/<slug>/cover.jpg`). Every media entry handed to the dashboard carries
+ * this reference, never a repo-root path.
+ */
+export function mediaReference(repoPath: string): string {
+  const prefix = "src/images/";
+  return repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : repoPath;
 }
 
 // Extracts body image references from Markdown: `![alt](path)` links.

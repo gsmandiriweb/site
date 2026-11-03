@@ -16,6 +16,8 @@ import { imageAsset } from "./images.ts";
 import {
   extractMarkdownImageReferences,
   mediaFolder,
+  mediaReference,
+  mediaRepoFolder,
   mediaRepoPath,
   normalizeMediaReference,
   sanitizeMediaBaseName,
@@ -416,7 +418,7 @@ export async function listMediaAssets(
   const env = await runtimeEnv();
   const apiUrl = apiUrlFor(env);
   const { revision, branch } = await pendingMediaRevision(request, storageSlug);
-  const folder = mediaFolder(storageSlug);
+  const folder = mediaRepoFolder(storageSlug);
   if (!pat) return { revision, branch, assets: [], mainAssets: [] };
   const [pendingEntries, mainEntries] = await Promise.all([
     listRepoFolder(apiUrl, pat, folder, branch),
@@ -425,12 +427,17 @@ export async function listMediaAssets(
   const toEntry = (
     entry: { name: string; path: string; size: number },
     ref: string,
-  ): MediaAssetEntry => ({
-    path: entry.path,
-    filename: entry.name,
-    bytes: entry.size,
-    url: rawMediaUrl(ref, entry.path),
-  });
+  ): MediaAssetEntry => {
+    // The API answers with repo-root paths; a media entry speaks the reference
+    // form ("blog/<slug>/cover.jpg") that `post.image` and the gate use.
+    const path = mediaReference(entry.path);
+    return {
+      path,
+      filename: entry.name,
+      bytes: entry.size,
+      url: rawMediaUrl(ref, path),
+    };
+  };
   return {
     revision,
     branch,
@@ -461,7 +468,7 @@ export async function uploadMediaFile(
   const { revision, branch } = await pendingMediaRevision(request, storageSlug);
   await ensureRevisionBranch(apiUrl, pat, branch);
 
-  const folder = mediaFolder(storageSlug);
+  const folder = mediaRepoFolder(storageSlug);
   const existingNames = new Set(
     (await listRepoFolder(apiUrl, pat, folder, branch)).map((entry) => entry.name),
   );
@@ -475,7 +482,11 @@ export async function uploadMediaFile(
     const numberPrefix = String(bodyCount + 1).padStart(2, "0");
     filename = nextAvailableName(`${numberPrefix}-${base}`, extension, existingNames);
   }
-  const path = `${folder}/${filename}`;
+  // `reference` is what the article's frontmatter carries and what the gate
+  // resolves; `path` is where the commit lands. Conflating the two is exactly
+  // what produced `blog/<slug>/cover.png` at the repo root.
+  const reference = `${mediaFolder(storageSlug)}/${filename}`;
+  const path = mediaRepoPath(reference);
 
   const response = await githubRequest(apiUrl, pat, `/contents/${path}`, {
     method: "PUT",
@@ -490,13 +501,13 @@ export async function uploadMediaFile(
   return {
     revision,
     branch,
-    path,
+    path: reference,
     filename,
     bytes: input.bytes.length,
     width: input.width,
     height: input.height,
     type: input.type,
-    url: rawMediaUrl(branch, path),
+    url: rawMediaUrl(branch, reference),
   };
 }
 

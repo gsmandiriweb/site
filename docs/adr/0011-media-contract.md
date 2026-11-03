@@ -24,3 +24,9 @@
 ## Consequences
 
 The resolver, the blog schema (new `imageAlt`, required), the upload path in whichever editor survives (decision owned by the editor-boundary ticket), and the PR-creation gate (dangling-reference validation) all follow this contract. The migration task owns moving legacy `src/images/ref/` files into per-post folders and rewriting legacy basename references to explicit paths.
+
+## Amendment (2026-11-03) — reference form vs repository path
+
+The contract above describes a path two ways without saying so, and the uploader conflated them: a **media reference** (`blog/<slug>/cover.jpg`) is relative to `src/images/` — that is the form the frontmatter, the dashboard and the dangling-reference gate speak — while the **repository path** (`src/images/blog/<slug>/cover.jpg`) is what the GitHub contents API addresses. `uploadMediaFile` passed the reference form straight to `/contents/…`, so every CMS upload landed in a stray `blog/<slug>/` at the repo root while the gate resolved the same reference under `src/images/`. The uploaded cover was then invisible to the site, and the gate passed only because those posts' `image:` fields happened to resolve against the legacy pool.
+
+The two conversions are now explicit and named — `mediaRepoFolder()` / `mediaRepoPath()` for the write direction, `mediaReference()` for the read direction — with tests pinning the round trip, and every media entry handed to the dashboard carries the reference form. Sanitized base names also drop a raw extension (`foto.jpg` → `foto`), since the caller appends the detected one.
