@@ -623,6 +623,18 @@ export default function CmsDashboard({
 
   const updatePost = (patch: Partial<Post>, markDirty = true) => {
     if (isLocked) return; // legacy file pending rename: read-only
+    // The WYSIWYG emits its normalized Markdown once on mount, and the repo
+    // overlay re-applies fields the post already has. Neither is an edit, and
+    // treating them as one made every article claim unsaved changes the moment
+    // it was opened — which in turn made the publication panel offer "Kirim
+    // revisi baru" instead of "Setujui & terbitkan" for a clean revision.
+    // `dirty` must mean "differs from GitHub", so a no-op patch is a no-op.
+    const previous = posts[selectedPost];
+    if (!previous) return;
+    const changed = (Object.keys(patch) as Array<keyof Post>).some(
+      (key) => patch[key] !== undefined && previous[key] !== patch[key],
+    );
+    if (!changed) return;
     setPosts((current) => ({
       ...current,
       [selectedPost]: {
