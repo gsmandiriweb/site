@@ -1,11 +1,19 @@
 name: Scheduled publishing tick
 
-# Unattended half of scheduled publishing: every 5 minutes, ask the Worker to
-# merge any revision PR whose schedule label is due. Merges push to main, so
-# the Deploy workflow handles build/deploy/callback from there. This job is
-# intentionally curl-only (no checkout, no dependencies): all logic lives in
-# the Worker. Requires the CMS_SCHEDULE_SECRET repo secret (same value as the
-# Worker secret).
+# FALLBACK trigger. The primary one is a Cloudflare Cron Trigger on the `site`
+# Worker (`cloudflare.config.ts` → `triggers.scheduled("*/5 * * * *")`), which
+# calls the same tick in-process. This workflow stays because the tick is
+# idempotent and a GitHub run covers a window when the Worker cron cannot fire.
+#
+# Do NOT rely on this as the schedule's clock: GitHub's `schedule` event is
+# best-effort. Measured on this repo, `*/5` produced ~4 runs a day with 3–10h
+# gaps, which is how a 14:00 schedule was still unmerged at 14:16 (ADR 0014).
+#
+# Every 5 minutes, ask the Worker to merge any revision PR whose schedule label
+# is due. Merges push to main, so the Deploy workflow handles build/deploy/
+# callback from there. This job is intentionally curl-only (no checkout, no
+# dependencies): all logic lives in the Worker. Requires the
+# CMS_SCHEDULE_SECRET repo secret (same value as the Worker secret).
 #
 # A missing secret means "scheduling is not set up yet", not "something broke":
 # the run warns and skips. A secret that IS set but rejected (401) or a tick

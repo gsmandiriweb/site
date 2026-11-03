@@ -1,4 +1,4 @@
-import { bindings, defineConfig } from "cf/config";
+import { bindings, defineConfig, triggers } from "cf/config";
 
 /**
  * Secret-like files were detected but not read or migrated: .env. Only `secrets.required` entries are migrated.
@@ -19,6 +19,15 @@ import { bindings, defineConfig } from "cf/config";
 export default defineConfig({
   worker: {
     name: "site",
+    // Custom entry (`src/worker.ts`): the adapter's generated entry exports
+    // only `fetch`, so a cron trigger would invoke a missing `scheduled`.
+    entrypoint: "./src/worker.ts",
+    // Scheduled publishing runs on the Worker itself. GitHub Actions' `schedule`
+    // is best-effort: on this repo a `*/5` cron fired ~4 times a day, so a
+    // schedule set for 14:00 was still unmerged at 14:16. Cloudflare cron is
+    // minute-granular and actually fires; `.github/workflows/schedule.yml`
+    // stays as a fallback (the tick is idempotent).
+    triggers: [triggers.scheduled({ schedule: "*/5 * * * *" })],
     compatibilityDate: "2026-04-15",
     compatibilityFlags: ["nodejs_compat"],
     env: {

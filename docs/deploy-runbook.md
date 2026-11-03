@@ -25,14 +25,32 @@ the deployed commit SHA to a signed callback so the CMS marks revisions **Publis
 
 Set with `wrangler secret put <NAME> --name site` (value via stdin). Never commit values.
 
-| Secret                       | Purpose                                                                                                                                                          |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CMS_OWNER_USERNAME`         | Owner username for `/admin/login` (e.g. `owner`)                                                                                                                 |
-| `CMS_OWNER_PASSWORD`         | Owner password for `/admin/login` (long random value)                                                                                                            |
-| `CMS_GITHUB_PAT`             | GitHub PAT, repo **Contents r/w + Pull requests r/w** (server-side mutations)                                                                                    |
-| `CMS_DEPLOY_CALLBACK_URL`    | `https://site.gsmandiri-web.workers.dev/api/cms/deploy/callback`                                                                                                 |
-| `CMS_DEPLOY_CALLBACK_SECRET` | HMAC key — **must match** the GitHub Actions secret byte-for-byte                                                                                                |
-| `CMS_SCHEDULE_SECRET`        | Shared secret for the schedule ticker (`schedule.yml` → `/api/cms/schedule/tick`). Generate with `openssl rand -hex 32`; same value as the GitHub Actions secret |
+| Secret                       | Purpose                                                                                                                                                                                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CMS_OWNER_USERNAME`         | Owner username for `/admin/login` (e.g. `owner`)                                                                                                                                                                                                          |
+| `CMS_OWNER_PASSWORD`         | Owner password for `/admin/login` (long random value)                                                                                                                                                                                                     |
+| `CMS_GITHUB_PAT`             | GitHub PAT, repo **Contents r/w + Pull requests r/w** (server-side mutations)                                                                                                                                                                             |
+| `CMS_DEPLOY_CALLBACK_URL`    | `https://site.gsmandiri-web.workers.dev/api/cms/deploy/callback`                                                                                                                                                                                          |
+| `CMS_DEPLOY_CALLBACK_SECRET` | HMAC key — **must match** the GitHub Actions secret byte-for-byte                                                                                                                                                                                         |
+| `CMS_SCHEDULE_SECRET`        | Shared secret for the **fallback** schedule ticker (`schedule.yml` → `/api/cms/schedule/tick`). The primary ticker is the Worker's own Cron Trigger, which needs no secret. Generate with `openssl rand -hex 32`; same value as the GitHub Actions secret |
+
+### Scheduled publishing clock
+
+The publish schedule is drained by a **Cloudflare Cron Trigger** declared in
+`cloudflare.config.ts` (`*/5 * * * *`) and handled by `src/worker.ts`'s
+`scheduled()` export. It ships with the deployment, so the only way to change or
+verify it is to deploy, then:
+
+```bash
+curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/site/schedules"
+```
+
+An empty `schedules` array means the deployed build predates the trigger (or the
+entry regressed to the adapter default, which exports `fetch` only) — a schedule
+then never fires and the only hint is that PRs sit open with a
+`cms-schedule:` label. `.github/workflows/schedule.yml` is a fallback: GitHub's
+`schedule` event is best-effort and has fired as rarely as 4×/day here.
 
 The generated values are saved locally in the gitignored `.env`
 (`CMS_OWNER_USERNAME`, `CMS_OWNER_PASSWORD`, `CMS_DEPLOY_CALLBACK_SECRET`,
@@ -84,13 +102,13 @@ repository through a GitHub PAT. After the pair is set, the plaintext
 Repo → **Settings → Secrets and variables → Actions**. The `gh` CLI token lacks the
 repo-secrets permission (403), so these must be added in the dashboard:
 
-| Secret                       | Value                                                                                                          |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`       | Create: Cloudflare dashboard → My Profile → **API Tokens → Create Token** → "Edit Cloudflare Workers" template |
-| `CLOUDFLARE_ACCOUNT_ID`      | `d2856251d33378b2df9c712b9bee40d6`                                                                             |
-| `CMS_DEPLOY_CALLBACK_URL`    | `https://site.gsmandiri-web.workers.dev/api/cms/deploy/callback`                                               |
-| `CMS_DEPLOY_CALLBACK_SECRET` | Copy from `.env` — identical to the Worker secret                                                              |
-| `CMS_SCHEDULE_SECRET`        | Generate with `openssl rand -hex 32` — identical to the Worker secret (feeds `schedule.yml` → tick endpoint)   |
+| Secret                       | Value                                                                                                           |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`       | Create: Cloudflare dashboard → My Profile → **API Tokens → Create Token** → "Edit Cloudflare Workers" template  |
+| `CLOUDFLARE_ACCOUNT_ID`      | `d2856251d33378b2df9c712b9bee40d6`                                                                              |
+| `CMS_DEPLOY_CALLBACK_URL`    | `https://site.gsmandiri-web.workers.dev/api/cms/deploy/callback`                                                |
+| `CMS_DEPLOY_CALLBACK_SECRET` | Copy from `.env` — identical to the Worker secret                                                               |
+| `CMS_SCHEDULE_SECRET`        | Generate with `openssl rand -hex 32` — identical to the Worker secret (fallback `schedule.yml` → tick endpoint) |
 
 > If `CMS_DEPLOY_CALLBACK_SECRET` differs between the Worker and GitHub, merges deploy
 > fine but revisions stay stuck at "Merged" instead of flipping to "Published".
