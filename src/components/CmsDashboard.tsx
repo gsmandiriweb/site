@@ -1534,11 +1534,14 @@ export default function CmsDashboard({
   // plus a separate "Terbit" tab whose schedule field was invisible until a
   // revision existed — which is how "Terjadwal" and "Setujui & gabungkan"
   // ended up describing two different things at the same time.
-  const scheduledAt = draftPullRequest?.scheduledAt ?? null;
+  const hasOpenRevision = draftPullRequest?.status === "open";
+  // A merged revision keeps its schedule label on GitHub, but that schedule
+  // already fired: it must not read as "Terjadwal" (or offer to be cancelled)
+  // once the PR is closed. Only an open revision can still be waiting.
+  const scheduledAt = hasOpenRevision ? (draftPullRequest?.scheduledAt ?? null) : null;
   const scheduledPending = scheduleIsPending(scheduledAt);
   const scheduleOverdue = Boolean(scheduledAt) && !scheduledPending;
   const tickerReady = githubState?.tickerReady !== false;
-  const hasOpenRevision = draftPullRequest?.status === "open";
   const isLockedOut = isLocked || isMarkdown;
   const canSendRevision = isAuthenticated && persistenceMode === "github" && !isLocked;
   const publishBusy = isBusy || scheduleBusy;
@@ -1601,15 +1604,28 @@ export default function CmsDashboard({
 
   // At most one primary action, and it never publishes behind a schedule: while
   // a schedule is pending the primary slot is empty on purpose (the promise is
-  // already made), and publishing early is an explicit secondary choice.
+  // already made), publishing early is an explicit secondary choice, and a
+  // clean live article has nothing to offer at all — a button that exists only
+  // to create an empty revision is a button that publishes nothing.
   const primaryAction: { label: string; onClick: () => void } | null = (() => {
     if (isLockedOut) return null;
-    if (hasLocalEdits && canSendRevision)
-      return { label: "Kirim revisi baru", onClick: () => void createPullRequest() };
-    if (hasOpenRevision && !scheduledPending)
-      return { label: "Setujui & terbitkan", onClick: () => setMergeConfirmOpen(true) };
-    if (!hasOpenRevision && canSendRevision)
-      return { label: "Simpan revisi ke GitHub", onClick: () => void createPullRequest() };
+    if (hasOpenRevision) {
+      if (hasLocalEdits && canSendRevision)
+        return { label: "Kirim revisi baru", onClick: () => void createPullRequest() };
+      if (!scheduledPending)
+        return { label: "Setujui & terbitkan", onClick: () => setMergeConfirmOpen(true) };
+      return null;
+    }
+    if (!canSendRevision) return null;
+    // No revision waiting: only real unfinished business earns a button —
+    // unsent work, a never-sent draft, or a file the site does not show.
+    if (hasLocalEdits || !hasRepoRecord)
+      return {
+        label: hasRepoRecord ? "Kirim revisi untuk menerbitkan" : "Simpan revisi ke GitHub",
+        onClick: () => void createPullRequest(),
+      };
+    if (publicationState === "not-live")
+      return { label: "Kirim revisi untuk menerbitkan", onClick: () => void createPullRequest() };
     return null;
   })();
 
